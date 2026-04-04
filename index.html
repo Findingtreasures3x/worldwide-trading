@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Worldwide Trading</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Pirata+One&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo-icon">
+        <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Skull -->
+          <ellipse cx="100" cy="72" rx="38" ry="34" fill="#2c1810"/>
+          <ellipse cx="100" cy="72" rx="35" ry="31" fill="#f4e4c1"/>
+          <ellipse cx="100" cy="75" rx="32" ry="26" fill="#e8d5a8"/>
+          <!-- Eye sockets -->
+          <ellipse cx="86" cy="68" rx="9" ry="10" fill="#2c1810"/>
+          <ellipse cx="114" cy="68" rx="9" ry="10" fill="#2c1810"/>
+          <!-- Eye glow -->
+          <ellipse cx="86" cy="68" rx="5" ry="6" fill="#c0392b" opacity="0.6"/>
+          <ellipse cx="114" cy="68" rx="5" ry="6" fill="#c0392b" opacity="0.6"/>
+          <!-- Nose -->
+          <path d="M97,80 L100,86 L103,80 Z" fill="#2c1810"/>
+          <!-- Teeth/jaw -->
+          <rect x="88" y="90" width="5" height="7" rx="1" fill="#2c1810"/>
+          <rect x="95" y="90" width="5" height="8" rx="1" fill="#2c1810"/>
+          <rect x="102" y="90" width="5" height="8" rx="1" fill="#2c1810"/>
+          <rect x="109" y="90" width="5" height="7" rx="1" fill="#2c1810"/>
+          <!-- Crossbones behind -->
+          <line x1="30" y1="110" x2="170" y2="150" stroke="#2c1810" stroke-width="10" stroke-linecap="round"/>
+          <line x1="170" y1="110" x2="30" y2="150" stroke="#2c1810" stroke-width="10" stroke-linecap="round"/>
+          <line x1="30" y1="110" x2="170" y2="150" stroke="#e8d5a8" stroke-width="7" stroke-linecap="round"/>
+          <line x1="170" y1="110" x2="30" y2="150" stroke="#e8d5a8" stroke-width="7" stroke-linecap="round"/>
+          <!-- Bone ends -->
+          <circle cx="30" cy="110" r="7" fill="#e8d5a8" stroke="#2c1810" stroke-width="2"/>
+          <circle cx="170" cy="110" r="7" fill="#e8d5a8" stroke="#2c1810" stroke-width="2"/>
+          <circle cx="30" cy="150" r="7" fill="#e8d5a8" stroke="#2c1810" stroke-width="2"/>
+          <circle cx="170" cy="150" r="7" fill="#e8d5a8" stroke="#2c1810" stroke-width="2"/>
+          <!-- Hat -->
+          <path d="M55,58 Q58,30 100,22 Q142,30 145,58 Z" fill="#2c1810"/>
+          <path d="M55,58 L145,58" stroke="#8b6914" stroke-width="3"/>
+          <!-- Hat emblem - WT -->
+          <text x="100" y="50" text-anchor="middle" fill="#c9a84c" font-size="22" font-weight="bold" font-family="Pirata One, cursive">WT</text>
+          <!-- Grin line -->
+          <path d="M88,88 Q100,95 114,88" stroke="#2c1810" stroke-width="2" fill="none"/>
+          <!-- WT initials below -->
+          <text x="100" y="185" text-anchor="middle" fill="#2c1810" font-size="28" font-weight="bold" font-family="Pirata One, cursive" letter-spacing="8">WT</text>
+        </svg>
+      </div>
+      <h1 class="brand-name">Worldwide Trading</h1>
+      <p class="tagline">Premium Cards &middot; Card Shows &middot; Online</p>
+    </div>
+  </header>
+
+  <!-- Inventory -->
+  <section class="section" id="inventory">
+    <h2 class="section-title">Inventory</h2>
+    <div class="filters">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="pokemon">Pokémon</button>
+      <button class="filter-btn" data-filter="one-piece">One Piece</button>
+    </div>
+    <div id="inventory-container"></div>
+  </section>
+
+  <!-- Payment -->
+  <section class="section" id="payment">
+    <h2 class="section-title">Payment</h2>
+    <p class="section-subtitle">Scan to pay instantly</p>
+    <div class="qr-grid">
+      <div class="qr-card">
+        <img src="zelle-qr.png" alt="Zelle QR Code" class="qr-img">
+        <span class="qr-label">Zelle</span>
+      </div>
+      <div class="qr-card">
+        <img src="paypal-qr.png" alt="PayPal QR Code" class="qr-img">
+        <span class="qr-label">PayPal</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Connect -->
+  <section class="section" id="connect">
+    <h2 class="section-title">Connect</h2>
+    <div class="connect-links">
+      <a href="https://discord.com/users/worldwide_ll" class="connect-card" target="_blank" rel="noopener">
+        <svg class="connect-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.095 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.095 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+        <div>
+          <span class="connect-label">Discord</span>
+          <span class="connect-handle">worldwide_ll</span>
+        </div>
+      </a>
+      <a href="https://discord.com/channels/950260529946050610/1216238528959090828" class="connect-card" target="_blank" rel="noopener">
+        <svg class="connect-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0 1 12 2.944a11.955 11.955 0 0 1-8.618 3.04A12.02 12.02 0 0 0 3 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div>
+          <span class="connect-label">References</span>
+          <span class="connect-handle">View on Discord</span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>&copy; 2026 Worldwide Trading. All rights reserved.</p>
+  </footer>
+
+  <script src="inventory.js"></script>
+  <script>
+    function renderInventory(filter) {
+      const container = document.getElementById('inventory-container');
+      container.innerHTML = '';
+      INVENTORY.categories.forEach(cat => {
+        const filtered = cat.items.filter(item => filter === 'all' || item.brand === filter);
+        if (filtered.length === 0) return;
+        const section = document.createElement('div');
+        section.className = 'category';
+        section.innerHTML = `<h3 class="category-title">${cat.name}</h3>`;
+        const grid = document.createElement('div');
+        grid.className = 'item-grid';
+        filtered.forEach(item => {
+          const qtyBadge = item.qty > 1 ? `<span class="item-qty">x${item.qty}</span>` : '';
+          const priceLabel = item.qty > 1 ? `<span class="item-price">${item.price}<span class="price-each"> /ea</span></span>` : `<span class="item-price">${item.price}</span>`;
+          grid.innerHTML += `
+            <div class="item-card" data-brand="${item.brand}">
+              <div class="item-info">
+                <span class="item-name">${item.name}${qtyBadge}</span>
+                <span class="item-details">${item.details}</span>
+              </div>
+              ${priceLabel}
+            </div>`;
+        });
+        section.appendChild(grid);
+        container.appendChild(section);
+      });
+    }
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderInventory(btn.dataset.filter);
+      });
+    });
+
+    renderInventory('all');
+  </script>
+
+</body>
+</html>
