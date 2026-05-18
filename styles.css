@@ -177,11 +177,63 @@ body {
 
 /* ===================== HERO ===================== */
 .hero {
-  text-align: center;
-  padding: 5rem 1.5rem 3.5rem;
+  padding: 5rem 2.5rem 3.5rem;
   position: relative;
   overflow: hidden;
   background: url('hero-bg.webp') center center / cover no-repeat;
+}
+
+.hero-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.hero-right {
+  flex: 0 0 420px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  height: 360px;
+}
+
+.hero-card {
+  position: absolute;
+  width: 180px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  transition: transform 0.3s ease;
+}
+.hero-card img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  object-position: top;
+  display: block;
+}
+.hero-card-label {
+  padding: 0.5rem 0.6rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  background: var(--bg-raised);
 }
 
 .hero::before {
@@ -262,16 +314,15 @@ body {
 .hero-ctas {
   display: flex;
   gap: 1rem;
-  justify-content: center;
   flex-wrap: wrap;
 }
 
 .hero-sub {
   color: var(--text-secondary);
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 500;
   max-width: 540px;
-  margin: 0.75rem auto 2rem;
+  margin: 0.75rem 0 2rem;
   line-height: 1.6;
   letter-spacing: 0.02em;
 }
@@ -333,13 +384,41 @@ body {
   margin-top: 0.15rem;
 }
 
-/* ===================== TRUST STRIP ===================== */
-.trust-strip { border-bottom: 1px solid var(--border); padding: 1.25rem 2.5rem; }
-.trust-strip-inner { max-width: var(--max-width); margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
-.trust-item { display: flex; align-items: flex-start; gap: 0.75rem; font-size: 0.8rem; }
-.trust-icon { font-size: 1.25rem; flex-shrink: 0; margin-top: 0.1rem; }
-.trust-item strong { display: block; color: var(--text); font-weight: 600; margin-bottom: 0.1rem; }
-.trust-item div span { color: var(--text-secondary); font-size: 0.72rem; }
+/* ===================== SECTION EYEBROW ===================== */
+.section-eyebrow {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--gold-text);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-bottom: 0.5rem;
+}
+
+/* ===================== DEAL LAYOUT ===================== */
+.deal-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+.deal-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+}
+.deal-card-title {
+  font-family: 'Cinzel', serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+.deal-card-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 1.25rem;
+}
 
 /* ===================== SECTIONS ===================== */
 .section {
@@ -610,17 +689,15 @@ body {
 .stub-day { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
 .stub-date { font-family: 'Cinzel', serif; font-size: 2.5rem; font-weight: 800; line-height: 1; }
 .stub-month { font-size: 0.6rem; font-weight: 600; letter-spacing: 0.05em; }
-.show-status-pill {
-  font-size: 0.68rem;
+.show-status-tag {
+  font-size: 0.6rem;
   font-weight: 600;
-  color: #22c55e;
-  background: rgba(34,197,94,0.1);
-  padding: 0.25rem 0.75rem;
-  border-radius: 100px;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  margin-bottom: 0.5rem;
+  color: var(--gold-text);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.35rem;
+  display: block;
+  opacity: 0.8;
 }
 .show-doors-label {
   font-size: 0.6rem;
@@ -1854,13 +1931,15 @@ body {
     font-size: 0.7rem;
   }
 
-  /* Trust strip mobile */
-  .trust-strip { padding: 1rem; }
-  .trust-strip-inner { grid-template-columns: 1fr 1fr; gap: 1rem; }
-  .trust-item { font-size: 0.72rem; }
+  /* Hero mobile */
+  .hero-inner { flex-direction: column; text-align: center; }
+  .hero-left { text-align: center; }
+  .hero-right { display: none; }
+  .hero-sub { margin: 0.75rem auto 2rem; }
+  .hero-ctas { justify-content: center; }
 
-  /* Hero CTAs */
-  .hero-ctas { flex-direction: column; align-items: center; gap: 0.75rem; }
+  /* Deal layout mobile */
+  .deal-layout { grid-template-columns: 1fr; }
 
   /* Mobile show tweaks */
   .show-flyer { max-height: 250px; }

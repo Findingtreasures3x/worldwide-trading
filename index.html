@@ -57,12 +57,19 @@
 
   <!-- Hero -->
   <section class="hero">
-    <img src="logo.png" alt="Worldwide Trading" class="hero-logo">
-    <h1><span class="gold-grad">Buy.</span> Sell. <span class="gold-grad">Trade.</span></h1>
-    <p class="hero-sub">Graded slabs &amp; sealed product — Pokémon, One Piece &amp; more.<br>Trading &amp; buying at <strong style="color:var(--gold-text)">70–90% market value</strong></p>
-    <div class="hero-ctas">
-      <a href="#inventory" class="hero-cta">Browse Inventory ↓</a>
-      <a href="#next-show" class="hero-cta-outline">Next Show</a>
+    <div class="hero-inner">
+      <div class="hero-left">
+        <img src="logo.png" alt="Worldwide Trading" class="hero-logo">
+        <h1><span class="gold-grad">Buy.</span> Sell. <span class="gold-grad">Trade.</span></h1>
+        <p class="hero-sub">Graded slabs &amp; sealed product — Pokémon, One Piece &amp; more.<br>Trading &amp; buying at <strong style="color:var(--gold-text)">70–90% market value</strong></p>
+        <div class="hero-ctas">
+          <a href="#inventory" class="hero-cta">Browse Inventory ↓</a>
+          <a href="#next-show" class="hero-cta-outline">Next Show</a>
+        </div>
+      </div>
+      <div class="hero-right" id="heroFeatured">
+        <!-- Featured cards rendered dynamically -->
+      </div>
     </div>
   </section>
 
@@ -88,25 +95,16 @@
     </div>
   </div>
 
-  <!-- Trust Strip -->
-  <div class="trust-strip">
-    <div class="trust-strip-inner">
-      <div class="trust-item"><span class="trust-icon">🛡</span><div><strong>PSA &amp; BGS slabs only</strong><span>Every grade authenticated</span></div></div>
-      <div class="trust-item"><span class="trust-icon">⚡</span><div><strong>Same-day Zelle / PayPal</strong><span>Cash in person at shows</span></div></div>
-      <div class="trust-item"><span class="trust-icon">💵</span><div><strong>70–90% market value</strong><span>Better than any LCS in NJ</span></div></div>
-      <div class="trust-item"><span class="trust-icon">📍</span><div><strong>Next show coming soon</strong><span>Check below for details</span></div></div>
-    </div>
-  </div>
-
   <!-- Next Show (rendered dynamically) -->
   <div id="show-section"></div>
 
   <!-- Inventory -->
   <section class="section" id="inventory">
     <div class="section-header">
-      <h2 class="section-title">Inventory</h2>
+      <h2 class="section-title">The <span class="gold-grad">Vault</span></h2>
       <div class="section-header-right">
         <span class="section-count" id="inventoryCount"></span>
+        <span class="section-count" id="categoryCounts" style="font-size:0.8rem;color:var(--text-muted);"></span>
         <div class="view-toggle" id="viewToggle">
           <button class="view-btn active" data-view="grid" title="Grid view">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
@@ -150,25 +148,26 @@
 
   <hr class="section-divider">
 
-  <!-- Payment -->
+  <!-- Pay & Connect — combined -->
   <section class="section" id="payment">
-    <div class="section-header">
-      <h2 class="section-title">Payment</h2>
+    <div class="section-header" style="justify-content:center;text-align:center;flex-direction:column;align-items:center;">
+      <span class="section-eyebrow">HOW TO DEAL</span>
+      <h2 class="section-title"><span class="gold-grad">Pay</span>, then <span class="gold-grad">Connect</span>.</h2>
     </div>
-    <p class="section-subtitle">Tap QR to enlarge and scan, or pay cash in person</p>
-    <div class="payment-grid" id="paymentGrid">
-      <!-- Loaded dynamically -->
+    <div class="deal-layout">
+      <div class="deal-card">
+        <h3 class="deal-card-title">📱 Scan to Pay</h3>
+        <p class="deal-card-sub">Tap QR to enlarge · On mobile, tap to open payment app</p>
+        <div class="payment-grid" id="paymentGrid">
+          <!-- Loaded dynamically -->
+        </div>
+      </div>
+      <div class="deal-card" id="connect">
+        <h3 class="deal-card-title">💬 Connect</h3>
+        <div class="connect-grid" id="connect-container"></div>
+        <p style="font-size:0.72rem;color:var(--text-muted);margin-top:1rem;">✓ Holds for 24 hrs with deposit · No-show = no future holds</p>
+      </div>
     </div>
-  </section>
-
-  <hr class="section-divider">
-
-  <!-- Connect (rendered dynamically) -->
-  <section class="section" id="connect">
-    <div class="section-header">
-      <h2 class="section-title">Connect</h2>
-    </div>
-    <div class="connect-grid" id="connect-container"></div>
   </section>
 
   <!-- Modal -->
@@ -186,7 +185,7 @@
           <span id="modalPrice" class="modal-price"></span>
         </div>
         <div class="modal-actions-row">
-          <a href="#payment" class="hero-cta" onclick="closeModal()" style="font-size:0.8rem;padding:0.6rem 1.25rem;">Scan to Pay</a>
+          <a href="#payment" class="hero-cta" onclick="closeModal()" style="font-size:0.8rem;padding:0.6rem 1.25rem;">Pay Now</a>
           <a href="#connect" class="hero-cta-outline" onclick="closeModal()" style="font-size:0.8rem;padding:0.6rem 1.25rem;">DM to Hold</a>
         </div>
       </div>
@@ -294,6 +293,14 @@
         try { const s = await settingsRes.json(); showPrices = !s.length || s[0].value === 'true'; } catch(e) {}
         allItems = data || [];
         document.getElementById('statItems').textContent = allItems.length;
+        // Category counts in vault header
+        const slabCount = allItems.filter(i => i.category === 'slabs').length;
+        const sealedCount = allItems.filter(i => i.category === 'sealed').length;
+        const rawCount = allItems.filter(i => i.category === 'raw').length;
+        const ccEl = document.getElementById('categoryCounts');
+        if (ccEl) ccEl.innerHTML = `<strong>${allItems.length}</strong> showing · <strong>${slabCount}</strong> slabs · <strong>${sealedCount}</strong> sealed${rawCount ? ` · <strong>${rawCount}</strong> raw` : ''}`;
+        // Render featured cards in hero
+        renderHeroFeatured(allItems.filter(i => i.featured && i.image).slice(0, 3));
         buildBrandFilters();
         renderInventory();
       } catch (err) {
@@ -594,6 +601,21 @@
     fetchConnectLinks();
     fetchPaymentMethods();
 
+    // ========== HERO FEATURED CARDS ==========
+    function renderHeroFeatured(items) {
+      const el = document.getElementById('heroFeatured');
+      if (!el || !items.length) return;
+      el.innerHTML = items.map((item, i) => {
+        const rotate = i === 0 ? '-6deg' : i === 1 ? '0deg' : '6deg';
+        const z = i === 1 ? 3 : i === 0 ? 2 : 1;
+        const offset = i === 0 ? '-15%' : i === 2 ? '15%' : '0';
+        return `<div class="hero-card" style="transform:rotate(${rotate}) translateX(${offset});z-index:${z};">
+          <img src="${item.image}" alt="${item.name}" loading="lazy">
+          <div class="hero-card-label">${item.name.split(' - ')[0].split(' (')[0]}</div>
+        </div>`;
+      }).join('');
+    }
+
     // ========== PAYMENT METHODS ==========
     async function fetchPaymentMethods() {
       try {
@@ -671,7 +693,7 @@
               <div class="stub-month">${stubMonth}</div>
             </div>
             <div class="show-details">
-              <div class="show-status-pill">● Confirmed · Vending</div>
+              <span class="show-status-tag">Confirmed · Vending</span>
               <h3 class="show-name">${show.name}</h3>
               <div class="show-meta">
                 <div class="show-meta-item">
