@@ -129,18 +129,20 @@
           <button class="filter-btn" data-cat="accessories">Accessories</button>
           <button class="filter-btn" data-cat="collectibles">Collectibles</button>
         </div>
+        <span class="filter-separator">$</span>
+        <div class="filters" id="priceFilters">
+          <button class="filter-btn active" data-price="all">Any</button>
+          <button class="filter-btn" data-price="100">&lt;$100</button>
+          <button class="filter-btn" data-price="500">&lt;$500</button>
+          <button class="filter-btn" data-price="1000">&lt;$1k</button>
+        </div>
+        <span class="filter-separator" style="margin-left:auto;">Sort</span>
         <select class="sort-select" id="sortSelect">
-          <option value="sort_order">Default</option>
+          <option value="sort_order">Featured</option>
           <option value="price_desc">Price: High → Low</option>
           <option value="price_asc">Price: Low → High</option>
           <option value="name_asc">Name: A → Z</option>
         </select>
-        <div class="filters" id="priceFilters">
-          <button class="filter-btn active" data-price="all">Any Price</button>
-          <button class="filter-btn" data-price="100">Under $100</button>
-          <button class="filter-btn" data-price="500">Under $500</button>
-          <button class="filter-btn" data-price="1000">Under $1K</button>
-        </div>
       </div>
     </div>
     <div id="inventory-container"></div>
@@ -288,12 +290,14 @@
         try { const s = await settingsRes.json(); showPrices = !s.length || s[0].value === 'true'; } catch(e) {}
         allItems = data || [];
         document.getElementById('statItems').textContent = allItems.length;
-        // Category counts in vault header
-        const slabCount = allItems.filter(i => i.category === 'slabs').length;
-        const sealedCount = allItems.filter(i => i.category === 'sealed').length;
-        const rawCount = allItems.filter(i => i.category === 'raw').length;
+        // Category counts in vault header — all categories dynamically
+        const catMap = {};
+        allItems.forEach(i => { const c = i.category || 'other'; catMap[c] = (catMap[c] || 0) + 1; });
         const ccEl = document.getElementById('categoryCounts');
-        if (ccEl) ccEl.innerHTML = `<strong>${allItems.length}</strong> showing · <strong>${slabCount}</strong> slabs · <strong>${sealedCount}</strong> sealed${rawCount ? ` · <strong>${rawCount}</strong> raw` : ''}`;
+        if (ccEl) {
+          const parts = Object.entries(catMap).sort((a, b) => b[1] - a[1]).map(([cat, count]) => `<strong>${count}</strong> ${cat}`);
+          ccEl.innerHTML = `<strong>${allItems.length}</strong> showing · ${parts.join(' · ')}`;
+        }
         // Render featured cards in hero
         renderHeroFeatured(allItems.filter(i => i.featured && i.image).slice(0, 3));
         buildBrandFilters();
@@ -687,7 +691,6 @@
               <div class="stub-month">${stubMonth}</div>
             </div>
             <div class="show-details">
-              <span class="show-status-tag">Confirmed · Vending</span>
               <h3 class="show-name">${show.name}</h3>
               <div class="show-meta">
                 <div class="show-meta-item">

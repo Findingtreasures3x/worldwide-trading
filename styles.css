@@ -404,6 +404,7 @@ body {
 .deal-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
+  border-top: 2px solid var(--gold);
   border-radius: var(--radius-lg);
   padding: 2rem;
 }
@@ -485,8 +486,8 @@ body {
 
 .section-title {
   font-family: 'Cinzel', serif;
-  font-size: 2.5rem;
-  font-weight: 600;
+  font-size: 3rem;
+  font-weight: 700;
   color: var(--text);
   letter-spacing: -0.5px;
 }
@@ -736,16 +737,6 @@ body {
 .stub-day { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
 .stub-date { font-family: 'Cinzel', serif; font-size: 2.5rem; font-weight: 800; line-height: 1; }
 .stub-month { font-size: 0.6rem; font-weight: 600; letter-spacing: 0.05em; }
-.show-status-tag {
-  font-size: 0.6rem;
-  font-weight: 600;
-  color: var(--gold-text);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin-bottom: 0.35rem;
-  display: block;
-  opacity: 0.8;
-}
 .show-doors-label {
   font-size: 0.6rem;
   font-weight: 600;
@@ -824,6 +815,13 @@ body {
   background: color-mix(in srgb, var(--bg) 85%, transparent);
   backdrop-filter: blur(12px);
   padding: 1rem 0;
+}
+
+.filter-separator {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  flex-shrink: 0;
 }
 
 .search-input {
