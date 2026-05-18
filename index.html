@@ -150,22 +150,17 @@
 
   <!-- Pay & Connect — combined -->
   <section class="section" id="payment">
-    <div class="section-header" style="justify-content:center;text-align:center;flex-direction:column;align-items:center;">
-      <span class="section-eyebrow">HOW TO DEAL</span>
-      <h2 class="section-title"><span class="gold-grad">Pay</span>, then <span class="gold-grad">Connect</span>.</h2>
-    </div>
     <div class="deal-layout">
       <div class="deal-card">
-        <h3 class="deal-card-title">📱 Scan to Pay</h3>
-        <p class="deal-card-sub">Tap QR to enlarge · On mobile, tap to open payment app</p>
+        <h3 class="deal-card-title">Scan to <span class="gold-grad">Pay</span></h3>
+        <p class="deal-card-sub">Tap QR to enlarge · Hold logo to open payment app</p>
         <div class="payment-grid" id="paymentGrid">
           <!-- Loaded dynamically -->
         </div>
       </div>
       <div class="deal-card" id="connect">
-        <h3 class="deal-card-title">💬 Connect</h3>
-        <div class="connect-grid" id="connect-container"></div>
-        <p style="font-size:0.72rem;color:var(--text-muted);margin-top:1rem;">✓ Holds for 24 hrs with deposit · No-show = no future holds</p>
+        <h3 class="deal-card-title"><span class="gold-grad">Connect</span></h3>
+        <div class="connect-list" id="connect-container"></div>
       </div>
     </div>
   </section>
@@ -633,7 +628,6 @@
             return `<div class="cash-card">
               <svg class="cash-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M2 10h2M20 10h2M2 14h2M20 14h2"/></svg>
               <span class="qr-label">${m.name}</span>
-              <span class="cash-sub">Accepted at card shows</span>
             </div>`;
           }
           return `<div class="qr-card" onclick="openModal('${m.qr_image}', '${m.name}')">
@@ -830,12 +824,13 @@
         const container = document.getElementById('connect-container');
         if (!links.length) { container.innerHTML = ''; return; }
         container.innerHTML = links.map(l => `
-          <a href="${l.url}" class="connect-card" target="_blank" rel="noopener">
+          <a href="${l.url}" class="connect-row" target="_blank" rel="noopener">
             <span class="connect-icon">${ICON_MAP[l.icon] || ICON_MAP.link}</span>
-            <div>
+            <div class="connect-row-info">
               <span class="connect-label">${l.label}</span>
               <span class="connect-handle">${l.handle}</span>
             </div>
+            <span class="connect-arrow">→</span>
           </a>
         `).join('');
       } catch (e) { console.error('Connect fetch error:', e); }
@@ -871,6 +866,21 @@
         priceEl.style.display = 'block';
       } else {
         priceEl.style.display = 'none';
+      }
+      // Hide action buttons for QR/payment modals, show for inventory
+      const actionsRow = document.querySelector('.modal-actions-row');
+      const rightPanel = document.querySelector('.modal-right');
+      if (!details && !price) {
+        // QR code — simple enlarge, hide right panel
+        if (actionsRow) actionsRow.style.display = 'none';
+        document.querySelector('.modal-left').style.flex = '1';
+        document.querySelector('.modal-left').style.borderRadius = 'var(--radius-lg)';
+        if (rightPanel) rightPanel.style.display = 'none';
+      } else {
+        if (actionsRow) actionsRow.style.display = 'flex';
+        document.querySelector('.modal-left').style.flex = '0 0 45%';
+        document.querySelector('.modal-left').style.borderRadius = '';
+        if (rightPanel) rightPanel.style.display = 'flex';
       }
       document.getElementById('qrModal').classList.add('active');
       document.body.style.overflow = 'hidden';
