@@ -942,11 +942,11 @@ body {
 
 .category-count {
   font-size: 0.75rem;
-  color: var(--text-muted);
-  background: var(--bg-card);
+  color: var(--gold-text);
+  background: var(--gold-dim);
   padding: 0.15rem 0.6rem;
   border-radius: 100px;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(245, 185, 75, 0.25);
 }
 
 .item-grid {
