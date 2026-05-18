@@ -1,0 +1,2834 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Worldwide Trading</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #0a0a0c; --bg-raised: #131316; --bg-card: rgba(255,255,255,0.035);
+      --bg-card-hover: rgba(255,255,255,0.06); --bg-sidebar: #101013;
+      --gold: #f5b94b; --gold-dim: rgba(245,185,75,0.12); --gold-glow: rgba(245,185,75,0.1);
+      --gold-text: #f5c566; --text: #e8e8ec; --text-secondary: #8a8a9a; --text-muted: #55556a;
+      --border: rgba(255,255,255,0.07); --border-hover: rgba(245,185,75,0.3);
+      --border-strong: rgba(255,255,255,0.1); --danger: #ef4444; --danger-dim: rgba(239,68,68,0.1);
+      --success: #22c55e; --success-dim: rgba(34,197,94,0.1);
+      --blue: #3b82f6; --blue-dim: rgba(59,130,246,0.1);
+      --radius: 10px; --transition: 150ms ease;
+    }
+    [data-theme="light"] {
+      --bg: #f5f5f7; --bg-raised: #ffffff; --bg-card: rgba(0,0,0,0.03);
+      --bg-card-hover: rgba(0,0,0,0.06); --bg-sidebar: #ffffff;
+      --gold: #d4960a; --gold-dim: rgba(212,150,10,0.1); --gold-glow: rgba(212,150,10,0.08);
+      --gold-text: #9a6d00; --text: #1a1a1a; --text-secondary: #555566; --text-muted: #999aaa;
+      --border: rgba(0,0,0,0.08); --border-hover: rgba(212,150,10,0.4);
+      --border-strong: rgba(0,0,0,0.12); --danger: #dc2626; --danger-dim: rgba(220,38,38,0.08);
+      --success: #16a34a; --success-dim: rgba(22,163,74,0.08);
+      --blue: #2563eb; --blue-dim: rgba(37,99,235,0.08);
+    }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; -webkit-font-smoothing: antialiased; min-height: 100vh; }
+
+    /* ===== AUTH ===== */
+    .auth-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; }
+    .auth-box { background: var(--bg-raised); border: 1px solid var(--border-strong); border-radius: var(--radius); padding: 2.5rem; width: 100%; max-width: 380px; text-align: center; }
+    .auth-box h1 { font-size: 1.3rem; margin-bottom: 0.5rem; color: var(--gold-text); }
+    .auth-box p { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.5rem; }
+    .auth-error { color: var(--danger); font-size: 0.8rem; margin-bottom: 1rem; display: none; }
+
+    /* ===== LAYOUT ===== */
+    .app { display: flex; min-height: 100vh; }
+
+    /* Sidebar */
+    .sidebar { width: 220px; background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; bottom: 0; left: 0; z-index: 50; transition: width 0.2s ease; }
+    .sidebar.collapsed { width: 60px; }
+    .sidebar.collapsed .sidebar-brand-name,
+    .sidebar.collapsed .sidebar-brand-sub,
+    .sidebar.collapsed .sidebar-link span { display: none; }
+    .sidebar.collapsed .sidebar-link { justify-content: center; padding: 0.6rem; }
+    .sidebar.collapsed .sidebar-brand { padding: 1rem 0.5rem; text-align: center; }
+    .sidebar.collapsed .sidebar-nav { padding: 0.75rem 0.5rem; }
+    .sidebar.collapsed .sidebar-footer { padding: 0.5rem; }
+    .sidebar-toggle { width: 100%; padding: 0.5rem; border: none; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 1rem; transition: var(--transition); display: flex; align-items: center; justify-content: center; }
+    .sidebar-toggle:hover { color: var(--gold-text); }
+    .sidebar-brand { padding: 1.25rem 1.25rem 1rem; border-bottom: 1px solid var(--border); }
+    .sidebar-brand-name { font-size: 0.95rem; font-weight: 800; color: var(--gold-text); }
+    .sidebar-brand-sub { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.15rem; }
+    .sidebar-nav { flex: 1; padding: 0.75rem 0.75rem; display: flex; flex-direction: column; gap: 0.2rem; }
+    .sidebar-link { display: flex; align-items: center; gap: 0.65rem; padding: 0.6rem 0.75rem; border-radius: 8px; color: var(--text-secondary); text-decoration: none; font-size: 0.82rem; font-weight: 500; transition: var(--transition); cursor: pointer; border: none; background: none; width: 100%; text-align: left; }
+    .sidebar-link:hover { color: var(--text); background: var(--bg-card); }
+    .sidebar-link.active { color: var(--gold-text); background: var(--gold-dim); }
+    .sidebar-link svg { width: 18px; height: 18px; flex-shrink: 0; }
+    .sidebar-footer { padding: 0.75rem; border-top: 1px solid var(--border); }
+    .sidebar-footer .sidebar-link { font-size: 0.75rem; }
+
+    /* Main */
+    .main { flex: 1; margin-left: 220px; transition: margin-left 0.2s ease; }
+    .sidebar.collapsed + .main { margin-left: 60px; }
+    .top-bar { position: sticky; top: 0; z-index: 40; background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 52px; }
+    .top-bar-title { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+    .page { padding: 1.75rem 2rem; display: none; }
+    .page.active { display: block; }
+
+    /* ===== CARDS & GRID ===== */
+    .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1.5rem; }
+    .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
+    .stat-card-label { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.4rem; }
+    .stat-card-value { font-size: 1.8rem; font-weight: 800; color: var(--text); line-height: 1.1; }
+    .stat-card-value.gold { color: var(--gold-text); }
+    .stat-card-value.green { color: var(--success); }
+    .stat-card-value.blue { color: var(--blue); }
+    .stat-card-sub { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.25rem; }
+
+    .stat-card-delta { font-size: 0.68rem; font-weight: 600; margin-top: 0.2rem; }
+    .stat-card-delta.up { color: var(--success); }
+    .stat-card-delta.down { color: var(--danger); }
+    .stat-card-delta.flat { color: var(--text-muted); }
+
+    .sparkline { margin-top: 0.4rem; display: flex; align-items: flex-end; gap: 1px; height: 28px; }
+    .sparkline-bar { flex: 1; background: var(--gold); opacity: 0.35; border-radius: 1px 1px 0 0; min-height: 1px; }
+    .sparkline-bar:last-child { opacity: 0.9; }
+
+    /* Horizontal bar for referrers */
+    .h-bar-item { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.5rem; font-size: 0.78rem; }
+    .h-bar-item:last-child { margin-bottom: 0; }
+    .h-bar-label { width: 150px; flex-shrink: 0; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.75rem; }
+    .h-bar-track { flex: 1; height: 20px; background: var(--bg); border-radius: 4px; overflow: hidden; position: relative; }
+    .h-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
+    .h-bar-fill.gold { background: var(--gold); opacity: 0.7; }
+    .h-bar-fill.blue { background: var(--blue); opacity: 0.7; }
+    .h-bar-fill.green { background: var(--success); opacity: 0.7; }
+    .h-bar-value { width: 40px; text-align: right; font-weight: 700; color: var(--text); font-size: 0.75rem; flex-shrink: 0; }
+
+    /* Donut chart */
+    .donut-wrap { position: relative; width: 110px; height: 110px; flex-shrink: 0; }
+    .donut-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .donut-center-val { font-size: 1.1rem; font-weight: 800; color: var(--text); line-height: 1; }
+    .donut-center-label { font-size: 0.55rem; color: var(--text-muted); text-transform: uppercase; }
+    .donut-legend { display: flex; flex-direction: column; gap: 0.4rem; flex: 1; }
+    .donut-legend-item { display: flex; align-items: center; gap: 0.45rem; font-size: 0.75rem; color: var(--text-secondary); }
+    .donut-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .donut-legend-val { margin-left: auto; font-weight: 700; color: var(--text); }
+
+    /* Funnel */
+    .funnel-step { display: flex; align-items: center; gap: 0.65rem; margin-bottom: 0.45rem; }
+    .funnel-step:last-child { margin-bottom: 0; }
+    .funnel-bar { height: 24px; border-radius: 4px; background: var(--gold); opacity: 0.6; transition: width 0.3s; }
+    .funnel-label { font-size: 0.72rem; color: var(--text-secondary); width: 45px; flex-shrink: 0; }
+    .funnel-value { font-size: 0.72rem; font-weight: 700; color: var(--text); width: 40px; text-align: right; flex-shrink: 0; }
+
+    @media (max-width: 768px) {
+      #kpiGrid { grid-template-columns: repeat(2, 1fr) !important; }
+    }
+
+    .two-col { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+
+    .panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); }
+    .panel-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .panel-title { font-size: 0.82rem; font-weight: 700; }
+    .panel-body { padding: 1rem 1.25rem; }
+
+    /* Chart */
+    .chart-container { display: flex; align-items: flex-end; gap: 2px; height: 160px; padding: 0.75rem 0; }
+    .chart-bar { flex: 1; background: var(--gold); border-radius: 3px 3px 0 0; min-height: 2px; position: relative; transition: opacity 0.15s; }
+    .chart-bar:hover { opacity: 0.75; }
+    .chart-bar-tip { display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: var(--bg-raised); border: 1px solid var(--border-strong); border-radius: 6px; padding: 0.2rem 0.45rem; font-size: 0.6rem; color: var(--text); white-space: nowrap; margin-bottom: 4px; z-index: 10; }
+    .chart-bar:hover .chart-bar-tip { display: block; }
+
+    /* Breakdown list */
+    .breakdown-item { display: flex; justify-content: space-between; align-items: center; padding: 0.55rem 0.25rem; font-size: 0.8rem; }
+    .breakdown-item + .breakdown-item { border-top: 1px solid var(--border); }
+    .breakdown-label { color: var(--text-secondary); text-transform: capitalize; }
+    .breakdown-value { font-weight: 700; color: var(--text); }
+
+    /* ===== SECTION HEADER ===== */
+    .sec-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
+    .sec-title { font-size: 1.15rem; font-weight: 700; }
+    .sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+    .sortable:hover { color: var(--gold-text); }
+    .sortable.asc .sort-arrow::after { content: ' ▲'; font-size: 0.55rem; }
+    .sortable.desc .sort-arrow::after { content: ' ▼'; font-size: 0.55rem; }
+    .cal-day { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; min-height: 80px; padding: 0.4rem; font-size: 0.72rem; }
+    .cal-day.today { border-color: var(--gold); }
+    .cal-day.empty { background: transparent; border-color: transparent; }
+    .cal-day-num { font-weight: 700; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.25rem; }
+    .cal-day.today .cal-day-num { color: var(--gold-text); }
+    .cal-event { font-size: 0.6rem; padding: 0.15rem 0.3rem; border-radius: 3px; margin-bottom: 2px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cal-event.vending { background: var(--gold-dim); color: var(--gold-text); }
+    .cal-event.attending { background: var(--blue-dim); color: var(--blue); }
+    .cal-header { font-size: 0.65rem; font-weight: 700; color: var(--text-muted); text-align: center; padding: 0.4rem; text-transform: uppercase; }
+    .pg-btn { padding: 0.35rem 0.7rem; font-size: 0.75rem; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); cursor: pointer; transition: var(--transition); }
+    .pg-btn:hover { border-color: var(--border-hover); color: var(--gold-text); }
+    .pg-btn.active { background: var(--gold-dim); border-color: var(--gold); color: var(--gold-text); font-weight: 700; }
+    .pg-btn:disabled { opacity: 0.3; cursor: default; }
+    .sold-group { margin-bottom: 1.5rem; }
+    .sold-group-header { display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0.75rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px 8px 0 0; cursor: pointer; }
+    .sold-group-header:hover { background: var(--bg-card-hover); }
+    .sold-group-title { font-size: 0.85rem; font-weight: 700; color: var(--gold-text); }
+    .sold-group-meta { font-size: 0.72rem; color: var(--text-muted); display: flex; gap: 1rem; }
+    .sold-group-body { border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; overflow: hidden; }
+    .sold-group.collapsed .sold-group-body { display: none; }
+    .sold-group.collapsed .sold-group-header { border-radius: 8px; }
+    .lot-badge { font-size: 0.65rem; padding: 0.15rem 0.45rem; border-radius: 4px; background: var(--blue-dim); color: var(--blue); font-weight: 600; }
+    .lot-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 0.75rem; overflow: hidden; }
+    .lot-card-header { display: flex; align-items: center; justify-content: space-between; padding: 0.85rem 1rem; gap: 1rem; flex-wrap: wrap; }
+    .lot-card-title { font-size: 0.9rem; font-weight: 700; color: var(--gold-text); }
+    .lot-card-stats { display: flex; gap: 1.5rem; font-size: 0.78rem; align-items: center; flex-wrap: wrap; }
+    .lot-card-stat { display: flex; flex-direction: column; align-items: center; gap: 0.1rem; }
+    .lot-card-stat-label { font-size: 0.58rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .lot-card-stat-value { font-weight: 700; color: var(--text); }
+    .lot-card-stat-value.gold { color: var(--gold-text); }
+    .lot-card-stat-value.green { color: var(--success); }
+    .lot-card-items { border-top: 1px solid var(--border); }
+    .lot-card-items.collapsed { display: none; }
+    .lot-card-toggle { font-size: 0.72rem; color: var(--text-muted); cursor: pointer; padding: 0.3rem 0.6rem; border-radius: 4px; border: 1px solid var(--border); background: transparent; transition: var(--transition); }
+    .lot-card-toggle:hover { color: var(--text); border-color: var(--border-hover); }
+
+    /* ===== TABLE ===== */
+    .tbl { width: 100%; border-collapse: collapse; }
+    .tbl th { text-align: left; font-size: 0.65rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; padding: 0.55rem 0.65rem; border-bottom: 1px solid var(--border-strong); }
+    .tbl td { padding: 0.55rem 0.65rem; font-size: 0.8rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .tbl tr:hover td { background: var(--bg-card); }
+    .tbl .img-cell img { width: 36px; height: 48px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); }
+    .tbl .img-cell .no-img { width: 36px; height: 48px; border-radius: 4px; background: var(--bg-card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 0.55rem; color: var(--text-muted); }
+    .tbl .name-cell { font-weight: 600; }
+    .tbl .price-cell { font-weight: 700; white-space: nowrap; }
+    .brand-badge { font-size: 0.6rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 100px; text-transform: capitalize; background: var(--bg-card-hover); color: var(--text-secondary); border: 1px solid var(--border); white-space: nowrap; display: inline-block; }
+    .featured-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); margin-left: 0.3rem; vertical-align: middle; }
+    .action-btns { display: flex; gap: 0.25rem; }
+    .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .tbl { min-width: 700px; }
+
+    /* ===== FORMS ===== */
+    .form-group { margin-bottom: 0.85rem; text-align: left; }
+    .form-label { display: block; font-size: 0.65rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .form-input, .form-select, .form-textarea { width: 100%; padding: 0.55rem 0.75rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text); font-family: inherit; font-size: 0.82rem; outline: none; transition: var(--transition); }
+    .form-textarea { resize: vertical; min-height: 55px; }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold-glow); }
+    .form-select { -webkit-appearance: none; appearance: none; cursor: pointer; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; }
+    .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.65rem; }
+    .form-check { display: flex; align-items: center; gap: 0.4rem; cursor: pointer; }
+    .form-check input[type="checkbox"] { accent-color: var(--gold); width: 15px; height: 15px; }
+    .form-check-label { font-size: 0.78rem; color: var(--text-secondary); }
+
+    /* ===== BUTTONS ===== */
+    .btn { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.45rem 0.9rem; border-radius: 100px; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); font-family: inherit; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: var(--transition); text-decoration: none; }
+    .btn:hover { border-color: var(--border-hover); color: var(--text); background: var(--bg-card-hover); }
+    .btn-gold { background: var(--gold); border-color: var(--gold); color: #0a0a0c; }
+    .btn-gold:hover { box-shadow: 0 0 0 3px var(--gold-glow); background: var(--gold); color: #0a0a0c; }
+    .btn-danger { border-color: var(--danger); color: var(--danger); }
+    .btn-danger:hover { background: var(--danger-dim); }
+    .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.68rem; }
+
+    /* ===== MODALS ===== */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 200; align-items: flex-start; justify-content: center; padding: 2rem 1rem; overflow-y: auto; backdrop-filter: blur(4px); }
+    .modal { background: var(--bg-raised); border: 1px solid var(--border-strong); border-radius: var(--radius); padding: 1.75rem; width: 100%; max-width: 560px; }
+    .modal-overlay.active { display: flex; }
+    .modal-box { background: var(--bg-raised); border: 1px solid var(--border-strong); border-radius: var(--radius); padding: 1.75rem; width: 100%; max-width: 540px; margin-top: 2rem; animation: modalIn 0.15s ease-out; }
+    @keyframes modalIn { from { transform: translateY(6px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+    .modal-title { font-size: 1rem; font-weight: 700; }
+    .modal-close { background: none; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer; line-height: 1; padding: 0.2rem; }
+    .modal-close:hover { color: var(--text); }
+    .modal-footer { display: flex; gap: 0.4rem; justify-content: flex-end; margin-top: 1.25rem; padding-top: 0.85rem; border-top: 1px solid var(--border); }
+
+    /* Drop zone */
+    .drop-zone { border: 2px dashed var(--border-strong); border-radius: var(--radius); padding: 1.25rem; text-align: center; transition: var(--transition); cursor: pointer; position: relative; min-height: 100px; display: flex; align-items: center; justify-content: center; }
+    .drop-zone:hover, .drop-zone.dragover { border-color: var(--gold); background: var(--gold-dim); }
+    .drop-zone-prompt { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; color: var(--text-secondary); font-size: 0.78rem; }
+    .drop-zone-icon { font-size: 1.3rem; }
+    .drop-zone-browse { color: var(--gold-text); cursor: pointer; text-decoration: underline; }
+    .drop-zone-hint { font-size: 0.65rem; color: var(--text-muted); }
+    .drop-zone-preview { position: relative; display: inline-block; }
+    .drop-zone-preview img { width: 80px; height: 107px; object-fit: cover; border-radius: 5px; border: 1px solid var(--border); }
+    .drop-zone-remove { position: absolute; top: -5px; right: -5px; width: 20px; height: 20px; border-radius: 50%; border: none; background: var(--danger); color: #fff; font-size: 0.8rem; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .drop-zone-uploading { color: var(--gold-text); font-size: 0.75rem; }
+    .image-or { text-align: center; font-size: 0.65rem; color: var(--text-muted); margin: 0.4rem 0 0.3rem; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 1.25rem; right: 1.25rem; background: var(--bg-raised); border: 1px solid var(--border-strong); border-radius: var(--radius); padding: 0.65rem 1.1rem; font-size: 0.78rem; color: var(--text); z-index: 300; opacity: 0; transform: translateY(6px); transition: all 0.2s ease; pointer-events: none; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.success { border-left: 3px solid var(--success); }
+    .toast.error { border-left: 3px solid var(--danger); }
+
+    .loading { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.82rem; }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+      .sidebar { width: 60px; }
+      .sidebar-brand-name, .sidebar-brand-sub, .sidebar-link span { display: none; }
+      .sidebar-link { justify-content: center; padding: 0.6rem; }
+      .sidebar-link svg { width: 20px; height: 20px; }
+      .main { margin-left: 60px; }
+      .top-bar { padding: 0 1rem; }
+      .page { padding: 1.25rem 1rem; }
+      .stat-grid { grid-template-columns: repeat(2, 1fr); }
+      .two-col { grid-template-columns: 1fr; }
+      .form-row, .form-row-3 { grid-template-columns: 1fr; }
+      .tbl { min-width: 600px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- AUTH - LOGIN -->
+  <div id="authScreen" class="auth-screen">
+    <div class="auth-box">
+      <h1>Admin Login</h1>
+      <p>Sign in to manage your inventory</p>
+      <div class="auth-error" id="authError"></div>
+      <form id="authForm">
+        <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="authEmail" required autocomplete="email"></div>
+        <div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" id="authPassword" required autocomplete="current-password"></div>
+        <button type="submit" class="btn btn-gold" style="width:100%;justify-content:center;margin-top:0.4rem;">Sign In</button>
+      </form>
+      <div style="margin-top:1rem;">
+        <button onclick="showForgotScreen()" style="background:none;border:none;color:var(--text-muted);font-size:0.78rem;cursor:pointer;text-decoration:underline;font-family:inherit;">Forgot password?</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUTH - FORGOT PASSWORD -->
+  <div id="forgotScreen" class="auth-screen" style="display:none;">
+    <div class="auth-box">
+      <h1>Reset Password</h1>
+      <p>Enter your email and we'll send you a reset link</p>
+      <div class="auth-error" id="forgotError"></div>
+      <div id="forgotSuccess" style="display:none;color:var(--success);font-size:0.85rem;margin-bottom:1rem;padding:0.75rem;background:var(--success-dim);border-radius:var(--radius);border:1px solid rgba(34,197,94,0.2);"></div>
+      <form id="forgotForm">
+        <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="forgotEmail" required autocomplete="email" placeholder="your@email.com"></div>
+        <button type="submit" class="btn btn-gold" id="forgotBtn" style="width:100%;justify-content:center;margin-top:0.4rem;">Send Reset Link</button>
+      </form>
+      <div style="margin-top:1rem;">
+        <button onclick="showLoginScreen()" style="background:none;border:none;color:var(--text-muted);font-size:0.78rem;cursor:pointer;text-decoration:underline;font-family:inherit;">← Back to login</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div id="adminApp" class="app" style="display:none;">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="adminSidebar">
+      <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">☰</button>
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-name">Worldwide Trading</div>
+        <div class="sidebar-brand-sub">Admin Terminal</div>
+      </div>
+      <nav class="sidebar-nav">
+        <button class="sidebar-link active" data-page="dashboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="4" rx="1"/><rect x="14" y="10" width="7" height="11" rx="1"/><rect x="3" y="13" width="7" height="8" rx="1"/></svg>
+          <span>Dashboard</span>
+        </button>
+        <button class="sidebar-link" data-page="inventory">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+          <span>Inventory</span>
+        </button>
+        <button class="sidebar-link" data-page="sold">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <span>Sold</span>
+        </button>
+        <button class="sidebar-link" data-page="financials">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <span>Financials</span>
+        </button>
+        <button class="sidebar-link" data-page="shows">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span>Shows</span>
+        </button>
+        <button class="sidebar-link" data-page="payments">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+          <span>Payments</span>
+        </button>
+        <button class="sidebar-link" data-page="connect">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          <span>Connect</span>
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="sidebar-link" onclick="toggleExcludeMe()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><span id="excludeLabel">Exclude My Views</span></button>
+        <button class="sidebar-link" onclick="toggleAdminTheme()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg><span id="themeLabel">Light Mode</span></button>
+        <a href="/" class="sidebar-link" target="_blank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg><span>View Site</span></a>
+        <button class="sidebar-link" onclick="signOut()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg><span>Sign Out</span></button>
+      </div>
+    </aside>
+
+    <div class="main">
+      <div class="top-bar">
+        <span class="top-bar-title" id="pageTitle">Dashboard</span>
+        <select class="form-select" id="analyticsRange" style="width:auto;font-size:0.72rem;padding:0.35rem 1.5rem 0.35rem 0.6rem;" onchange="loadAnalytics()">
+          <option value="7">Last 7 days</option>
+          <option value="30" selected>Last 30 days</option>
+          <option value="90">Last 90 days</option>
+          <option value="365">All time</option>
+        </select>
+      </div>
+
+      <!-- DASHBOARD PAGE -->
+      <div class="page active" id="page-dashboard">
+        <!-- KPI Cards Row -->
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.65rem;margin-bottom:1.25rem;" id="kpiGrid">
+          <div class="stat-card"><div class="stat-card-label">Page Views</div><div class="stat-card-value gold" id="aViews">—</div><div class="stat-card-delta" id="aViewsDelta"></div><div class="sparkline" id="aViewsSpark"></div></div>
+          <div class="stat-card"><div class="stat-card-label">Unique Visitors</div><div class="stat-card-value blue" id="aUnique">—</div><div class="stat-card-delta" id="aUniqueDelta"></div><div class="sparkline" id="aUniqueSpark"></div></div>
+          <div class="stat-card"><div class="stat-card-label">Avg Session</div><div class="stat-card-value" id="aAvgSession" style="color:var(--text);">—</div><div class="stat-card-sub">duration</div></div>
+          <div class="stat-card"><div class="stat-card-label">Mobile</div><div class="stat-card-value green" id="aMobile">—</div><div class="stat-card-sub" id="aMobileSub">of visitors</div></div>
+          <div class="stat-card"><div class="stat-card-label">Today</div><div class="stat-card-value gold" id="aToday">—</div><div class="stat-card-sub" id="aTodaySub">views</div></div>
+        </div>
+
+        <!-- Row 2: Traffic Chart + Device Breakdown -->
+        <div class="two-col" style="margin-bottom:1rem;">
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title">Traffic Over Time</span></div>
+            <div class="panel-body"><div class="chart-container" id="analyticsChart"></div></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title">Devices</span></div>
+            <div class="panel-body">
+              <div id="deviceChart" style="display:flex;align-items:center;gap:1.25rem;min-height:120px;">
+                <div class="loading">Loading...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 3: Referrers + Top Events -->
+        <div class="two-col" style="margin-bottom:1rem;">
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title">Traffic Sources</span></div>
+            <div class="panel-body" id="referrerPanel"><div class="loading">Loading...</div></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title">Top Actions</span></div>
+            <div class="panel-body" id="eventsPanel"><div class="loading">Loading...</div></div>
+          </div>
+        </div>
+
+        <!-- Row 4: Inventory Summary + By Brand + By Category -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem;">
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title">Inventory Summary</span></div>
+            <div class="panel-body">
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0.5rem;text-align:center;">
+                <div><div style="font-size:1.6rem;font-weight:800;color:var(--text);" id="dTotalItems">—</div><div class="stat-card-label">Total</div></div>
+                <div><div style="font-size:1.6rem;font-weight:800;color:var(--success);" id="dVisibleItems">—</div><div class="stat-card-label">Visible</div></div>
+                <div><div style="font-size:1.6rem;font-weight:800;color:var(--text-muted);" id="dHiddenItems">—</div><div class="stat-card-label">Hidden</div></div>
+                <div><div style="font-size:1.6rem;font-weight:800;color:var(--gold-text);" id="dSoldItems">—</div><div class="stat-card-label">Sold</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title">By Brand</span></div>
+            <div class="panel-body" id="inventoryBreakdown"><div class="loading">Loading...</div></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title">By Category</span></div>
+            <div class="panel-body" id="categoryBreakdown"><div class="loading">Loading...</div></div>
+          </div>
+        </div>
+
+        <!-- Row 5: Scroll Depth + Timezones -->
+        <div class="two-col">
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title">Scroll Depth</span></div>
+            <div class="panel-body" id="scrollPanel"><div class="loading">Loading...</div></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title">Visitor Regions</span></div>
+            <div class="panel-body" id="regionPanel"><div class="loading">Loading...</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- INVENTORY PAGE -->
+      <div class="page" id="page-inventory">
+        <div class="sec-header">
+          <h2 class="sec-title">Inventory (<span id="itemCount">0</span>)</h2>
+          <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+            <div id="bulkActions" style="display:none;align-items:center;gap:0.5rem;">
+              <span style="font-size:0.8rem;color:var(--text-secondary);"><span id="selectedCount">0</span> selected</span>
+              <button class="btn btn-sm" style="background:var(--success-dim);color:var(--success);" onclick="bulkSell()">Sell Selected</button>
+              <button class="btn btn-sm" onclick="clearSelection()">Clear</button>
+            </div>
+            <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.78rem;color:var(--text-secondary);cursor:pointer;">
+              <input type="checkbox" id="showPricesToggle" onchange="toggleShowPrices(this.checked)" style="accent-color:var(--gold);">
+              Show prices on site
+            </label>
+            <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.78rem;color:var(--text-secondary);cursor:pointer;">
+              <input type="checkbox" id="sitePasswordToggle" onchange="toggleSitePassword(this.checked)" style="accent-color:var(--gold);">
+              Password protect site
+            </label>
+            <input class="form-input" id="sitePasswordField" placeholder="Set password..." style="width:140px;font-size:0.75rem;padding:0.3rem 0.5rem;display:none;" onchange="saveSitePassword(this.value)">
+            <button class="btn btn-gold" onclick="openAddModal()">+ Add Item</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;flex-wrap:wrap;align-items:center;">
+          <input class="form-input" id="invSearch" oninput="invPage=1;renderInventoryPage();" placeholder="Search inventory..." style="width:250px;font-size:0.8rem;">
+          <select class="form-select" id="invFilterBrand" onchange="invPage=1;renderInventoryPage();" style="width:auto;font-size:0.75rem;padding:0.4rem 1.5rem 0.4rem 0.6rem;">
+            <option value="">All Brands</option>
+          </select>
+          <select class="form-select" id="invFilterCategory" onchange="invPage=1;renderInventoryPage();" style="width:auto;font-size:0.75rem;padding:0.4rem 1.5rem 0.4rem 0.6rem;">
+            <option value="">All Categories</option>
+          </select>
+          <select class="form-select" id="invFilterVisible" onchange="invPage=1;renderInventoryPage();" style="width:auto;font-size:0.75rem;padding:0.4rem 1.5rem 0.4rem 0.6rem;">
+            <option value="">All Visibility</option>
+            <option value="visible">Visible</option>
+            <option value="hidden">Hidden</option>
+          </select>
+          <select class="form-select" id="invFilterFeatured" onchange="invPage=1;renderInventoryPage();" style="width:auto;font-size:0.75rem;padding:0.4rem 1.5rem 0.4rem 0.6rem;">
+            <option value="">All Items</option>
+            <option value="featured">Featured</option>
+            <option value="exclusive">Exclusive</option>
+          </select>
+        </div>
+        <div class="table-scroll">
+          <table class="tbl">
+            <thead><tr>
+              <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this.checked)" style="accent-color:var(--gold);"></th>
+              <th>Image</th>
+              <th class="sortable" data-sort="name">Name <span class="sort-arrow"></span></th>
+              <th>Details</th>
+              <th class="sortable" data-sort="brand">Brand <span class="sort-arrow"></span></th>
+              <th class="sortable" data-sort="category">Category <span class="sort-arrow"></span></th>
+              <th class="sortable" data-sort="price">Price <span class="sort-arrow"></span></th>
+              <th class="sortable" data-sort="qty">Qty <span class="sort-arrow"></span></th>
+              <th class="sortable" data-sort="visible">Visible <span class="sort-arrow"></span></th>
+              <th>Actions</th>
+            </tr></thead>
+            <tbody id="tableBody"><tr><td colspan="10" class="loading">Loading...</td></tr></tbody>
+          </table>
+        </div>
+        <div id="invPagination" style="display:flex;align-items:center;justify-content:center;gap:0.5rem;margin-top:1rem;"></div>
+      </div>
+
+      <!-- SOLD PAGE -->
+      <div class="page" id="page-sold">
+        <div class="sec-header">
+          <h2 class="sec-title">Sold Items (<span id="soldCount">0</span>)</h2>
+          <div id="soldBulkActions" style="display:none;align-items:center;gap:0.5rem;">
+            <span style="font-size:0.8rem;color:var(--text-secondary);"><span id="soldSelectedCount">0</span> selected</span>
+            <button class="btn btn-sm" style="background:var(--blue-dim);color:var(--blue);" onclick="openBulkLotModal()">New Lot</button>
+            <button class="btn btn-sm" style="background:var(--blue-dim);color:var(--blue);" onclick="bulkAddToLot()">Add to Lot</button>
+            <button class="btn btn-sm" onclick="clearSoldSelection()">Clear</button>
+          </div>
+        </div>
+        <div style="margin-bottom:0.75rem;">
+          <input class="form-input" id="soldSearch" oninput="renderSold()" placeholder="Search sold items..." style="max-width:400px;font-size:0.8rem;">
+        </div>
+        <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center;">
+          <select class="form-select" id="soldFilterShow" onchange="renderSold()" style="width:auto;font-size:0.75rem;padding:0.4rem 1.5rem 0.4rem 0.6rem;">
+            <option value="">All Sales</option>
+            <option value="__shows__">Show Sales</option>
+            <option value="__other__">Other Sales</option>
+          </select>
+          <select class="form-select" id="soldFilterBrand" onchange="renderSold()" style="width:auto;font-size:0.75rem;padding:0.4rem 1.5rem 0.4rem 0.6rem;">
+            <option value="">All Brands</option>
+          </select>
+          <select class="form-select" id="soldFilterCategory" onchange="renderSold()" style="width:auto;font-size:0.75rem;padding:0.4rem 1.5rem 0.4rem 0.6rem;">
+            <option value="">All Categories</option>
+          </select>
+          <select class="form-select" id="soldGroupBy" onchange="renderSold()" style="width:auto;font-size:0.75rem;padding:0.4rem 1.5rem 0.4rem 0.6rem;">
+            <option value="show">Group by Sale</option>
+            <option value="lot">Group by Lot</option>
+            <option value="none">No Grouping</option>
+          </select>
+        </div>
+        <div id="soldContainer"><div class="loading">Loading...</div></div>
+      </div>
+
+      <!-- MARK SOLD MODAL -->
+      <div class="modal-overlay" id="soldModal">
+        <div class="modal">
+          <div class="modal-header"><h3 id="soldModalTitle">Mark as Sold</h3><button class="modal-close" onclick="closeSoldModal()">✕</button></div>
+          <form id="soldForm" autocomplete="off">
+            <input type="hidden" id="soldItemId">
+            <input type="hidden" id="soldItemMaxQty">
+            <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:1rem;">Moving <strong id="soldItemName"></strong> to sold</p>
+            <div class="form-group" id="soldQtyGroup" style="display:none;">
+              <label class="form-label">Quantity to Sell <span style="color:var(--text-muted);font-weight:400;">(out of <span id="soldQtyMax"></span>)</span></label>
+              <input class="form-input" id="soldQtyInput" type="number" min="1" value="1">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Sold At (Show / Location)</label>
+              <select class="form-select" id="soldShow">
+                <option value="">— Select or type below —</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Or type custom location</label>
+              <input class="form-input" id="soldShowCustom" placeholder="e.g. Online, DM Sale, eBay...">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+              <div class="form-group">
+                <label class="form-label">Sold Price</label>
+                <input class="form-input" id="soldPriceInput" data-money placeholder="e.g. 100">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Buyer <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+                <input class="form-input" id="soldBuyerInput" placeholder="e.g. John, @instagram...">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Lot Name <span style="color:var(--text-muted);font-weight:400;">(optional — group items sold together)</span></label>
+              <input class="form-input" id="soldLotInput" placeholder="e.g. One Piece Bundle, Table Clearance...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Notes <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+              <textarea class="form-input" id="soldNotesInput" rows="4" style="resize:vertical;min-height:80px;" placeholder="e.g. Negotiated down from $500, traded for..."></textarea>
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn" onclick="closeSoldModal()">Cancel</button>
+              <button type="submit" class="btn btn-gold" id="soldBtn">Mark as Sold</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- EDIT SOLD MODAL -->
+      <div class="modal-overlay" id="editSoldModal">
+        <div class="modal">
+          <div class="modal-header"><h3>Edit Sold Item</h3><button class="modal-close" onclick="closeEditSoldModal()">✕</button></div>
+          <form id="editSoldForm" autocomplete="off">
+            <input type="hidden" id="editSoldId">
+            <input type="hidden" id="editSoldOrigQty">
+            <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:1rem;">Editing <strong id="editSoldName"></strong></p>
+            <div class="form-group" id="editSoldQtyGroup" style="display:none;">
+              <label class="form-label">Quantity <span style="color:var(--text-muted);font-weight:400;">(reduce to split into separate records)</span></label>
+              <input class="form-input" id="editSoldQty" type="number" min="1" value="1">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Sold At (Show / Location)</label>
+              <select class="form-select" id="editSoldShow">
+                <option value="">— Select or type below —</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Or type custom location</label>
+              <input class="form-input" id="editSoldShowCustom" placeholder="e.g. Online, DM Sale, eBay...">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;">
+              <div class="form-group">
+                <label class="form-label">Sold Price</label>
+                <input class="form-input" id="editSoldPrice" data-money placeholder="e.g. 100">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Cost (Paid)</label>
+                <input class="form-input" id="editSoldCost" data-money placeholder="e.g. 50">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Buyer</label>
+                <input class="form-input" id="editSoldBuyer" placeholder="e.g. John, @instagram...">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Lot Name</label>
+              <input class="form-input" id="editSoldLot" placeholder="e.g. One Piece Bundle...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">📋 Item Notes <span style="color:var(--text-muted);font-weight:400;">(original inventory notes)</span></label>
+              <textarea class="form-input" id="editSoldItemNotes" rows="4" style="resize:vertical;min-height:80px;" placeholder="Notes about the item itself..."></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">📝 Sale Notes <span style="color:var(--text-muted);font-weight:400;">(notes about this sale)</span></label>
+              <textarea class="form-input" id="editSoldNotes" rows="4" style="resize:vertical;min-height:80px;" placeholder="Notes about this sale..."></textarea>
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn" onclick="closeEditSoldModal()">Cancel</button>
+              <button type="submit" class="btn btn-gold" id="editSoldBtn">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- NOTE POPUP -->
+      <div class="modal-overlay" id="notePopup" onclick="if(event.target===this)this.classList.remove('active')">
+        <div class="modal" style="max-width:500px;">
+          <div class="modal-header"><h3>Note</h3><button class="modal-close" onclick="document.getElementById('notePopup').classList.remove('active')">✕</button></div>
+          <div id="notePopupContent" style="padding:1rem 1.5rem 1.5rem;font-size:0.85rem;color:var(--text);white-space:pre-wrap;line-height:1.6;"></div>
+        </div>
+      </div>
+
+      <!-- ADD TO LOT MODAL -->
+      <div class="modal-overlay" id="addToLotModal">
+        <div class="modal">
+          <div class="modal-header"><h3>Add to Lot</h3><button class="modal-close" onclick="closeAddToLotModal()">✕</button></div>
+          <form id="addToLotForm" autocomplete="off">
+            <input type="hidden" id="addToLotItemIds">
+            <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:1rem;">Adding <strong id="addToLotItemName"></strong> to an existing lot</p>
+            <div class="form-group">
+              <label class="form-label">Select Lot</label>
+              <select class="form-select" id="addToLotSelect" required></select>
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn" onclick="closeAddToLotModal()">Cancel</button>
+              <button type="submit" class="btn btn-gold">Add to Lot</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- EDIT LOT MODAL -->
+      <div class="modal-overlay" id="editLotModal">
+        <div class="modal">
+          <div class="modal-header"><h3>Edit Lot</h3><button class="modal-close" onclick="closeEditLotModal()">✕</button></div>
+          <form id="editLotForm" autocomplete="off">
+            <input type="hidden" id="editLotName">
+            <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:1rem;">Editing lot: <strong id="editLotTitle"></strong></p>
+            <div class="form-group">
+              <label class="form-label">Lot Name</label>
+              <input class="form-input" id="editLotNewName" required>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+              <div class="form-group">
+                <label class="form-label">Sold Price (total for lot)</label>
+                <input class="form-input" id="editLotSoldPrice" data-money placeholder="e.g. 500">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Total Cost (what you paid)</label>
+                <input class="form-input" id="editLotCost" data-money placeholder="e.g. 300">
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+              <div class="form-group">
+                <label class="form-label">Buyer</label>
+                <input class="form-input" id="editLotBuyerInput" placeholder="e.g. John...">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Show / Location</label>
+                <select class="form-select" id="editLotShow"></select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Notes</label>
+              <textarea class="form-input" id="editLotNotes" rows="2" placeholder="Notes about this transaction..."></textarea>
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn" onclick="closeEditLotModal()">Cancel</button>
+              <button type="submit" class="btn btn-gold">Save Lot</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- BULK LOT MODAL -->
+      <div class="modal-overlay" id="bulkLotModal">
+        <div class="modal">
+          <div class="modal-header"><h3>Group as Lot</h3><button class="modal-close" onclick="closeBulkLotModal()">✕</button></div>
+          <form id="bulkLotForm" autocomplete="off">
+            <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:1rem;">Grouping <strong id="bulkLotCount"></strong> items as a lot</p>
+            <div class="form-group">
+              <label class="form-label">Lot Name</label>
+              <input class="form-input" id="bulkLotName" placeholder="e.g. One Piece Bundle, Bulk Deal..." required>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+              <div class="form-group">
+                <label class="form-label">Total Sold Price <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+                <input class="form-input" id="bulkLotPrice" data-money placeholder="e.g. 200">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Buyer <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+                <input class="form-input" id="bulkLotBuyer" placeholder="e.g. John...">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Notes <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+              <textarea class="form-input" id="bulkLotNotes" rows="2" placeholder="Any notes about this lot sale..."></textarea>
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn" onclick="closeBulkLotModal()">Cancel</button>
+              <button type="submit" class="btn btn-gold">Save Lot</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- FINANCIALS PAGE -->
+      <div class="page" id="page-financials">
+        <div class="sec-header">
+          <h2 class="sec-title">Financials</h2>
+        </div>
+
+        <!-- KPI Row -->
+        <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:0.65rem;margin-bottom:1.25rem;">
+          <div class="stat-card"><div class="stat-card-label">Revenue</div><div class="stat-card-value green" id="finRevenue">—</div></div>
+          <div class="stat-card"><div class="stat-card-label">Card Costs</div><div class="stat-card-value" id="finCost" style="color:var(--text);">—</div></div>
+          <div class="stat-card"><div class="stat-card-label">Gross Profit</div><div class="stat-card-value" id="finGrossProfit">—</div></div>
+          <div class="stat-card"><div class="stat-card-label">Expenses</div><div class="stat-card-value" id="finExpenses" style="color:var(--danger);">—</div></div>
+          <div class="stat-card"><div class="stat-card-label">Net Profit</div><div class="stat-card-value" id="finProfit">—</div></div>
+          <div class="stat-card"><div class="stat-card-label">Margin</div><div class="stat-card-value" id="finMargin">—</div><div class="stat-card-sub" id="finItemsSoldSub"></div></div>
+        </div>
+
+        <!-- Unsold Row -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0.65rem;margin-bottom:1.25rem;">
+          <div class="stat-card"><div class="stat-card-label">Unsold Inventory (Listed)</div><div class="stat-card-value gold" id="finUnsoldListed">—</div></div>
+          <div class="stat-card"><div class="stat-card-label">Unsold Inventory (Cost)</div><div class="stat-card-value" id="finUnsoldCost" style="color:var(--text);">—</div></div>
+          <div class="stat-card"><div class="stat-card-label">Potential Profit</div><div class="stat-card-value green" id="finUnsoldProfit">—</div></div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="two-col" style="margin-bottom:1rem;">
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title">Revenue vs Cost by Sale</span></div>
+            <div class="panel-body" id="finBarChart" style="min-height:200px;"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title">Revenue by Brand</span></div>
+            <div class="panel-body" id="finPieChart" style="min-height:200px;display:flex;align-items:center;gap:1.5rem;"></div>
+          </div>
+        </div>
+
+        <!-- Breakdowns -->
+        <div class="two-col" style="margin-bottom:1rem;">
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title">Profit by Sale</span></div>
+            <div class="panel-body" id="finByShow"><div class="loading">Loading...</div></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title">Profit by Brand</span></div>
+            <div class="panel-body" id="finByBrand"><div class="loading">Loading...</div></div>
+          </div>
+        </div>
+
+        <div class="two-col" style="margin-bottom:1rem;">
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title">Lot Breakdown</span></div>
+            <div class="panel-body" id="finByLot"><div class="loading">Loading...</div></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title">Top Profitable Items</span></div>
+            <div class="panel-body" id="finTopItems"><div class="loading">Loading...</div></div>
+          </div>
+        </div>
+
+        <!-- Expenses Section -->
+        <div class="panel" style="margin-bottom:1rem;">
+          <div class="panel-header" style="display:flex;justify-content:space-between;align-items:center;">
+            <span class="panel-title">Expenses</span>
+            <button class="btn btn-sm btn-gold" onclick="openExpenseModal()">+ Add Expense</button>
+          </div>
+          <div class="panel-body">
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.65rem;margin-bottom:1rem;" id="expenseKpis"></div>
+            <div class="table-scroll">
+              <table class="tbl">
+                <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Show/Sale</th><th>Amount</th><th>Notes</th><th>Actions</th></tr></thead>
+                <tbody id="expenseBody"><tr><td colspan="7" class="loading">Loading...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADD EXPENSE MODAL -->
+      <div class="modal-overlay" id="expenseModal">
+        <div class="modal">
+          <div class="modal-header"><h3 id="expenseModalTitle">Add Expense</h3><button class="modal-close" onclick="closeExpenseModal()">✕</button></div>
+          <form id="expenseForm" autocomplete="off">
+            <input type="hidden" id="expenseId">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+              <div class="form-group">
+                <label class="form-label">Category</label>
+                <select class="form-select" id="expenseCategory" required>
+                  <option value="table_fee">Table Fee</option>
+                  <option value="gas">Gas / Travel</option>
+                  <option value="supplies">Supplies</option>
+                  <option value="shipping">Shipping</option>
+                  <option value="entry_fee">Entry Fee</option>
+                  <option value="food">Food</option>
+                  <option value="platform_fees">Platform Fees</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Amount</label>
+                <input class="form-input" id="expenseAmount" required data-money placeholder="e.g. 200">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Description</label>
+              <input class="form-input" id="expenseDesc" placeholder="e.g. 2 tables at Dallas Card Show">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+              <div class="form-group">
+                <label class="form-label">Show / Sale <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+                <select class="form-select" id="expenseShow"><option value="">General / Not tied to a show</option></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Date</label>
+                <input class="form-input" id="expenseDate" type="date" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Notes <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+              <input class="form-input" id="expenseNotes" placeholder="Any additional notes...">
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn" onclick="closeExpenseModal()">Cancel</button>
+              <button type="submit" class="btn btn-gold">Save Expense</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- SHOWS PAGE -->
+      <div class="page" id="page-shows">
+        <div class="sec-header">
+          <h2 class="sec-title">Shows</h2>
+          <div style="display:flex;gap:0.5rem;align-items:center;">
+            <button class="btn btn-sm" id="showViewTable" onclick="setShowView('table')" style="background:var(--gold-dim);color:var(--gold-text);">List</button>
+            <button class="btn btn-sm" id="showViewCal" onclick="setShowView('calendar')">Calendar</button>
+            <button class="btn btn-gold" onclick="openShowModal()">+ Add Show</button>
+          </div>
+        </div>
+
+        <!-- Table View -->
+        <div id="showsTableView">
+          <div class="table-scroll">
+            <table class="tbl">
+              <thead><tr><th>Flyer</th><th>Name</th><th>Date</th><th>Location</th><th>Type</th><th>Actions</th></tr></thead>
+              <tbody id="showsBody"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Calendar View -->
+        <div id="showsCalendarView" style="display:none;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+            <button class="btn btn-sm" onclick="calNavMonth(-1)">← Prev</button>
+            <h3 style="font-size:1rem;font-weight:700;" id="calMonthLabel"></h3>
+            <button class="btn btn-sm" onclick="calNavMonth(1)">Next →</button>
+          </div>
+          <div id="calendarGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;"></div>
+        </div>
+      </div>
+
+      <!-- PAYMENTS PAGE -->
+      <div class="page" id="page-payments">
+        <div class="sec-header">
+          <h2 class="sec-title">Payment Methods</h2>
+          <button class="btn btn-gold" onclick="openPaymentModal()">+ Add Method</button>
+        </div>
+        <div class="table-scroll">
+          <table class="tbl">
+            <thead><tr><th>QR</th><th>Name</th><th>Type</th><th>Order</th><th>Visible</th><th>Actions</th></tr></thead>
+            <tbody id="paymentsBody"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PAYMENT MODAL -->
+      <div class="modal-overlay" id="paymentModal">
+        <div class="modal">
+          <div class="modal-header"><h3 id="paymentModalTitle">Add Payment Method</h3><button class="modal-close" onclick="closePaymentModal()">✕</button></div>
+          <form id="paymentForm" autocomplete="off">
+            <input type="hidden" id="paymentId">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+              <div class="form-group">
+                <label class="form-label">Name</label>
+                <input class="form-input" id="paymentName" required placeholder="e.g. Venmo, CashApp...">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Type</label>
+                <select class="form-select" id="paymentType">
+                  <option value="qr">QR Code</option>
+                  <option value="cash">Cash (no QR)</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">QR Code Image URL <span style="color:var(--text-muted);font-weight:400;">(upload to storage or paste URL)</span></label>
+              <div class="drop-zone" id="paymentDropZone">
+                <div class="drop-zone-prompt" id="paymentDropPrompt"><span class="drop-zone-icon">📷</span><span>Drag & drop QR code, or <label for="paymentFileInput" class="drop-zone-browse">browse</label></span><span class="drop-zone-hint">JPG, PNG, WebP — max 5MB</span></div>
+                <div class="drop-zone-preview" id="paymentDropPreview" style="display:none;"><img id="paymentPreviewImg" src="" alt="Preview" style="max-height:120px;"><button type="button" class="drop-zone-remove" onclick="removePaymentImage()">&times;</button></div>
+                <input type="file" id="paymentFileInput" accept="image/jpeg,image/png,image/webp" style="display:none;">
+              </div>
+              <div class="image-or">or paste URL</div>
+              <input class="form-input" id="paymentImageUrl" placeholder="https://...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Sort Order</label>
+              <input class="form-input" id="paymentSort" type="number" value="0">
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn" onclick="closePaymentModal()">Cancel</button>
+              <button type="submit" class="btn btn-gold">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- CONNECT PAGE -->
+      <div class="page" id="page-connect">
+        <div class="sec-header">
+          <h2 class="sec-title">Connect Links</h2>
+          <button class="btn btn-gold" onclick="openLinkModal()">+ Add Link</button>
+        </div>
+        <div class="table-scroll">
+          <table class="tbl">
+            <thead><tr><th>Icon</th><th>Label</th><th>Handle</th><th>URL</th><th>Actions</th></tr></thead>
+            <tbody id="linksBody"><tr><td colspan="5" class="loading">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ITEM MODAL -->
+  <div class="modal-overlay" id="itemModal">
+    <div class="modal-box">
+      <div class="modal-header"><span class="modal-title" id="modalTitle">Add Item</span><button class="modal-close" onclick="closeItemModal()">&times;</button></div>
+      <form id="itemForm">
+        <input type="hidden" id="itemId">
+        <div class="form-group"><label class="form-label">Name</label><input type="text" class="form-input" id="itemName" required placeholder="e.g. Silver Luffy"></div>
+        <div class="form-group"><label class="form-label">Details</label><input type="text" class="form-input" id="itemDetails" required placeholder="e.g. One Piece · BGS 10"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0.75rem;">
+          <div class="form-group"><label class="form-label">Price (Listed)</label><input type="text" class="form-input" id="itemPrice" required data-money placeholder="100"></div>
+          <div class="form-group"><label class="form-label">Cost (Paid)</label><input type="text" class="form-input" id="itemCost" data-money placeholder="50"></div>
+          <div class="form-group"><label class="form-label">Quantity</label><input type="number" class="form-input" id="itemQty" required min="1" value="1"></div>
+          <div class="form-group"><label class="form-label">Sort Order</label><input type="number" class="form-input" id="itemSort" value="0"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Brand</label><input type="text" class="form-input" id="itemBrand" required list="brandList" placeholder="Type or select"><datalist id="brandList"><option value="pokemon"><option value="one-piece"><option value="yugioh"><option value="magic"><option value="union-arena"><option value="gradedguard"><option value="funko"></datalist></div>
+          <div class="form-group"><label class="form-label">Category</label><select class="form-select" id="itemCategory" required><option value="slabs">Slabs</option><option value="sealed">Sealed</option><option value="raw">Raw Cards</option><option value="accessories">Accessories</option><option value="collectibles">Collectibles</option></select></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Image</label>
+          <div class="drop-zone" id="dropZone">
+            <div class="drop-zone-prompt" id="dropPrompt"><span class="drop-zone-icon">📷</span><span>Drag & drop, or <label for="fileInput" class="drop-zone-browse">browse</label></span><span class="drop-zone-hint">JPG, PNG, WebP — max 5MB</span></div>
+            <div class="drop-zone-preview" id="dropPreview" style="display:none;"><img id="previewImg" src="" alt="Preview"><button type="button" class="drop-zone-remove" onclick="removeImage()">&times;</button></div>
+            <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp,application/pdf" style="display:none;">
+          </div>
+          <div class="image-or">or paste URL</div>
+          <input type="url" class="form-input" id="itemImage" placeholder="https://...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">TCGPlayer Link <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+          <input type="url" class="form-input" id="itemTcgUrl" placeholder="https://www.tcgplayer.com/product/...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes <span style="color:var(--text-muted);font-weight:400;">(private — not shown on site)</span></label>
+          <textarea class="form-input" id="itemNotes" rows="4" style="resize:vertical;min-height:80px;" placeholder="e.g. Bought from John at Dallas show, slight whitening on back corner..."></textarea>
+        </div>
+        <div class="form-row">
+          <label class="form-check"><input type="checkbox" id="itemFeatured"><span class="form-check-label">Featured</span></label>
+          <label class="form-check"><input type="checkbox" id="itemExclusive"><span class="form-check-label">Exclusive</span></label>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn" onclick="closeItemModal()">Cancel</button><button type="submit" class="btn btn-gold" id="saveBtn">Save Item</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- SHOW MODAL -->
+  <div class="modal-overlay" id="showModal">
+    <div class="modal-box">
+      <div class="modal-header"><span class="modal-title" id="showModalTitle">Add Show</span><button class="modal-close" onclick="document.getElementById('showModal').classList.remove('active')">&times;</button></div>
+      <form id="showForm">
+        <input type="hidden" id="showId">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Show Name</label><input type="text" class="form-input" id="showName" required placeholder="e.g. The Big Show"></div>
+          <div class="form-group"><label class="form-label">Type</label><select class="form-select" id="showType"><option value="vending">Vending (shown on site)</option><option value="attending">Attending (personal only)</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Date & Time</label><input type="datetime-local" class="form-input" id="showDate" required></div>
+          <div class="form-group"><label class="form-label">Event URL</label><input type="url" class="form-input" id="showUrl" placeholder="https://..."></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Location Name</label><input type="text" class="form-input" id="showLocName" required></div>
+          <div class="form-group"><label class="form-label">Address</label><input type="text" class="form-input" id="showAddress" required></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Early Bird (time)</label><input type="text" class="form-input" id="showEBTime" placeholder="9AM–4PM"></div>
+          <div class="form-group"><label class="form-label">Early Bird (price)</label><input type="text" class="form-input" id="showEBPrice" placeholder="$10"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">General (time)</label><input type="text" class="form-input" id="showGATime" placeholder="11AM–4PM"></div>
+          <div class="form-group"><label class="form-label">General (price)</label><input type="text" class="form-input" id="showGAPrice" placeholder="$5"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Notes</label><input type="text" class="form-input" id="showNotes" placeholder="e.g. Kids under 10 free"></div>
+        <div class="form-group">
+          <label class="form-label">Flyer Image</label>
+          <div class="drop-zone" id="flyerDropZone">
+            <div class="drop-zone-prompt" id="flyerDropPrompt"><span class="drop-zone-icon">🖼️</span><span>Drag & drop, or <label for="flyerFileInput" class="drop-zone-browse">browse</label></span><span class="drop-zone-hint">JPG, PNG, WebP — max 5MB</span></div>
+            <div class="drop-zone-preview" id="flyerDropPreview" style="display:none;"><img id="flyerPreviewImg" src="" alt="Preview" style="height:100px;width:auto;"><button type="button" class="drop-zone-remove" onclick="removeFlyerImage()">&times;</button></div>
+            <input type="file" id="flyerFileInput" accept="image/jpeg,image/png,image/webp" style="display:none;">
+          </div>
+          <div class="image-or">or paste URL</div>
+          <input type="text" class="form-input" id="showFlyer" placeholder="https://...">
+        </div>
+        <div class="modal-footer"><button type="button" class="btn" onclick="document.getElementById('showModal').classList.remove('active')">Cancel</button><button type="submit" class="btn btn-gold">Save Show</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- LINK MODAL -->
+  <div class="modal-overlay" id="linkModal">
+    <div class="modal-box">
+      <div class="modal-header"><span class="modal-title" id="linkModalTitle">Add Link</span><button class="modal-close" onclick="document.getElementById('linkModal').classList.remove('active')">&times;</button></div>
+      <form id="linkForm">
+        <input type="hidden" id="linkId">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Label</label><input type="text" class="form-input" id="linkLabel" required placeholder="e.g. Discord"></div>
+          <div class="form-group"><label class="form-label">Handle</label><input type="text" class="form-input" id="linkHandle" required placeholder="e.g. @worldwide_ll"></div>
+        </div>
+        <div class="form-group"><label class="form-label">URL</label><input type="url" class="form-input" id="linkUrl" required placeholder="https://..."></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Icon</label><select class="form-select" id="linkIcon"><option value="discord">Discord</option><option value="shield">Shield / References</option><option value="email">Email</option><option value="instagram">Instagram</option><option value="twitter">X / Twitter</option><option value="link">Generic Link</option></select></div>
+          <div class="form-group"><label class="form-label">Sort Order</label><input type="number" class="form-input" id="linkSort" value="0"></div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn" onclick="document.getElementById('linkModal').classList.remove('active')">Cancel</button><button type="submit" class="btn btn-gold">Save Link</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- DELETE MODAL -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal-box" style="max-width:380px;">
+      <div class="modal-header"><span class="modal-title">Delete Item</span><button class="modal-close" onclick="closeDeleteModal()">&times;</button></div>
+      <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:0.85rem;">Delete <strong id="deleteName"></strong>? This can't be undone.</p>
+      <div class="modal-footer"><button class="btn" onclick="closeDeleteModal()">Cancel</button><button class="btn btn-danger" onclick="confirmDelete()">Delete</button></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const SUPABASE_URL = 'https://tjeucyzkjrirvvmxklmu.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRqZXVjeXpranJpcnZ2bXhrbG11Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMDQ4NjEsImV4cCI6MjA5MTY4MDg2MX0.d4fFLvV4nataORqpEPRF9H7QZIqrWZDSepw-Tl5hyxo';
+    let accessToken = null, refreshToken = null, deleteId = null, uploadedImageUrl = null, uploadedFlyerUrl = null;
+    let tokenRefreshTimer = null;
+
+    async function refreshAccessToken() {
+      const rt = localStorage.getItem('wt-admin-refresh');
+      if (!rt) return false;
+      try {
+        const r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+          method: 'POST',
+          headers: { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: rt })
+        });
+        if (!r.ok) return false;
+        const d = await r.json();
+        accessToken = d.access_token;
+        refreshToken = d.refresh_token;
+        localStorage.setItem('wt-admin-token', accessToken);
+        localStorage.setItem('wt-admin-refresh', refreshToken);
+        scheduleTokenRefresh(d.expires_in || 3600);
+        return true;
+      } catch(e) { return false; }
+    }
+
+    function scheduleTokenRefresh(expiresInSec) {
+      if (tokenRefreshTimer) clearTimeout(tokenRefreshTimer);
+      // Refresh 5 minutes before expiry
+      const ms = Math.max((expiresInSec - 300) * 1000, 60000);
+      tokenRefreshTimer = setTimeout(() => refreshAccessToken(), ms);
+    }
+
+    // REST helpers
+    function authHeaders() { return { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken || SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' }; }
+
+    async function apiFetch(ep, opts = {}) {
+      let r = await fetch(`${SUPABASE_URL}/rest/v1/${ep}`, { ...opts, headers: authHeaders() });
+      // If 401/403, try refreshing the token and retry once
+      if ((r.status === 401 || r.status === 403) && await refreshAccessToken()) {
+        r = await fetch(`${SUPABASE_URL}/rest/v1/${ep}`, { ...opts, headers: authHeaders() });
+      }
+      if (!r.ok) throw new Error(await r.text());
+      return r;
+    }
+    async function apiGet(ep) { const r = await apiFetch(ep); return r.json(); }
+    async function apiPost(ep, b) { const r = await apiFetch(ep, { method: 'POST', body: JSON.stringify(b) }); return r.json(); }
+    async function apiPatch(ep, b) { const r = await apiFetch(ep, { method: 'PATCH', body: JSON.stringify(b) }); return r.json(); }
+    async function apiDelete(ep) { await apiFetch(ep, { method: 'DELETE' }); }
+
+    // Auth
+    async function checkAuth() {
+      const s = localStorage.getItem('wt-admin-token');
+      if (s) {
+        try {
+          const r = await fetch(`${SUPABASE_URL}/auth/v1/user`, { headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${s}` } });
+          if (r.ok) { accessToken = s; scheduleTokenRefresh(3000); showDashboard(); return; }
+        } catch(e) {}
+        // Token expired — try refresh
+        if (await refreshAccessToken()) { showDashboard(); return; }
+        localStorage.removeItem('wt-admin-token');
+        localStorage.removeItem('wt-admin-refresh');
+      }
+    }
+    document.getElementById('authForm').addEventListener('submit', async (e) => { e.preventDefault(); const email = document.getElementById('authEmail').value, pw = document.getElementById('authPassword').value, err = document.getElementById('authError'); err.style.display='none'; try { const r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, { method:'POST', headers:{'apikey':SUPABASE_ANON_KEY,'Content-Type':'application/json'}, body:JSON.stringify({email,password:pw})}); const d = await r.json(); if(!r.ok){err.textContent=d.error_description||'Login failed';err.style.display='block';return;} accessToken=d.access_token; refreshToken=d.refresh_token; localStorage.setItem('wt-admin-token',accessToken); localStorage.setItem('wt-admin-refresh',refreshToken); scheduleTokenRefresh(d.expires_in || 3600); showDashboard(); } catch(e){err.textContent='Network error';err.style.display='block';} });
+    function signOut() { accessToken=null; refreshToken=null; if(tokenRefreshTimer)clearTimeout(tokenRefreshTimer); localStorage.removeItem('wt-admin-token'); localStorage.removeItem('wt-admin-refresh'); document.getElementById('authScreen').style.display='flex'; document.getElementById('adminApp').style.display='none'; }
+
+    // Exclude my views from analytics
+    let _excludeMyViews = false;
+    let _myVisitorId = null;
+
+    function toggleExcludeMe() {
+      _excludeMyViews = !_excludeMyViews;
+      if (_excludeMyViews) {
+        // Save visitor ID and set cookie
+        const vid = localStorage.getItem('wt-vid');
+        if (vid) localStorage.setItem('wt-admin-vid', vid);
+        _myVisitorId = vid;
+        document.cookie = 'wt-admin-exclude=1; path=/; max-age=31536000; SameSite=Lax';
+        document.getElementById('excludeLabel').textContent = 'Include My Views';
+        showToast('Dashboard now excludes your visits', 'success');
+      } else {
+        document.cookie = 'wt-admin-exclude=; path=/; max-age=0';
+        _myVisitorId = null;
+        document.getElementById('excludeLabel').textContent = 'Exclude My Views';
+        showToast('Dashboard now includes your visits', 'success');
+      }
+      // Reload analytics with new filter
+      loadAnalytics();
+    }
+    (function initExclude() {
+      const isExcluded = document.cookie.includes('wt-admin-exclude=1');
+      _excludeMyViews = isExcluded;
+      _myVisitorId = isExcluded ? localStorage.getItem('wt-admin-vid') : null;
+      const label = document.getElementById('excludeLabel');
+      if (label && isExcluded) label.textContent = 'Include My Views';
+    })();
+
+    // ========== PAYMENTS ==========
+    let uploadedPaymentUrl = null;
+    async function loadPayments() {
+      try {
+        const data = await apiGet('payment_methods?select=*&order=sort_order.asc');
+        const tb = document.getElementById('paymentsBody'); tb.innerHTML = '';
+        if (!data.length) { tb.innerHTML = '<tr><td colspan="6" class="loading">No payment methods.</td></tr>'; return; }
+        window._payments = data;
+        data.forEach(p => {
+          const img = p.qr_image ? `<img src="${p.qr_image}" style="height:40px;border-radius:4px;">` : '—';
+          const vis = p.visible ? `<button class="btn btn-sm" onclick="togglePaymentVisible('${p.id}',false)">👁️</button>` : `<button class="btn btn-sm" style="opacity:0.4" onclick="togglePaymentVisible('${p.id}',true)">🚫</button>`;
+          tb.innerHTML += `<tr><td>${img}</td><td class="name-cell">${p.name}</td><td><span class="brand-badge">${p.type}</span></td><td>${p.sort_order}</td><td>${vis}</td><td><div class="action-btns"><button class="btn btn-sm" onclick="editPayment('${p.id}')">Edit</button><button class="btn btn-sm btn-danger" onclick="deletePayment('${p.id}','${p.name}')">Del</button></div></td></tr>`;
+        });
+      } catch(e) { showToast('Failed', 'error'); }
+    }
+
+    function openPaymentModal() {
+      document.getElementById('paymentModalTitle').textContent = 'Add Payment Method';
+      document.getElementById('paymentForm').reset();
+      document.getElementById('paymentId').value = '';
+      document.getElementById('paymentSort').value = (window._payments?.length || 0) + 1;
+      uploadedPaymentUrl = null;
+      document.getElementById('paymentDropPrompt').style.display = 'flex';
+      document.getElementById('paymentDropPreview').style.display = 'none';
+      document.getElementById('paymentModal').classList.add('active');
+    }
+    function closePaymentModal() { document.getElementById('paymentModal').classList.remove('active'); }
+
+    function editPayment(id) {
+      const p = window._payments?.find(x => x.id === id);
+      if (!p) return;
+      document.getElementById('paymentModalTitle').textContent = 'Edit Payment Method';
+      document.getElementById('paymentId').value = p.id;
+      document.getElementById('paymentName').value = p.name;
+      document.getElementById('paymentType').value = p.type;
+      document.getElementById('paymentImageUrl').value = p.qr_image || '';
+      document.getElementById('paymentSort').value = p.sort_order;
+      uploadedPaymentUrl = null;
+      if (p.qr_image) {
+        document.getElementById('paymentPreviewImg').src = p.qr_image;
+        document.getElementById('paymentDropPrompt').style.display = 'none';
+        document.getElementById('paymentDropPreview').style.display = 'inline-block';
+      } else {
+        document.getElementById('paymentDropPrompt').style.display = 'flex';
+        document.getElementById('paymentDropPreview').style.display = 'none';
+      }
+      document.getElementById('paymentModal').classList.add('active');
+    }
+
+    // Payment image upload
+    const paymentDZ = document.getElementById('paymentDropZone');
+    const paymentFI = document.getElementById('paymentFileInput');
+    paymentDZ.addEventListener('click', e => { if (!e.target.closest('.drop-zone-remove')) paymentFI.click(); });
+    paymentDZ.addEventListener('dragover', e => { e.preventDefault(); paymentDZ.classList.add('dragover'); });
+    paymentDZ.addEventListener('dragleave', () => paymentDZ.classList.remove('dragover'));
+    paymentDZ.addEventListener('drop', e => { e.preventDefault(); paymentDZ.classList.remove('dragover'); if (e.dataTransfer.files[0]) handlePaymentFile(e.dataTransfer.files[0]); });
+    paymentFI.addEventListener('change', () => { if (paymentFI.files[0]) handlePaymentFile(paymentFI.files[0]); });
+
+    async function handlePaymentFile(file) {
+      if (file.size > 5 * 1024 * 1024) { showToast('Max 5MB', 'error'); return; }
+      document.getElementById('paymentDropPrompt').innerHTML = '<span class="drop-zone-uploading">Uploading...</span>';
+      try {
+        const fn = `payment-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        const r = await fetch(`${SUPABASE_URL}/storage/v1/object/card-images/${fn}`, { method: 'POST', headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}`, 'Content-Type': file.type }, body: file });
+        if (!r.ok) throw new Error(await r.text());
+        uploadedPaymentUrl = `${SUPABASE_URL}/storage/v1/object/public/card-images/${fn}`;
+        document.getElementById('paymentPreviewImg').src = URL.createObjectURL(file);
+        document.getElementById('paymentDropPrompt').style.display = 'none';
+        document.getElementById('paymentDropPreview').style.display = 'inline-block';
+        document.getElementById('paymentImageUrl').value = '';
+        showToast('Uploaded', 'success');
+      } catch(e) { showToast('Upload failed', 'error'); document.getElementById('paymentDropPrompt').innerHTML = '<span class="drop-zone-icon">📷</span><span>Drag & drop or browse</span>'; }
+    }
+    function removePaymentImage() { uploadedPaymentUrl = null; document.getElementById('paymentDropPrompt').style.display = 'flex'; document.getElementById('paymentDropPreview').style.display = 'none'; paymentFI.value = ''; }
+
+    document.getElementById('paymentForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const id = document.getElementById('paymentId').value;
+      const p = {
+        name: document.getElementById('paymentName').value.trim(),
+        type: document.getElementById('paymentType').value,
+        qr_image: document.getElementById('paymentImageUrl').value.trim() || uploadedPaymentUrl || null,
+        sort_order: parseInt(document.getElementById('paymentSort').value) || 0
+      };
+      try {
+        if (id) { await apiPatch(`payment_methods?id=eq.${id}`, p); }
+        else { await apiPost('payment_methods', p); }
+        uploadedPaymentUrl = null;
+        closePaymentModal();
+        showToast(id ? 'Updated' : 'Added', 'success');
+        loadPayments();
+      } catch(e) { showToast('Failed: ' + e.message, 'error'); }
+    });
+
+    async function togglePaymentVisible(id, v) {
+      try { await apiPatch(`payment_methods?id=eq.${id}`, { visible: v }); showToast(v ? 'Shown' : 'Hidden', 'success'); loadPayments(); }
+      catch(e) { showToast('Failed', 'error'); }
+    }
+
+    async function deletePayment(id, name) {
+      if (!confirm(`Delete "${name}"?`)) return;
+      try { await apiDelete(`payment_methods?id=eq.${id}`); showToast('Deleted', 'success'); loadPayments(); }
+      catch(e) { showToast('Failed', 'error'); }
+    }
+
+    // Sidebar toggle
+    function toggleSidebar() {
+      const sb = document.getElementById('adminSidebar');
+      sb.classList.toggle('collapsed');
+      localStorage.setItem('wt-sidebar', sb.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+    }
+    (function initSidebar() {
+      if (localStorage.getItem('wt-sidebar') === 'collapsed') {
+        document.getElementById('adminSidebar')?.classList.add('collapsed');
+      }
+    })();
+
+    // Theme toggle
+    function toggleAdminTheme() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('wt-admin-theme', next);
+      document.getElementById('themeLabel').textContent = next === 'dark' ? 'Light Mode' : 'Dark Mode';
+    }
+    (function initAdminTheme() {
+      const saved = localStorage.getItem('wt-admin-theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', saved);
+      const label = document.getElementById('themeLabel');
+      if (label) label.textContent = saved === 'dark' ? 'Light Mode' : 'Dark Mode';
+    })();
+
+    function showForgotScreen() {
+      document.getElementById('authScreen').style.display = 'none';
+      document.getElementById('forgotScreen').style.display = 'flex';
+      document.getElementById('forgotEmail').value = document.getElementById('authEmail').value || '';
+      document.getElementById('forgotError').style.display = 'none';
+      document.getElementById('forgotSuccess').style.display = 'none';
+    }
+
+    function showLoginScreen() {
+      document.getElementById('forgotScreen').style.display = 'none';
+      document.getElementById('authScreen').style.display = 'flex';
+    }
+
+    document.getElementById('forgotForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('forgotEmail').value.trim();
+      const errEl = document.getElementById('forgotError');
+      const successEl = document.getElementById('forgotSuccess');
+      const btn = document.getElementById('forgotBtn');
+      errEl.style.display = 'none';
+      successEl.style.display = 'none';
+      btn.textContent = 'Sending...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`${SUPABASE_URL}/auth/v1/recover`, {
+          method: 'POST',
+          headers: { 'apikey': SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        if (res.ok) {
+          successEl.textContent = `Reset link sent to ${email}. Check your inbox.`;
+          successEl.style.display = 'block';
+          document.getElementById('forgotForm').style.display = 'none';
+        } else {
+          const d = await res.json();
+          errEl.textContent = d.error_description || d.msg || 'Failed to send reset email.';
+          errEl.style.display = 'block';
+        }
+      } catch (e) {
+        errEl.textContent = 'Network error. Try again.';
+        errEl.style.display = 'block';
+      }
+      btn.textContent = 'Send Reset Link';
+      btn.disabled = false;
+    });
+    function showDashboard() { document.getElementById('authScreen').style.display='none'; document.getElementById('adminApp').style.display='flex'; loadAnalytics(); loadInventory(); loadShows(); loadLinks(); loadPayments(); loadPriceSetting(); loadPasswordSetting(); }
+
+    // Page navigation
+    document.querySelectorAll('.sidebar-link[data-page]').forEach(link => {
+      link.addEventListener('click', () => {
+        document.querySelectorAll('.sidebar-link[data-page]').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById('page-' + link.dataset.page).classList.add('active');
+        document.getElementById('pageTitle').textContent = link.querySelector('span')?.textContent || '';
+        document.getElementById('analyticsRange').style.display = link.dataset.page === 'dashboard' ? '' : 'none';
+        if (link.dataset.page === 'sold') loadSold();
+        if (link.dataset.page === 'financials') loadFinancials();
+      });
+    });
+
+    // Timezone helper — format date in ET
+    function toETDateKey(isoStr) {
+      return new Date(isoStr).toLocaleDateString('en-CA', { timeZone: 'America/New_York' }); // YYYY-MM-DD
+    }
+    function todayET() {
+      return new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+    }
+
+    // Analytics
+    async function loadAnalytics() {
+      const days = parseInt(document.getElementById('analyticsRange').value);
+      const since = new Date(Date.now() - days * 86400000).toISOString();
+      const prevSince = new Date(Date.now() - days * 2 * 86400000).toISOString();
+      const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+
+      try {
+        // Fetch current + previous period for comparison
+        const [data, events] = await Promise.all([
+          apiGet(`page_views?select=*&created_at=gte.${prevSince}&order=created_at.asc`),
+          apiGet(`analytics_events?select=*&created_at=gte.${since}&order=created_at.asc`)
+        ]);
+
+        // Filter out admin views if exclude is active
+        const filterAdmin = d => !(_excludeMyViews && _myVisitorId && d.visitor_id === _myVisitorId);
+        const current = data.filter(d => d.created_at >= since).filter(filterAdmin);
+        const previous = data.filter(d => d.created_at < since).filter(filterAdmin);
+        const filteredEvents = events.filter(filterAdmin);
+        const curUnique = new Set(current.map(d => d.visitor_id)).size;
+        const prevUnique = new Set(previous.map(d => d.visitor_id)).size;
+
+        // KPI: Page Views
+        document.getElementById('aViews').textContent = current.length.toLocaleString();
+        setDelta('aViewsDelta', current.length, previous.length);
+
+        // KPI: Unique Visitors
+        document.getElementById('aUnique').textContent = curUnique.toLocaleString();
+        setDelta('aUniqueDelta', curUnique, prevUnique);
+
+        // KPI: Today (ET timezone)
+        const todayKey = todayET();
+        const todayCount = current.filter(d => toETDateKey(d.created_at) === todayKey).length;
+        document.getElementById('aToday').textContent = todayCount.toLocaleString();
+
+        // KPI: Avg Session Duration
+        const sessions = filteredEvents.filter(e => e.event_name === 'session_end');
+        if (sessions.length) {
+          const avgSec = Math.round(sessions.reduce((s, e) => s + (e.event_data?.duration_seconds || 0), 0) / sessions.length);
+          const mm = Math.floor(avgSec / 60), ss = avgSec % 60;
+          document.getElementById('aAvgSession').textContent = mm > 0 ? `${mm}m ${ss}s` : `${ss}s`;
+        } else {
+          document.getElementById('aAvgSession').textContent = '—';
+        }
+
+        // KPI: Mobile %
+        const mobileCount = current.filter(d => d.is_mobile).length;
+        const mobilePct = current.length ? Math.round((mobileCount / current.length) * 100) : 0;
+        document.getElementById('aMobile').textContent = `${mobilePct}%`;
+        document.getElementById('aMobileSub').textContent = `${mobileCount} of ${current.length}`;
+
+        // Sparklines (grouped by ET date)
+        const dayMap = {}, dayUniqueMap = {};
+        current.forEach(d => { const k = toETDateKey(d.created_at); dayMap[k] = (dayMap[k] || 0) + 1; if (!dayUniqueMap[k]) dayUniqueMap[k] = new Set(); dayUniqueMap[k].add(d.visitor_id); });
+        const allDays = []; const s = new Date(since), end = new Date();
+        for (let d = new Date(s); d <= end; d.setDate(d.getDate() + 1)) { const k = toETDateKey(d.toISOString()); allDays.push({ date: k, views: dayMap[k] || 0, unique: dayUniqueMap[k]?.size || 0 }); }
+        renderSparkline('aViewsSpark', allDays.map(d => d.views));
+        renderSparkline('aUniqueSpark', allDays.map(d => d.unique));
+
+        // Traffic chart
+        const mx = Math.max(...allDays.map(d => d.views), 1);
+        document.getElementById('analyticsChart').innerHTML = allDays.map(d => {
+          const h = Math.max((d.views / mx) * 100, 2);
+          const l = new Date(d.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          return `<div class="chart-bar" style="height:${h}%"><div class="chart-bar-tip">${l}: ${d.views} views</div></div>`;
+        }).join('');
+
+        // Device breakdown donut
+        const desktop = current.filter(d => !d.is_mobile).length;
+        renderDeviceChart(mobileCount, desktop);
+
+        // Referrer breakdown
+        const refMap = {};
+        const selfDomains = ['worldwidetrading.cards', 'worldwide-trading-site.vercel.app', 'localhost'];
+        current.forEach(d => {
+          let src = 'Direct';
+          if (d.utm_source) { src = d.utm_source; }
+          else if (d.referrer) {
+            try {
+              const host = new URL(d.referrer).hostname.replace('www.', '');
+              if (selfDomains.some(s => host.includes(s))) return; // skip self-referrals
+              src = host;
+            } catch { src = d.referrer; }
+          }
+          refMap[src] = (refMap[src] || 0) + 1;
+        });
+        const refSorted = Object.entries(refMap).sort((a, b) => b[1] - a[1]).slice(0, 8);
+        const refMax = refSorted[0]?.[1] || 1;
+        const colors = ['gold', 'blue', 'green', 'gold', 'blue', 'green', 'gold', 'blue'];
+        document.getElementById('referrerPanel').innerHTML = refSorted.map(([k, v], i) =>
+          `<div class="h-bar-item"><span class="h-bar-label">${k}</span><div class="h-bar-track"><div class="h-bar-fill ${colors[i % 3]}" style="width:${(v / refMax) * 100}%"></div></div><span class="h-bar-value">${v}</span></div>`
+        ).join('') || '<div class="loading">No data yet</div>';
+
+        // Top events
+        const eventMap = {};
+        filteredEvents.filter(e => e.event_name !== 'session_end' && e.event_name !== 'scroll_depth').forEach(e => {
+          const label = e.event_name.replace('click_', '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+          eventMap[label] = (eventMap[label] || 0) + 1;
+        });
+        const evSorted = Object.entries(eventMap).sort((a, b) => b[1] - a[1]).slice(0, 6);
+        document.getElementById('eventsPanel').innerHTML = evSorted.length ? evSorted.map(([k, v]) =>
+          `<div class="breakdown-item"><span class="breakdown-label">${k}</span><span class="breakdown-value">${v}</span></div>`
+        ).join('') : '<div class="loading">No events yet — data populates as visitors interact</div>';
+
+        // Scroll depth funnel
+        const scrollEvents = filteredEvents.filter(e => e.event_name === 'scroll_depth');
+        const scrollMap = { 25: 0, 50: 0, 75: 0, 100: 0 };
+        scrollEvents.forEach(e => { const d = e.event_data?.depth; if (d && scrollMap.hasOwnProperty(d)) scrollMap[d]++; });
+        const scrollMax = Math.max(...Object.values(scrollMap), 1);
+        document.getElementById('scrollPanel').innerHTML = Object.entries(scrollMap).map(([k, v]) =>
+          `<div class="funnel-step"><span class="funnel-label">${k}%</span><div class="h-bar-track"><div class="funnel-bar" style="width:${(v / scrollMax) * 100}%"></div></div><span class="funnel-value">${v}</span></div>`
+        ).join('') || '<div class="loading">No data yet</div>';
+
+        // Regions (timezone)
+        const tzMap = {};
+        current.forEach(d => { if (d.timezone) { const city = d.timezone.split('/').pop().replace(/_/g, ' '); tzMap[city] = (tzMap[city] || 0) + 1; } });
+        const tzSorted = Object.entries(tzMap).sort((a, b) => b[1] - a[1]).slice(0, 8);
+        document.getElementById('regionPanel').innerHTML = tzSorted.length ? tzSorted.map(([k, v]) =>
+          `<div class="breakdown-item"><span class="breakdown-label">${k}</span><span class="breakdown-value">${v}</span></div>`
+        ).join('') : '<div class="loading">No data yet</div>';
+
+      } catch (e) { console.error('Analytics error:', e); }
+    }
+
+    function setDelta(id, cur, prev) {
+      const el = document.getElementById(id);
+      if (!prev || prev === 0) { el.textContent = ''; return; }
+      const pct = Math.round(((cur - prev) / prev) * 100);
+      if (pct > 0) { el.textContent = `↑ ${pct}%`; el.className = 'stat-card-delta up'; }
+      else if (pct < 0) { el.textContent = `↓ ${Math.abs(pct)}%`; el.className = 'stat-card-delta down'; }
+      else { el.textContent = '— 0%'; el.className = 'stat-card-delta flat'; }
+    }
+
+    function renderSparkline(id, values) {
+      const el = document.getElementById(id);
+      const mx = Math.max(...values, 1);
+      el.innerHTML = values.slice(-14).map(v => `<div class="sparkline-bar" style="height:${Math.max((v / mx) * 100, 4)}%"></div>`).join('');
+    }
+
+    function renderDeviceChart(mobile, desktop) {
+      const total = mobile + desktop || 1;
+      const mPct = Math.round((mobile / total) * 100);
+      const dPct = 100 - mPct;
+      // SVG donut
+      const mAngle = (mPct / 100) * 360;
+      const dAngle = (dPct / 100) * 360;
+      const mEnd = polarToCartesian(55, 55, 40, mAngle);
+      const mArc = mAngle > 180 ? 1 : 0;
+      const mPath = `M 55 15 A 40 40 0 ${mArc} 1 ${mEnd.x} ${mEnd.y}`;
+      const dPath = `M ${mEnd.x} ${mEnd.y} A 40 40 0 ${mAngle <= 180 ? 1 : 0} 1 55 15`;
+
+      document.getElementById('deviceChart').innerHTML = `
+        <div class="donut-wrap">
+          <svg viewBox="0 0 110 110" width="110" height="110">
+            <circle cx="55" cy="55" r="40" fill="none" stroke="var(--border)" stroke-width="14"/>
+            <path d="${mPath}" fill="none" stroke="var(--gold)" stroke-width="14" stroke-linecap="round"/>
+            <path d="${dPath}" fill="none" stroke="var(--blue)" stroke-width="14" stroke-linecap="round"/>
+          </svg>
+          <div class="donut-center"><div class="donut-center-val">${total}</div><div class="donut-center-label">Total</div></div>
+        </div>
+        <div class="donut-legend">
+          <div class="donut-legend-item"><span class="donut-legend-dot" style="background:var(--gold)"></span>Mobile<span class="donut-legend-val">${mPct}%</span></div>
+          <div class="donut-legend-item"><span class="donut-legend-dot" style="background:var(--blue)"></span>Desktop<span class="donut-legend-val">${dPct}%</span></div>
+        </div>`;
+    }
+
+    function polarToCartesian(cx, cy, r, deg) {
+      const rad = (deg - 90) * Math.PI / 180;
+      return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+    }
+
+    // Inventory
+    async function loadInventory() {
+      const scrollY = window.scrollY;
+      try {
+        const data = await apiGet('inventory?select=*&sold=eq.false&order=sort_order.asc');
+        document.getElementById('itemCount').textContent = data.length;
+        const tbody = document.getElementById('tableBody'); tbody.innerHTML = '';
+        if(!data.length){tbody.innerHTML='<tr><td colspan="10" class="loading">No items yet.</td></tr>';return;}
+
+        // Dashboard breakdowns
+        const brandCounts={}, catCounts={};
+        let visible=0, hidden=0;
+        data.forEach(i => {
+          const bl = i.brand.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+          brandCounts[bl]=(brandCounts[bl]||0)+1;
+          const cl = {slabs:'Slabs',sealed:'Sealed',raw:'Raw Cards',accessories:'Accessories',collectibles:'Collectibles'}[i.category]||i.category;
+          catCounts[cl]=(catCounts[cl]||0)+1;
+          if(i.visible!==false) visible++; else hidden++;
+        });
+        // Fetch sold count for dashboard
+        let soldCount = 0;
+        try { const soldData = await apiGet('inventory?select=id&sold=eq.true'); soldCount = soldData.length; } catch(e) {}
+        document.getElementById('dTotalItems').textContent=data.length + soldCount;
+        document.getElementById('dVisibleItems').textContent=visible;
+        document.getElementById('dHiddenItems').textContent=hidden;
+        document.getElementById('dSoldItems').textContent=soldCount;
+        document.getElementById('inventoryBreakdown').innerHTML=Object.entries(brandCounts).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="breakdown-item"><span class="breakdown-label">${k}</span><span class="breakdown-value">${v}</span></div>`).join('');
+        document.getElementById('categoryBreakdown').innerHTML=Object.entries(catCounts).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="breakdown-item"><span class="breakdown-label">${k}</span><span class="breakdown-value">${v}</span></div>`).join('');
+
+        // Update brand datalist
+        const brands=[...new Set(data.map(i=>i.brand))].sort();
+        const defaults=['pokemon','one-piece','yugioh','magic','union-arena','gradedguard','funko'];
+        document.getElementById('brandList').innerHTML=[...new Set([...defaults,...brands])].sort().map(b=>`<option value="${b}">`).join('');
+
+        // Populate inventory filter dropdowns — preserve selections
+        const prevBrand = document.getElementById('invFilterBrand').value;
+        const prevCat = document.getElementById('invFilterCategory').value;
+        const prevVis = document.getElementById('invFilterVisible').value;
+        const prevFeat = document.getElementById('invFilterFeatured').value;
+        const prevSearch = document.getElementById('invSearch').value;
+        const fBrands = [...new Set(data.map(i => i.brand))].sort();
+        const fCats = [...new Set(data.map(i => i.category))].sort();
+        document.getElementById('invFilterBrand').innerHTML = '<option value="">All Brands</option>' + fBrands.map(b => `<option value="${b}">${b.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</option>`).join('');
+        document.getElementById('invFilterCategory').innerHTML = '<option value="">All Categories</option>' + fCats.map(c => `<option value="${c}" style="text-transform:capitalize">${c}</option>`).join('');
+        // Restore selections
+        document.getElementById('invFilterBrand').value = prevBrand;
+        document.getElementById('invFilterCategory').value = prevCat;
+        document.getElementById('invFilterVisible').value = prevVis;
+        document.getElementById('invFilterFeatured').value = prevFeat;
+        document.getElementById('invSearch').value = prevSearch;
+
+        // Table — paginated
+        window._items=data;
+        renderInventoryPage();
+        requestAnimationFrame(() => window.scrollTo(0, scrollY));
+      } catch(e){showToast('Failed to load','error');}
+    }
+
+    async function toggleVisible(id,v){try{await apiPatch(`inventory?id=eq.${id}`,{visible:v});showToast(v?'Shown':'Hidden','success');loadInventory();}catch(e){showToast('Failed','error');}}
+
+    // Item modal
+    function openAddModal(){document.getElementById('modalTitle').textContent='Add Item';document.getElementById('itemForm').reset();document.getElementById('itemId').value='';document.getElementById('itemSort').value=(window._items?.length||0)+1;uploadedImageUrl=null;resetDropZone();fileInput.value='';document.getElementById('itemModal').classList.add('active');}
+    function openEditModal(id){const i=window._items?.find(x=>x.id===id);if(!i)return;document.getElementById('modalTitle').textContent='Edit Item';document.getElementById('itemId').value=i.id;document.getElementById('itemName').value=i.name;document.getElementById('itemDetails').value=i.details;document.getElementById('itemPrice').value=i.price;document.getElementById('itemQty').value=i.qty;document.getElementById('itemSort').value=i.sort_order;document.getElementById('itemBrand').value=i.brand;document.getElementById('itemCategory').value=i.category;document.getElementById('itemImage').value=i.image||'';document.getElementById('itemFeatured').checked=i.featured;document.getElementById('itemExclusive').checked=i.exclusive;document.getElementById('itemTcgUrl').value=i.tcgplayer_url||'';document.getElementById('itemCost').value=i.cost||'';document.getElementById('itemNotes').value=i.notes||'';uploadedImageUrl=null;fileInput.value='';if(i.image){previewImg.src=i.image;dropPrompt.style.display='none';dropPreview.style.display='inline-block';}else{resetDropZone();}document.getElementById('itemModal').classList.add('active');}
+    function closeItemModal(){document.getElementById('itemModal').classList.remove('active');}
+
+    // Image upload
+    const dropZone=document.getElementById('dropZone'),fileInput=document.getElementById('fileInput'),dropPrompt=document.getElementById('dropPrompt'),dropPreview=document.getElementById('dropPreview'),previewImg=document.getElementById('previewImg');
+    dropZone.addEventListener('click',e=>{if(!e.target.closest('.drop-zone-remove'))fileInput.click();});
+    dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('dragover');});
+    dropZone.addEventListener('dragleave',()=>{dropZone.classList.remove('dragover');});
+    dropZone.addEventListener('drop',e=>{e.preventDefault();dropZone.classList.remove('dragover');if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
+    fileInput.addEventListener('change',()=>{if(fileInput.files[0])handleFile(fileInput.files[0]);});
+    async function handleFile(file){if(file.size>5*1024*1024){showToast('Max 5MB','error');return;}dropPrompt.innerHTML='<span class="drop-zone-uploading">Uploading...</span>';dropPreview.style.display='none';try{const fn=`${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g,'_')}`;const r=await fetch(`${SUPABASE_URL}/storage/v1/object/card-images/${fn}`,{method:'POST',headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${accessToken}`,'Content-Type':file.type},body:file});if(!r.ok)throw new Error(await r.text());uploadedImageUrl=`${SUPABASE_URL}/storage/v1/object/public/card-images/${fn}`;previewImg.src=URL.createObjectURL(file);dropPrompt.style.display='none';dropPreview.style.display='inline-block';document.getElementById('itemImage').value='';showToast('Uploaded','success');}catch(e){showToast('Upload failed','error');resetDropZone();}}
+    function removeImage(){uploadedImageUrl=null;resetDropZone();fileInput.value='';}
+    function resetDropZone(){dropPrompt.innerHTML='<span class="drop-zone-icon">📷</span><span>Drag & drop, or <label for="fileInput" class="drop-zone-browse">browse</label></span><span class="drop-zone-hint">JPG, PNG, WebP — max 5MB</span>';dropPrompt.style.display='flex';dropPreview.style.display='none';}
+    document.getElementById('itemImage').addEventListener('input',e=>{const u=e.target.value.trim();if(u&&u.startsWith('http')){previewImg.src=u;dropPrompt.style.display='none';dropPreview.style.display='inline-block';uploadedImageUrl=null;}else if(!uploadedImageUrl){resetDropZone();}});
+
+    // Save item
+    document.getElementById('itemForm').addEventListener('submit',async e=>{e.preventDefault();const btn=document.getElementById('saveBtn');btn.textContent='Saving...';btn.disabled=true;const id=document.getElementById('itemId').value;const p={name:document.getElementById('itemName').value.trim(),details:document.getElementById('itemDetails').value.trim(),price:document.getElementById('itemPrice').value.trim(),cost:document.getElementById('itemCost').value.trim()||null,qty:parseInt(document.getElementById('itemQty').value)||1,sort_order:parseInt(document.getElementById('itemSort').value)||0,brand:document.getElementById('itemBrand').value,category:document.getElementById('itemCategory').value,image:document.getElementById('itemImage').value.trim()||uploadedImageUrl||null,featured:document.getElementById('itemFeatured').checked,exclusive:document.getElementById('itemExclusive').checked,tcgplayer_url:document.getElementById('itemTcgUrl').value.trim()||null,notes:document.getElementById('itemNotes').value.trim()||null};try{if(id){await apiPatch(`inventory?id=eq.${id}`,p);}else{await apiPost('inventory',p);}uploadedImageUrl=null;closeItemModal();showToast(id?'Updated':'Added','success');loadInventory();}catch(e){showToast('Failed: '+e.message,'error');}btn.textContent='Save Item';btn.disabled=false;});
+
+    // Delete
+    function openDeleteModal(id,name){deleteId=id;document.getElementById('deleteName').textContent=name;document.getElementById('deleteModal').classList.add('active');}
+    function closeDeleteModal(){document.getElementById('deleteModal').classList.remove('active');deleteId=null;}
+    async function confirmDelete(){if(!deleteId)return;try{await apiDelete(`inventory?id=eq.${deleteId}`);closeDeleteModal();showToast('Deleted','success');loadInventory();}catch(e){closeDeleteModal();showToast('Failed','error');}}
+
+    // ========== INVENTORY PAGINATION + SORT + FILTER ==========
+    let invPage = 1;
+    const INV_PER_PAGE = 25;
+    let invSortCol = null;
+    let invSortDir = 'asc';
+
+    function parsePrice(p) { return parseFloat((p || '').replace(/[^0-9.]/g, '')) || 0; }
+
+    // Sort click handler
+    document.addEventListener('click', e => {
+      const th = e.target.closest('.sortable');
+      if (!th) return;
+      const col = th.dataset.sort;
+      if (invSortCol === col) {
+        invSortDir = invSortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        invSortCol = col;
+        invSortDir = 'asc';
+      }
+      // Update header arrows
+      document.querySelectorAll('.sortable').forEach(h => h.classList.remove('asc', 'desc'));
+      th.classList.add(invSortDir);
+      invPage = 1;
+      renderInventoryPage();
+    });
+
+    function getFilteredSortedItems() {
+      const search = (document.getElementById('invSearch')?.value || '').trim().toLowerCase();
+      const fBrand = document.getElementById('invFilterBrand')?.value || '';
+      const fCat = document.getElementById('invFilterCategory')?.value || '';
+      const fVis = document.getElementById('invFilterVisible')?.value || '';
+      const fFeat = document.getElementById('invFilterFeatured')?.value || '';
+
+      let data = (window._items || []).filter(i => {
+        if (search && !(i.name.toLowerCase().includes(search) || i.details.toLowerCase().includes(search) || i.brand.toLowerCase().includes(search) || i.category.toLowerCase().includes(search) || i.price.toLowerCase().includes(search))) return false;
+        if (fBrand && i.brand !== fBrand) return false;
+        if (fCat && i.category !== fCat) return false;
+        if (fVis === 'visible' && i.visible === false) return false;
+        if (fVis === 'hidden' && i.visible !== false) return false;
+        if (fFeat === 'featured' && !i.featured) return false;
+        if (fFeat === 'exclusive' && !i.exclusive) return false;
+        return true;
+      });
+
+      // Sort
+      if (invSortCol) {
+        data = [...data].sort((a, b) => {
+          let va, vb;
+          switch (invSortCol) {
+            case 'name': va = a.name.toLowerCase(); vb = b.name.toLowerCase(); break;
+            case 'brand': va = a.brand.toLowerCase(); vb = b.brand.toLowerCase(); break;
+            case 'category': va = a.category.toLowerCase(); vb = b.category.toLowerCase(); break;
+            case 'price': va = parsePrice(a.price); vb = parsePrice(b.price); return invSortDir === 'asc' ? va - vb : vb - va;
+            case 'qty': return invSortDir === 'asc' ? a.qty - b.qty : b.qty - a.qty;
+            case 'visible': va = a.visible === false ? 0 : 1; vb = b.visible === false ? 0 : 1; return invSortDir === 'asc' ? va - vb : vb - va;
+            default: return 0;
+          }
+          if (va < vb) return invSortDir === 'asc' ? -1 : 1;
+          if (va > vb) return invSortDir === 'asc' ? 1 : -1;
+          return 0;
+        });
+      }
+      return data;
+    }
+
+    function renderInventoryPage() {
+      const data = getFilteredSortedItems();
+      const totalPages = Math.ceil(data.length / INV_PER_PAGE) || 1;
+      if (invPage > totalPages) invPage = totalPages;
+      const start = (invPage - 1) * INV_PER_PAGE;
+      const pageItems = data.slice(start, start + INV_PER_PAGE);
+
+      document.getElementById('itemCount').textContent = data.length;
+      const tbody = document.getElementById('tableBody'); tbody.innerHTML = '';
+      if (!data.length) { tbody.innerHTML = '<tr><td colspan="10" class="loading">No items match filters.</td></tr>'; document.getElementById('invPagination').innerHTML = ''; return; }
+
+      pageItems.forEach(item => {
+        const img = item.image ? `<img src="${item.image}" alt="${item.name}">` : `<div class="no-img">—</div>`;
+        const feat = item.featured ? '<span class="featured-dot"></span>' : '';
+        const vis = item.visible !== false ? `<button class="btn btn-sm" onclick="toggleVisible('${item.id}',false)">👁️</button>` : `<button class="btn btn-sm" style="opacity:0.4" onclick="toggleVisible('${item.id}',true)">🚫</button>`;
+        const rs = item.visible === false ? ' style="opacity:0.4"' : '';
+        const bl = item.brand.replace(/-/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+        const safeName = item.name.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;');
+        const notePreview = item.notes ? `<div class="note-clickable" style="font-size:0.68rem;color:var(--text-muted);margin-top:0.15rem;max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;" data-note="${item.notes.replace(/"/g,'&quot;').replace(/</g,'&lt;')}">📝 ${item.notes.replace(/</g,'&lt;')}</div>` : '';
+        tbody.innerHTML += `<tr${rs}><td><input type="checkbox" class="item-check" value="${item.id}" data-name="${safeName}" onchange="updateSelection()" style="accent-color:var(--gold);"></td><td class="img-cell">${img}</td><td class="name-cell"><span style="cursor:pointer;" data-action="edit" data-id="${item.id}">${item.name}</span>${feat}${notePreview}</td><td>${item.details}</td><td><span class="brand-badge">${bl}</span></td><td style="text-transform:capitalize">${item.category}</td><td class="price-cell">${item.price}</td><td>${item.qty}</td><td>${vis}</td><td><div class="action-btns"><button class="btn btn-sm" data-action="edit" data-id="${item.id}">Edit</button><button class="btn btn-sm" style="background:var(--success-dim);color:var(--success);" data-action="sell" data-id="${item.id}" data-name="${safeName}">Sell</button><button class="btn btn-sm btn-danger" data-action="delete" data-id="${item.id}" data-name="${safeName}">Del</button></div></td></tr>`;
+      });
+
+      // Pagination controls
+      const pg = document.getElementById('invPagination'); pg.innerHTML = '';
+      if (totalPages > 1) {
+        pg.innerHTML += `<button class="pg-btn" onclick="invPage=1;renderInventoryPage();updateSelection();" ${invPage===1?'disabled':''}>«</button>`;
+        pg.innerHTML += `<button class="pg-btn" onclick="invPage--;renderInventoryPage();updateSelection();" ${invPage===1?'disabled':''}>‹</button>`;
+        for (let i = 1; i <= totalPages; i++) {
+          pg.innerHTML += `<button class="pg-btn${i===invPage?' active':''}" onclick="invPage=${i};renderInventoryPage();updateSelection();">${i}</button>`;
+        }
+        pg.innerHTML += `<button class="pg-btn" onclick="invPage++;renderInventoryPage();updateSelection();" ${invPage===totalPages?'disabled':''}>›</button>`;
+        pg.innerHTML += `<button class="pg-btn" onclick="invPage=${totalPages};renderInventoryPage();updateSelection();" ${invPage===totalPages?'disabled':''}>»</button>`;
+        pg.innerHTML += `<span style="font-size:0.72rem;color:var(--text-muted);margin-left:0.5rem;">Page ${invPage} of ${totalPages} · ${data.length} items</span>`;
+      }
+    }
+
+    // ========== SOLD ==========
+    let _soldData = [];
+
+    async function openSoldModal(id, name) {
+      document.getElementById('soldItemId').value = id;
+      document.getElementById('soldItemName').textContent = name;
+      document.getElementById('soldShowCustom').value = '';
+      document.getElementById('soldPriceInput').value = '';
+      document.getElementById('soldBuyerInput').value = '';
+      document.getElementById('soldLotInput').value = '';
+      document.getElementById('soldNotesInput').value = '';
+      // Handle quantity
+      const isBulk = id.includes(',');
+      const qtyGroup = document.getElementById('soldQtyGroup');
+      if (!isBulk) {
+        const item = (window._items || []).find(i => i.id === id);
+        if (item && item.qty > 1) {
+          qtyGroup.style.display = '';
+          document.getElementById('soldQtyMax').textContent = item.qty;
+          document.getElementById('soldQtyInput').max = item.qty;
+          document.getElementById('soldQtyInput').value = item.qty;
+          document.getElementById('soldItemMaxQty').value = item.qty;
+        } else {
+          qtyGroup.style.display = 'none';
+          document.getElementById('soldItemMaxQty').value = '1';
+        }
+      } else {
+        qtyGroup.style.display = 'none';
+        document.getElementById('soldItemMaxQty').value = '1';
+      }
+      try {
+        const shows = await apiGet('shows?select=name&order=date.desc');
+        const sel = document.getElementById('soldShow');
+        sel.innerHTML = '<option value="">— Select or type below —</option>' + shows.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+      } catch(e) {}
+      document.getElementById('soldModal').classList.add('active');
+    }
+    function closeSoldModal() { document.getElementById('soldModal').classList.remove('active'); }
+
+    document.getElementById('soldForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const btn = document.getElementById('soldBtn');
+      btn.textContent = 'Saving...'; btn.disabled = true;
+      const idStr = document.getElementById('soldItemId').value;
+      const ids = idStr.split(',');
+      const showVal = document.getElementById('soldShowCustom').value.trim() || document.getElementById('soldShow').value || null;
+      const priceVal = document.getElementById('soldPriceInput').value.trim() || null;
+      const buyerVal = document.getElementById('soldBuyerInput').value.trim() || null;
+      const lotVal = document.getElementById('soldLotInput').value.trim() || (ids.length > 1 ? `Lot ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'})}` : null);
+      const notesVal = document.getElementById('soldNotesInput').value.trim() || null;
+      const soldQty = parseInt(document.getElementById('soldQtyInput')?.value) || 1;
+      const maxQty = parseInt(document.getElementById('soldItemMaxQty').value) || 1;
+      try {
+        if (ids.length === 1 && maxQty > 1 && soldQty < maxQty) {
+          // Partial sell: reduce original qty, create new sold record
+          const item = (window._items || []).find(i => i.id === ids[0]);
+          if (item) {
+            // Reduce qty on original
+            await apiPatch(`inventory?id=eq.${ids[0]}`, { qty: maxQty - soldQty });
+            // Create sold copy
+            await apiPost('inventory', {
+              name: item.name, details: item.details, price: item.price, qty: soldQty,
+              brand: item.brand, category: item.category, image: item.image,
+              featured: item.featured, exclusive: item.exclusive, sort_order: item.sort_order,
+              cost: item.cost, notes: item.notes, tcgplayer_url: item.tcgplayer_url,
+              visible: false, sold: true, sold_at: new Date().toISOString(),
+              sold_show: showVal, sold_price: priceVal, sold_lot: lotVal,
+              sold_qty: soldQty, sold_notes: notesVal, sold_buyer: buyerVal
+            });
+          }
+        } else {
+          // Full sell (single or bulk)
+          for (const id of ids) {
+            const item = (window._items || []).find(i => i.id === id);
+            await apiPatch(`inventory?id=eq.${id}`, {
+              sold: true, sold_at: new Date().toISOString(), sold_show: showVal,
+              sold_price: ids.length === 1 ? priceVal : null, sold_lot: lotVal,
+              sold_qty: item ? item.qty : 1, sold_notes: notesVal, sold_buyer: buyerVal,
+              visible: false
+            });
+          }
+        }
+        closeSoldModal();
+        clearSelection();
+        showToast(ids.length > 1 ? `${ids.length} items marked as sold` : 'Marked as sold', 'success');
+        loadInventory();
+      } catch(e) { showToast('Failed: ' + e.message, 'error'); }
+      btn.textContent = 'Mark as Sold'; btn.disabled = false;
+    });
+
+    let _showDateMap = {};
+    async function loadSold() {
+      try {
+        _soldData = await apiGet('inventory?select=*&sold=eq.true&order=sold_at.desc');
+        // Build show name → date map
+        try {
+          const showsData = await apiGet('shows?select=name,date');
+          _showDateMap = {};
+          showsData.forEach(s => { _showDateMap[s.name] = new Date(s.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/New_York' }); });
+        } catch(e) {}
+        document.getElementById('soldCount').textContent = totalQty(_soldData);
+        // Populate filter dropdowns
+        const shows = [...new Set(_soldData.map(i => i.sold_show).filter(Boolean))].sort();
+        const brands = [...new Set(_soldData.map(i => i.brand))].sort();
+        const cats = [...new Set(_soldData.map(i => i.category))].sort();
+        document.getElementById('soldFilterShow').innerHTML = '<option value="">All Sales</option><option value="__shows__">Show Sales</option><option value="__other__">Other Sales</option>';
+        document.getElementById('soldFilterBrand').innerHTML = '<option value="">All Brands</option>' + brands.map(b => `<option value="${b}">${b.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</option>`).join('');
+        document.getElementById('soldFilterCategory').innerHTML = '<option value="">All Categories</option>' + cats.map(c => `<option value="${c}" style="text-transform:capitalize">${c}</option>`).join('');
+        const expandedLots = getExpandedLots();
+        const scrollY = window.scrollY;
+        renderSold();
+        requestAnimationFrame(() => { restoreExpandedLots(expandedLots); window.scrollTo(0, scrollY); });
+      } catch(e) { showToast('Failed to load sold items', 'error'); }
+    }
+
+    // Get display date: use show date if sold at a show, otherwise sold_at
+    function getSoldDate(item) {
+      if (item.sold_show && _showDateMap[item.sold_show]) return _showDateMap[item.sold_show];
+      return item.sold_at ? new Date(item.sold_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/New_York' }) : '—';
+    }
+
+    function totalQty(items) { return items.reduce((s, i) => s + (i.qty || 1), 0); }
+
+    function getExpandedLots() {
+      const expanded = [];
+      document.querySelectorAll('.lot-card-items:not(.collapsed)').forEach(el => {
+        if (el.id) expanded.push(el.id);
+      });
+      return expanded;
+    }
+    function restoreExpandedLots(expanded) {
+      expanded.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.classList.remove('collapsed');
+          const btn = el.parentElement.querySelector('.lot-card-toggle');
+          if (btn) btn.textContent = 'Hide Items';
+        }
+      });
+    }
+
+    function renderSold() {
+      const fShow = document.getElementById('soldFilterShow').value;
+      const fBrand = document.getElementById('soldFilterBrand').value;
+      const fCat = document.getElementById('soldFilterCategory').value;
+      const groupBy = document.getElementById('soldGroupBy').value;
+      const search = (document.getElementById('soldSearch').value || '').trim().toLowerCase();
+
+      let items = _soldData.filter(i => {
+        if (fShow === '__shows__' && !_showDateMap[i.sold_show]) return false;
+        if (fShow === '__other__' && _showDateMap[i.sold_show]) return false;
+        if (fShow && fShow !== '__shows__' && fShow !== '__other__' && i.sold_show !== fShow) return false;
+        if (fBrand && i.brand !== fBrand) return false;
+        if (fCat && i.category !== fCat) return false;
+        if (search && !(
+          i.name.toLowerCase().includes(search) ||
+          i.details.toLowerCase().includes(search) ||
+          (i.sold_buyer || '').toLowerCase().includes(search) ||
+          (i.sold_lot || '').toLowerCase().includes(search) ||
+          (i.sold_notes || '').toLowerCase().includes(search) ||
+          (i.sold_show || '').toLowerCase().includes(search)
+        )) return false;
+        return true;
+      });
+
+      const container = document.getElementById('soldContainer');
+      if (!items.length) { container.innerHTML = '<div class="loading">No sold items match filters.</div>'; return; }
+
+      // Separate lot items from individual items
+      const lots = {};
+      const individuals = [];
+      items.forEach(item => {
+        if (item.sold_lot) {
+          if (!lots[item.sold_lot]) lots[item.sold_lot] = [];
+          lots[item.sold_lot].push(item);
+        } else {
+          individuals.push(item);
+        }
+      });
+
+      // Further group by show or flat
+      let html = '';
+
+      if (groupBy === 'show') {
+        // Group lots and individuals by show
+        const showGroups = {};
+        Object.entries(lots).forEach(([lotName, lotItems]) => {
+          const show = lotItems[0].sold_show || 'Uncategorized';
+          if (!showGroups[show]) showGroups[show] = { lots: {}, individuals: [] };
+          showGroups[show].lots[lotName] = lotItems;
+        });
+        individuals.forEach(item => {
+          const show = item.sold_show || 'Uncategorized';
+          if (!showGroups[show]) showGroups[show] = { lots: {}, individuals: [] };
+          showGroups[show].individuals.push(item);
+        });
+
+        Object.entries(showGroups).forEach(([showName, group]) => {
+          const allInGroup = [...Object.values(group.lots).flat(), ...group.individuals];
+          const totalListed = allInGroup.reduce((s, i) => s + (parseFloat(i.price.replace(/[^0-9.]/g,'')) || 0) * (i.qty || 1), 0);
+          // For sold total: count each lot's sold price once, not per item
+          let totalSold = group.individuals.reduce((s, i) => s + parseMoney(i.sold_price), 0);
+          Object.values(group.lots).forEach(lotItems => {
+            const manual = parseMoney(lotItems[0].lot_sold_price);
+            const sumIndiv = lotItems.reduce((s, i) => s + parseMoney(i.sold_price), 0);
+            totalSold += manual || sumIndiv;
+          });
+          // Use show date if it's a recognized show, otherwise most recent sold_at
+          let soldDate = '';
+          if (_showDateMap[showName]) {
+            soldDate = _showDateMap[showName];
+          } else {
+            const mostRecent = allInGroup.reduce((latest, i) => {
+              const d = i.sold_at ? new Date(i.sold_at) : new Date(0);
+              return d > latest ? d : latest;
+            }, new Date(0));
+            soldDate = mostRecent > new Date(0) ? mostRecent.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/New_York' }) : '';
+          }
+
+          html += `<div class="sold-group collapsed">
+            <div class="sold-group-header" onclick="this.parentElement.classList.toggle('collapsed')">
+              <span class="sold-group-title">${showName}</span>
+              <span class="sold-group-meta">${totalQty(allInGroup)} items · Listed: $${totalListed.toLocaleString()} · Sold: $${totalSold.toLocaleString()} · ${soldDate}</span>
+            </div>
+            <div class="sold-group-body" style="padding:0.75rem;">`;
+          // Render lot cards within show
+          Object.entries(group.lots).forEach(([lotName, lotItems]) => {
+            html += buildLotCard(lotName, lotItems);
+          });
+          // Render individuals
+          if (group.individuals.length) {
+            html += `<div style="margin-top:${Object.keys(group.lots).length ? '0.5rem' : '0'}">` + buildIndividualTable(group.individuals) + `</div>`;
+          }
+          html += `</div></div>`;
+        });
+      } else {
+        // Lot view or no grouping — render lot cards then individuals
+        Object.entries(lots).forEach(([lotName, lotItems]) => {
+          html += buildLotCard(lotName, lotItems);
+        });
+        if (individuals.length) {
+          html += `<div class="sold-group collapsed">
+            <div class="sold-group-header" onclick="this.parentElement.classList.toggle('collapsed')">
+              <span class="sold-group-title">Individual Sales</span>
+              <span class="sold-group-meta">${totalQty(individuals)} items</span>
+            </div>
+            <div class="sold-group-body" style="padding:0.75rem;">${buildIndividualTable(individuals)}</div>
+          </div>`;
+        }
+      }
+
+      container.innerHTML = html;
+    }
+
+    function buildLotCard(lotName, items) {
+      const totalListed = items.reduce((s, i) => s + (parseFloat(i.price.replace(/[^0-9.]/g,'')) || 0) * (i.qty || 1), 0);
+      const totalCost = items.reduce((s, i) => s + parseMoney(i.cost) * (i.qty || 1), 0);
+      // Lot sold price: manual lot_sold_price takes priority, otherwise sum individual sold_prices
+      const manualLotPrice = items[0].lot_sold_price;
+      const sumIndividual = items.reduce((s, i) => s + parseMoney(i.sold_price), 0);
+      const lotSoldPrice = manualLotPrice || (sumIndividual ? `$${sumIndividual.toLocaleString()}` : '');
+      const buyer = items[0].sold_buyer || '';
+      const show = items[0].sold_show || '';
+      const notes = items[0].lot_notes || '';
+      const soldDate = getSoldDate(items[0]);
+      const uid = lotName.replace(/[^a-zA-Z0-9]/g, '_');
+
+      let itemRows = items.map(item => {
+        const img = item.image ? `<img src="${item.image}" alt="${item.name}">` : `<div class="no-img">—</div>`;
+        const qty = (item.qty || 1) > 1 ? ` <span style="color:var(--text-muted);">x${item.qty}</span>` : '';
+        const costStr = item.cost ? `<span style="color:var(--text-muted);font-size:0.7rem;"> (cost: ${item.cost})</span>` : '';
+        const soldStr = item.sold_price ? `<span style="color:var(--success);font-size:0.7rem;"> → ${item.sold_price}</span>` : '';
+        let itemNote = '';
+        if (item.notes) itemNote += `<div class="note-clickable" style="font-size:0.68rem;color:var(--text-muted);margin-top:0.15rem;max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;" data-note="${item.notes.replace(/"/g,'&quot;').replace(/</g,'&lt;')}">📋 ${item.notes.replace(/</g,'&lt;')}</div>`;
+        if (item.sold_notes) itemNote += `<div class="note-clickable" style="font-size:0.68rem;color:var(--gold-text);opacity:0.7;margin-top:0.1rem;max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;" data-note="${item.sold_notes.replace(/"/g,'&quot;').replace(/</g,'&lt;')}">📝 ${item.sold_notes.replace(/</g,'&lt;')}</div>`;
+        return `<tr><td class="img-cell">${img}</td><td class="name-cell">${item.name}${qty}${itemNote}</td><td>${item.details}</td><td class="price-cell">${item.price}${soldStr}${costStr}</td><td><div class="action-btns"><button class="btn btn-sm" onclick="openEditSoldModal('${item.id}')">Edit</button><button class="btn btn-sm" onclick="unsoldItem('${item.id}')">Remove</button></div></td></tr>`;
+      }).join('');
+
+      const notesHtml = notes ? `<div class="note-clickable" style="font-size:0.72rem;color:var(--text-muted);padding:0.25rem 1rem 0.65rem;cursor:pointer;line-height:1.5;border-top:1px solid var(--border);" data-note="${notes.replace(/"/g,'&quot;').replace(/</g,'&lt;')}"><span style="opacity:0.7;">📝</span> ${notes.length > 150 ? notes.replace(/</g,'&lt;').slice(0, 150) + '... <span style="color:var(--gold-text);">(click to read more)</span>' : notes.replace(/</g,'&lt;')}</div>` : '';
+
+      return `<div class="lot-card">
+        <div class="lot-card-header">
+          <div style="display:flex;align-items:center;gap:0.75rem;">
+            <span class="lot-card-title">${lotName}</span>
+            <span class="lot-badge">${totalQty(items)} items</span>
+          </div>
+          <div class="lot-card-stats">
+            <div class="lot-card-stat"><span class="lot-card-stat-label">Listed</span><span class="lot-card-stat-value">$${totalListed.toLocaleString()}</span></div>
+            <div class="lot-card-stat"><span class="lot-card-stat-label">Sold For</span><span class="lot-card-stat-value gold">${lotSoldPrice || '—'}</span></div>
+            <div class="lot-card-stat"><span class="lot-card-stat-label">Cost</span><span class="lot-card-stat-value">${totalCost ? '$' + totalCost.toLocaleString() : '—'}</span></div>
+            ${buyer ? `<div class="lot-card-stat"><span class="lot-card-stat-label">Buyer</span><span class="lot-card-stat-value">${buyer}</span></div>` : ''}
+            ${show ? `<div class="lot-card-stat"><span class="lot-card-stat-label">Show</span><span class="lot-card-stat-value">${show}</span></div>` : ''}
+            <div class="lot-card-stat"><span class="lot-card-stat-label">Date</span><span class="lot-card-stat-value">${soldDate}</span></div>
+            <button class="btn btn-sm" onclick="openEditLotModal('${lotName.replace(/'/g,"\\'")}')">Edit Lot</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteLot('${lotName.replace(/'/g,"\\'")}')">Delete Lot</button>
+            <button class="lot-card-toggle" onclick="document.getElementById('lotItems_${uid}').classList.toggle('collapsed');this.textContent=this.textContent==='Show Items'?'Hide Items':'Show Items';">Show Items</button>
+          </div>
+        </div>
+        ${notesHtml}
+        <div class="lot-card-items collapsed" id="lotItems_${uid}">
+          <table class="tbl"><thead><tr><th>Image</th><th>Name</th><th>Details</th><th>Listed Price</th><th></th></tr></thead><tbody>${itemRows}</tbody></table>
+        </div>
+      </div>`;
+    }
+
+    function buildIndividualTable(items) {
+      let rows = items.map(item => {
+        const img = item.image ? `<img src="${item.image}" alt="${item.name}">` : `<div class="no-img">—</div>`;
+        const bl = item.brand.replace(/-/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+        const soldDate = getSoldDate(item);
+        const qtyBadge = (item.qty || 1) > 1 ? `<span style="color:var(--text-muted);font-size:0.72rem;"> x${item.qty}</span>` : '';
+        let notesStr = '';
+        if (item.notes) notesStr += `<div class="note-clickable" style="font-size:0.68rem;color:var(--text-muted);margin-top:0.15rem;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;" data-note="${item.notes.replace(/"/g,'&quot;').replace(/</g,'&lt;')}">📋 ${item.notes.replace(/</g,'&lt;')}</div>`;
+        if (item.sold_notes) notesStr += `<div class="note-clickable" style="font-size:0.68rem;color:var(--gold-text);opacity:0.7;margin-top:0.1rem;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;" data-note="${item.sold_notes.replace(/"/g,'&quot;').replace(/</g,'&lt;')}">📝 ${item.sold_notes.replace(/</g,'&lt;')}</div>`;
+        return `<tr><td><input type="checkbox" class="sold-check" value="${item.id}" onchange="updateSoldSelection()" style="accent-color:var(--gold);"></td><td class="img-cell">${img}</td><td class="name-cell">${item.name}${qtyBadge}${notesStr}</td><td>${item.details}</td><td><span class="brand-badge">${bl}</span></td><td class="price-cell">${item.price}</td><td class="price-cell">${item.sold_price || '—'}</td><td class="price-cell">${item.cost || '—'}</td><td>${item.sold_buyer || '—'}</td><td>${item.sold_show || '—'}</td><td>${soldDate}</td><td><div class="action-btns"><button class="btn btn-sm" style="background:var(--blue-dim);color:var(--blue);" onclick="openAddToLotModal('${item.id}')">+ Lot</button><button class="btn btn-sm" onclick="openEditSoldModal('${item.id}')">Edit</button><button class="btn btn-sm btn-danger" onclick="unsoldItem('${item.id}')">Unsell</button></div></td></tr>`;
+      }).join('');
+      return `<table class="tbl"><thead><tr><th><input type="checkbox" class="sold-check-all" onchange="toggleSoldSelectAllInGroup(this)" style="accent-color:var(--gold);"></th><th>Image</th><th>Name</th><th>Details</th><th>Brand</th><th>Listed</th><th>Sold</th><th>Cost</th><th>Buyer</th><th>Show</th><th>Date</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+    }
+
+    async function openEditSoldModal(id) {
+      const item = _soldData.find(i => i.id === id);
+      if (!item) return;
+      document.getElementById('editSoldId').value = id;
+      document.getElementById('editSoldName').textContent = item.name;
+      document.getElementById('editSoldPrice').value = item.sold_price || '';
+      document.getElementById('editSoldBuyer').value = item.sold_buyer || '';
+      document.getElementById('editSoldCost').value = item.cost || '';
+      document.getElementById('editSoldLot').value = item.sold_lot || '';
+      document.getElementById('editSoldItemNotes').value = item.notes || '';
+      document.getElementById('editSoldNotes').value = item.sold_notes || '';
+      document.getElementById('editSoldShowCustom').value = '';
+      // Qty field — use the record's qty (actual count on this record)
+      const currentQty = item.qty || 1;
+      document.getElementById('editSoldOrigQty').value = currentQty;
+      const qtyGroup = document.getElementById('editSoldQtyGroup');
+      if (currentQty > 1) {
+        qtyGroup.style.display = '';
+        document.getElementById('editSoldQty').value = currentQty;
+        document.getElementById('editSoldQty').max = currentQty;
+      } else {
+        qtyGroup.style.display = 'none';
+      }
+      try {
+        const shows = await apiGet('shows?select=name&order=date.desc');
+        const customShows = [...new Set(_soldData.map(i => i.sold_show).filter(Boolean))];
+        const allShows = [...new Set([...shows.map(s => s.name), ...customShows])].sort();
+        const sel = document.getElementById('editSoldShow');
+        sel.innerHTML = '<option value="">— Select or type below —</option>' + allShows.map(s => `<option value="${s}"${s === item.sold_show ? ' selected' : ''}>${s}</option>`).join('');
+      } catch(e) {}
+      document.getElementById('editSoldModal').classList.add('active');
+    }
+    function closeEditSoldModal() { document.getElementById('editSoldModal').classList.remove('active'); }
+
+    document.getElementById('editSoldForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const btn = document.getElementById('editSoldBtn');
+      btn.textContent = 'Saving...'; btn.disabled = true;
+      const id = document.getElementById('editSoldId').value;
+      const showVal = document.getElementById('editSoldShowCustom').value.trim() || document.getElementById('editSoldShow').value || null;
+      const priceVal = document.getElementById('editSoldPrice').value.trim() || null;
+      const buyerVal = document.getElementById('editSoldBuyer').value.trim() || null;
+      const lotVal = document.getElementById('editSoldLot').value.trim() || null;
+      const itemNotesVal = document.getElementById('editSoldItemNotes').value.trim() || null;
+      const notesVal = document.getElementById('editSoldNotes').value.trim() || null;
+      const origQty = parseInt(document.getElementById('editSoldOrigQty').value) || 1;
+      const newQty = parseInt(document.getElementById('editSoldQty')?.value) || origQty;
+      try {
+        // Update this record
+        const costVal = document.getElementById('editSoldCost').value.trim() || null;
+        await apiPatch(`inventory?id=eq.${id}`, {
+          sold_show: showVal, sold_price: priceVal, sold_buyer: buyerVal,
+          sold_lot: lotVal, notes: itemNotesVal, sold_notes: notesVal, sold_qty: newQty, qty: newQty, cost: costVal
+        });
+        // If qty was reduced, create a new sold record with the remainder
+        if (newQty < origQty) {
+          const item = _soldData.find(i => i.id === id);
+          if (item) {
+            const remainder = origQty - newQty;
+            await apiPost('inventory', {
+              name: item.name, details: item.details, price: item.price, qty: remainder,
+              brand: item.brand, category: item.category, image: item.image,
+              featured: item.featured, exclusive: item.exclusive, sort_order: item.sort_order,
+              visible: false, sold: true, sold_at: item.sold_at,
+              sold_qty: remainder, sold_show: item.sold_show,
+              sold_price: null, sold_lot: null, sold_buyer: null, sold_notes: null
+            });
+            showToast(`Split into two records: ${newQty} + ${remainder}`, 'success');
+          }
+        } else {
+          showToast('Updated', 'success');
+        }
+        closeEditSoldModal();
+        loadSold();
+      } catch(e) { showToast('Failed: ' + e.message, 'error'); }
+      btn.textContent = 'Save Changes'; btn.disabled = false;
+    });
+
+    async function unsoldItem(id) {
+      const item = _soldData.find(i => i.id === id);
+      const name = item ? item.name : 'this item';
+      if (!confirm(`Are you sure you want to unsell "${name}"? This will move it back to your inventory.`)) return;
+      try {
+        await apiPatch(`inventory?id=eq.${id}`, { sold: false, sold_at: null, sold_show: null, sold_price: null, sold_lot: null, lot_sold_price: null, lot_notes: null, sold_buyer: null, sold_notes: null, visible: true });
+        showToast('Moved back to inventory', 'success');
+        loadSold(); loadInventory();
+      } catch(e) { showToast('Failed', 'error'); }
+    }
+
+    // ========== EDIT LOT ==========
+    async function openEditLotModal(lotName) {
+      const lotItems = _soldData.filter(i => i.sold_lot === lotName);
+      if (!lotItems.length) return;
+      document.getElementById('editLotName').value = lotName;
+      document.getElementById('editLotTitle').textContent = lotName;
+      document.getElementById('editLotNewName').value = lotName;
+      // Lot-level price: use lot_sold_price, or sum individual sold_prices, or manual
+      const lotManualPrice = lotItems[0].lot_sold_price;
+      const lotSumPrice = lotItems.reduce((s, i) => s + parseMoney(i.sold_price), 0);
+      document.getElementById('editLotSoldPrice').value = lotManualPrice || (lotSumPrice ? `$${lotSumPrice}` : '');
+      // Sum cost across all items in lot
+      const lotTotalCost = lotItems.reduce((s, i) => s + parseMoney(i.cost) * (i.qty || 1), 0);
+      document.getElementById('editLotCost').value = lotTotalCost ? `$${lotTotalCost}` : '';
+      document.getElementById('editLotBuyerInput').value = lotItems[0].sold_buyer || '';
+      document.getElementById('editLotNotes').value = lotItems[0].lot_notes || '';
+      try {
+        const shows = await apiGet('shows?select=name&order=date.desc');
+        const customShows = [...new Set(_soldData.map(i => i.sold_show).filter(Boolean))];
+        const allShows = [...new Set([...shows.map(s => s.name), ...customShows])].sort();
+        const sel = document.getElementById('editLotShow');
+        sel.innerHTML = '<option value="">— Select —</option>' + allShows.map(s => `<option value="${s}"${s === lotItems[0].sold_show ? ' selected' : ''}>${s}</option>`).join('');
+      } catch(e) {}
+      document.getElementById('editLotModal').classList.add('active');
+    }
+    function closeEditLotModal() { document.getElementById('editLotModal').classList.remove('active'); }
+
+    document.getElementById('editLotForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const oldName = document.getElementById('editLotName').value;
+      const newName = document.getElementById('editLotNewName').value.trim();
+      const soldPrice = document.getElementById('editLotSoldPrice').value.trim() || null;
+      const buyer = document.getElementById('editLotBuyerInput').value.trim() || null;
+      const show = document.getElementById('editLotShow').value || null;
+      const notes = document.getElementById('editLotNotes').value.trim() || null;
+      const lotCostTotal = parseMoney(document.getElementById('editLotCost').value);
+      const lotItems = _soldData.filter(i => i.sold_lot === oldName);
+      // Distribute cost proportionally by listed price
+      const lotListedTotal = lotItems.reduce((s, i) => s + parseMoney(i.price) * (i.qty || 1), 0);
+      try {
+        for (const item of lotItems) {
+          const itemListed = parseMoney(item.price) * (item.qty || 1);
+          const itemCost = lotListedTotal > 0 && lotCostTotal > 0 ? `$${Math.round((itemListed / lotListedTotal) * lotCostTotal)}` : null;
+          const patch = {
+            sold_lot: newName,
+            lot_sold_price: soldPrice,
+            lot_notes: notes,
+            sold_buyer: buyer,
+            sold_show: show || item.sold_show
+          };
+          if (itemCost && !item.cost) patch.cost = itemCost;
+          await apiPatch(`inventory?id=eq.${item.id}`, patch);
+        }
+        closeEditLotModal();
+        showToast('Lot updated', 'success');
+        loadSold();
+      } catch(e) { showToast('Failed: ' + e.message, 'error'); }
+    });
+
+    // ========== DELETE LOT ==========
+    async function deleteLot(lotName) {
+      const lotItems = _soldData.filter(i => i.sold_lot === lotName);
+      if (!confirm(`Are you sure you want to delete the lot "${lotName}"? This will move ${lotItems.length} item${lotItems.length > 1 ? 's' : ''} back to inventory.`)) return;
+      try {
+        for (const item of lotItems) {
+          await apiPatch(`inventory?id=eq.${item.id}`, { sold: false, sold_at: null, sold_show: null, sold_price: null, sold_lot: null, lot_sold_price: null, lot_notes: null, sold_buyer: null, sold_notes: null, visible: true });
+        }
+        showToast(`Lot "${lotName}" deleted — ${lotItems.length} items moved back to inventory`, 'success');
+        loadSold(); loadInventory();
+      } catch(e) { showToast('Failed: ' + e.message, 'error'); }
+    }
+
+    // ========== EXPENSES ==========
+    let _expenseData = [];
+    function openExpenseModal(id) {
+      document.getElementById('expenseModalTitle').textContent = id ? 'Edit Expense' : 'Add Expense';
+      document.getElementById('expenseForm').reset();
+      document.getElementById('expenseId').value = id || '';
+      document.getElementById('expenseDate').value = new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+      // Populate show dropdown
+      const showNames = [...new Set([...(window._shows || []).map(s => s.name), ..._soldData.map(i => i.sold_show).filter(Boolean)])].sort();
+      document.getElementById('expenseShow').innerHTML = '<option value="">General / Not tied to a show</option>' + showNames.map(s => `<option value="${s}">${s}</option>`).join('');
+      if (id) {
+        const exp = _expenseData.find(e => e.id === id);
+        if (exp) {
+          document.getElementById('expenseCategory').value = exp.category;
+          document.getElementById('expenseAmount').value = exp.amount;
+          document.getElementById('expenseDesc').value = exp.description || '';
+          document.getElementById('expenseShow').value = exp.show_name || '';
+          document.getElementById('expenseDate').value = exp.expense_date || '';
+          document.getElementById('expenseNotes').value = exp.notes || '';
+        }
+      }
+      document.getElementById('expenseModal').classList.add('active');
+    }
+    function closeExpenseModal() { document.getElementById('expenseModal').classList.remove('active'); }
+
+    document.getElementById('expenseForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const id = document.getElementById('expenseId').value;
+      const p = {
+        category: document.getElementById('expenseCategory').value,
+        amount: document.getElementById('expenseAmount').value.trim(),
+        description: document.getElementById('expenseDesc').value.trim() || null,
+        show_name: document.getElementById('expenseShow').value || null,
+        expense_date: document.getElementById('expenseDate').value || null,
+        notes: document.getElementById('expenseNotes').value.trim() || null
+      };
+      try {
+        if (id) { await apiPatch(`expenses?id=eq.${id}`, p); }
+        else { await apiPost('expenses', p); }
+        closeExpenseModal();
+        showToast(id ? 'Updated' : 'Expense added', 'success');
+        loadFinancials();
+      } catch(e) { showToast('Failed: ' + e.message, 'error'); }
+    });
+
+    async function deleteExpense(id) {
+      if (!confirm('Delete this expense?')) return;
+      try { await apiDelete(`expenses?id=eq.${id}`); showToast('Deleted', 'success'); loadFinancials(); }
+      catch(e) { showToast('Failed', 'error'); }
+    }
+
+    function renderExpenses(expenses) {
+      _expenseData = expenses;
+      const tbody = document.getElementById('expenseBody');
+      tbody.innerHTML = '';
+      if (!expenses.length) { tbody.innerHTML = '<tr><td colspan="7" class="loading">No expenses yet.</td></tr>'; }
+
+      const catLabels = { table_fee: 'Table Fee', gas: 'Gas / Travel', supplies: 'Supplies', shipping: 'Shipping', entry_fee: 'Entry Fee', food: 'Food', platform_fees: 'Platform Fees', other: 'Other' };
+      const catTotals = {};
+      let totalExp = 0;
+
+      expenses.forEach(exp => {
+        const amt = parseMoney(exp.amount);
+        totalExp += amt;
+        const cat = catLabels[exp.category] || exp.category;
+        catTotals[cat] = (catTotals[cat] || 0) + amt;
+        const dt = exp.expense_date ? new Date(exp.expense_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+        tbody.innerHTML += `<tr><td>${dt}</td><td><span class="brand-badge">${cat}</span></td><td>${exp.description || '—'}</td><td>${exp.show_name || 'General'}</td><td class="price-cell">${exp.amount}</td><td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${exp.notes || '—'}</td><td><div class="action-btns"><button class="btn btn-sm" onclick="openExpenseModal('${exp.id}')">Edit</button><button class="btn btn-sm btn-danger" onclick="deleteExpense('${exp.id}')">Del</button></div></td></tr>`;
+      });
+
+      // Expense KPI summary by category
+      const kpis = document.getElementById('expenseKpis');
+      kpis.innerHTML = Object.entries(catTotals).sort((a, b) => b[1] - a[1]).map(([cat, total]) =>
+        `<div class="stat-card"><div class="stat-card-label">${cat}</div><div class="stat-card-value" style="color:var(--danger);font-size:1.2rem;">$${total.toLocaleString()}</div></div>`
+      ).join('');
+
+      return totalExp;
+    }
+
+    // ========== CLICK OUTSIDE MODAL TO CLOSE ==========
+    document.addEventListener('click', e => {
+      if (e.target.classList.contains('modal-overlay') && e.target.classList.contains('active')) {
+        e.target.classList.remove('active');
+      }
+    });
+
+    // ========== MONEY INPUT FORMATTING ==========
+    function formatMoney(val) {
+      const num = parseFloat(val.replace(/[^0-9.]/g, ''));
+      if (isNaN(num)) return '';
+      return '$' + num.toLocaleString('en-US', { minimumFractionDigits: num % 1 !== 0 ? 2 : 0, maximumFractionDigits: 2 });
+    }
+    document.addEventListener('blur', e => {
+      if (e.target.matches && e.target.matches('[data-money]')) {
+        const v = e.target.value.trim();
+        if (v) e.target.value = formatMoney(v);
+      }
+    }, true);
+
+    // ========== INVENTORY ACTION DELEGATION ==========
+    document.addEventListener('click', e => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      const action = btn.dataset.action;
+      const id = btn.dataset.id;
+      const name = btn.dataset.name || '';
+      if (action === 'edit') openEditModal(id);
+      else if (action === 'sell') openSoldModal(id, name);
+      else if (action === 'delete') openDeleteModal(id, name);
+    });
+
+    // ========== NOTE POPUP ==========
+    document.addEventListener('click', e => {
+      const el = e.target.closest('.note-clickable');
+      if (el && el.dataset.note) {
+        document.getElementById('notePopupContent').textContent = el.dataset.note;
+        document.getElementById('notePopup').classList.add('active');
+      }
+    });
+
+    // ========== ADD TO LOT (bulk + single) ==========
+    function bulkAddToLot() {
+      const ids = [...document.querySelectorAll('.sold-check:checked')].map(cb => cb.value);
+      if (!ids.length) return;
+      openAddToLotModal(ids);
+    }
+
+    function openAddToLotModal(idOrIds) {
+      const ids = Array.isArray(idOrIds) ? idOrIds : [idOrIds];
+      document.getElementById('addToLotItemIds').value = ids.join(',');
+      // Get item names for display
+      const names = ids.map(id => { const i = _soldData.find(x => x.id === id); return i ? i.name : id; });
+      document.getElementById('addToLotItemName').textContent = ids.length === 1 ? names[0] : `${ids.length} items`;
+      // Populate lot dropdown from existing lots
+      const existingLots = [...new Set(_soldData.map(i => i.sold_lot).filter(Boolean))].sort();
+      const sel = document.getElementById('addToLotSelect');
+      sel.innerHTML = existingLots.map(l => `<option value="${l}">${l}</option>`).join('');
+      if (!existingLots.length) {
+        sel.innerHTML = '<option value="" disabled>No lots created yet</option>';
+      }
+      document.getElementById('addToLotModal').classList.add('active');
+    }
+    function closeAddToLotModal() { document.getElementById('addToLotModal').classList.remove('active'); }
+
+    document.getElementById('addToLotForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const ids = document.getElementById('addToLotItemIds').value.split(',');
+      const lotName = document.getElementById('addToLotSelect').value;
+      if (!lotName || !ids.length) return;
+      // Get the lot's existing data to match show, buyer, etc.
+      const lotItem = _soldData.find(i => i.sold_lot === lotName);
+      try {
+        for (const id of ids) {
+          await apiPatch(`inventory?id=eq.${id}`, {
+            sold_lot: lotName,
+            sold_show: lotItem?.sold_show || null,
+            sold_buyer: lotItem?.sold_buyer || null
+          });
+        }
+        closeAddToLotModal();
+        clearSoldSelection();
+        showToast(`Added to "${lotName}"`, 'success');
+        loadSold();
+      } catch(e) { showToast('Failed: ' + e.message, 'error'); }
+    });
+
+    // ========== SOLD BULK SELECTION ==========
+    function updateSoldSelection() {
+      const checked = document.querySelectorAll('.sold-check:checked');
+      document.getElementById('soldSelectedCount').textContent = checked.length;
+      document.getElementById('soldBulkActions').style.display = checked.length > 0 ? 'flex' : 'none';
+    }
+    function toggleSoldSelectAllInGroup(checkbox) {
+      // Only select checkboxes within the same table
+      const table = checkbox.closest('table');
+      table.querySelectorAll('.sold-check').forEach(cb => { cb.checked = checkbox.checked; });
+      updateSoldSelection();
+    }
+    function clearSoldSelection() {
+      document.querySelectorAll('.sold-check').forEach(cb => { cb.checked = false; });
+      document.querySelectorAll('.sold-check-all').forEach(cb => { cb.checked = false; });
+      updateSoldSelection();
+    }
+
+    function openBulkLotModal() {
+      const ids = [...document.querySelectorAll('.sold-check:checked')].map(cb => cb.value);
+      if (!ids.length) return;
+      document.getElementById('bulkLotCount').textContent = ids.length;
+      document.getElementById('bulkLotName').value = '';
+      document.getElementById('bulkLotPrice').value = '';
+      document.getElementById('bulkLotModal').classList.add('active');
+    }
+    function closeBulkLotModal() { document.getElementById('bulkLotModal').classList.remove('active'); }
+
+    document.getElementById('bulkLotForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const ids = [...document.querySelectorAll('.sold-check:checked')].map(cb => cb.value);
+      const lotName = document.getElementById('bulkLotName').value.trim();
+      const lotPrice = document.getElementById('bulkLotPrice').value.trim() || null;
+      const lotBuyer = document.getElementById('bulkLotBuyer').value.trim() || null;
+      const lotNotes = document.getElementById('bulkLotNotes').value.trim() || null;
+      if (!ids.length || !lotName) return;
+      try {
+        for (const id of ids) {
+          await apiPatch(`inventory?id=eq.${id}`, { sold_lot: lotName, lot_sold_price: lotPrice, lot_notes: lotNotes, sold_buyer: lotBuyer });
+        }
+        closeBulkLotModal();
+        clearSoldSelection();
+        showToast(`${ids.length} items grouped as "${lotName}"`, 'success');
+        loadSold();
+      } catch(e) { showToast('Failed: ' + e.message, 'error'); }
+    });
+
+    // ========== INVENTORY BULK SELECTION ==========
+    function toggleSelectAll(checked) {
+      document.querySelectorAll('.item-check').forEach(cb => { cb.checked = checked; });
+      updateSelection();
+    }
+    function updateSelection() {
+      const checked = document.querySelectorAll('.item-check:checked');
+      const count = checked.length;
+      document.getElementById('selectedCount').textContent = count;
+      document.getElementById('bulkActions').style.display = count > 0 ? 'flex' : 'none';
+      document.getElementById('selectAll').checked = count > 0 && count === document.querySelectorAll('.item-check').length;
+    }
+    function clearSelection() {
+      document.querySelectorAll('.item-check').forEach(cb => { cb.checked = false; });
+      document.getElementById('selectAll').checked = false;
+      updateSelection();
+    }
+    function getSelectedIds() {
+      return [...document.querySelectorAll('.item-check:checked')].map(cb => cb.value);
+    }
+    function getSelectedNames() {
+      return [...document.querySelectorAll('.item-check:checked')].map(cb => cb.dataset.name);
+    }
+
+    async function bulkSell() {
+      const ids = getSelectedIds();
+      const names = getSelectedNames();
+      if (!ids.length) return;
+      document.getElementById('soldItemId').value = ids.join(',');
+      document.getElementById('soldItemName').textContent = ids.length === 1 ? names[0] : `${ids.length} items`;
+      document.getElementById('soldShowCustom').value = '';
+      document.getElementById('soldPriceInput').value = '';
+      document.getElementById('soldLotInput').value = '';
+      try {
+        const shows = await apiGet('shows?select=name&order=date.desc');
+        const sel = document.getElementById('soldShow');
+        sel.innerHTML = '<option value="">— Select or type below —</option>' + shows.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+      } catch(e) {}
+      document.getElementById('soldModal').classList.add('active');
+    }
+
+    // ========== PRICE VISIBILITY ==========
+    async function loadPriceSetting() {
+      try {
+        const data = await apiGet('site_settings?key=eq.show_prices&select=value');
+        const show = data.length ? data[0].value === 'true' : true;
+        document.getElementById('showPricesToggle').checked = show;
+      } catch(e) {}
+    }
+    async function toggleShowPrices(show) {
+      try {
+        await apiPatch('site_settings?key=eq.show_prices', { value: show ? 'true' : 'false', updated_at: new Date().toISOString() });
+        showToast(show ? 'Prices visible on site' : 'Prices hidden from site', 'success');
+      } catch(e) { showToast('Failed', 'error'); }
+    }
+
+    // Site password
+    async function loadPasswordSetting() {
+      try {
+        const data = await apiGet('site_settings?key=in.(site_password_enabled,site_password)&select=key,value');
+        const enabled = data.find(s => s.key === 'site_password_enabled');
+        const pw = data.find(s => s.key === 'site_password');
+        const isEnabled = enabled && enabled.value === 'true';
+        document.getElementById('sitePasswordToggle').checked = isEnabled;
+        document.getElementById('sitePasswordField').style.display = isEnabled ? '' : 'none';
+        document.getElementById('sitePasswordField').value = pw ? pw.value : '';
+      } catch(e) {}
+    }
+    async function toggleSitePassword(enabled) {
+      try {
+        await apiPatch('site_settings?key=eq.site_password_enabled', { value: enabled ? 'true' : 'false', updated_at: new Date().toISOString() });
+        document.getElementById('sitePasswordField').style.display = enabled ? '' : 'none';
+        showToast(enabled ? 'Site is now password protected' : 'Password protection disabled', 'success');
+      } catch(e) { showToast('Failed', 'error'); }
+    }
+    async function saveSitePassword(pw) {
+      try {
+        await apiPatch('site_settings?key=eq.site_password', { value: pw, updated_at: new Date().toISOString() });
+        showToast('Password updated', 'success');
+      } catch(e) { showToast('Failed', 'error'); }
+    }
+
+    // ========== FINANCIALS ==========
+    function parseMoney(s) { return parseFloat((s || '').replace(/[^0-9.\-]/g, '')) || 0; }
+
+    async function loadFinancials() {
+      try {
+        const [soldItems, activeItems, expenses] = await Promise.all([
+          apiGet('inventory?select=*&sold=eq.true'),
+          apiGet('inventory?select=*&sold=eq.false'),
+          apiGet('expenses?select=*&order=expense_date.desc')
+        ]);
+
+        // Render expenses table and get total
+        const totalExpenses = renderExpenses(expenses);
+
+        // Expenses by show for per-show profit
+        const expensesByShow = {};
+        let generalExpenses = 0;
+        expenses.forEach(exp => {
+          const amt = parseMoney(exp.amount);
+          if (exp.show_name) {
+            expensesByShow[exp.show_name] = (expensesByShow[exp.show_name] || 0) + amt;
+          } else {
+            generalExpenses += amt;
+          }
+        });
+
+        // ---- SOLD KPIs ----
+        // Revenue: sum of sold_price for individuals + lot sold_price (once per lot)
+        const lots = {};
+        let totalRevenue = 0;
+        let totalCost = 0;
+        soldItems.forEach(item => {
+          totalCost += parseMoney(item.cost) * (item.qty || 1);
+          if (item.sold_lot) {
+            if (!lots[item.sold_lot]) lots[item.sold_lot] = { items: [] };
+            lots[item.sold_lot].items.push(item);
+          } else {
+            totalRevenue += parseMoney(item.sold_price);
+          }
+        });
+        // Calculate lot revenue: manual lot_sold_price takes priority, else sum individual sold_prices
+        Object.values(lots).forEach(l => {
+          const manual = parseMoney(l.items[0].lot_sold_price);
+          const sumIndiv = l.items.reduce((s, i) => s + parseMoney(i.sold_price), 0);
+          l.revenue = manual || sumIndiv;
+          totalRevenue += l.revenue;
+        });
+
+        const grossProfit = totalRevenue - totalCost;
+        const netProfit = grossProfit - totalExpenses;
+        const margin = totalRevenue > 0 ? Math.round((netProfit / totalRevenue) * 100) : 0;
+
+        document.getElementById('finRevenue').textContent = `$${totalRevenue.toLocaleString()}`;
+        document.getElementById('finCost').textContent = `$${totalCost.toLocaleString()}`;
+        document.getElementById('finGrossProfit').textContent = `$${grossProfit.toLocaleString()}`;
+        document.getElementById('finGrossProfit').style.color = grossProfit >= 0 ? 'var(--success)' : 'var(--danger)';
+        document.getElementById('finExpenses').textContent = `$${totalExpenses.toLocaleString()}`;
+        document.getElementById('finProfit').textContent = `$${netProfit.toLocaleString()}`;
+        document.getElementById('finProfit').style.color = netProfit >= 0 ? 'var(--success)' : 'var(--danger)';
+        document.getElementById('finMargin').textContent = `${margin}%`;
+        document.getElementById('finMargin').style.color = margin >= 0 ? 'var(--success)' : 'var(--danger)';
+        document.getElementById('finItemsSoldSub').textContent = `${soldItems.length} items sold`;
+
+        // ---- UNSOLD INVENTORY ----
+        let unsoldListed = 0, unsoldCost = 0;
+        activeItems.forEach(item => {
+          unsoldListed += parseMoney(item.price) * (item.qty || 1);
+          unsoldCost += parseMoney(item.cost) * (item.qty || 1);
+        });
+        document.getElementById('finUnsoldListed').textContent = `$${unsoldListed.toLocaleString()}`;
+        document.getElementById('finUnsoldCost').textContent = `$${unsoldCost.toLocaleString()}`;
+        document.getElementById('finUnsoldProfit').textContent = `$${(unsoldListed - unsoldCost).toLocaleString()}`;
+
+        // ---- PROFIT BY SHOW ----
+        const showProfit = {};
+        soldItems.forEach(item => {
+          const show = item.sold_show || 'Other';
+          if (!showProfit[show]) showProfit[show] = { revenue: 0, cost: 0, counted: new Set() };
+          showProfit[show].cost += parseMoney(item.cost) * (item.qty || 1);
+          if (item.sold_lot) {
+            if (!showProfit[show].counted.has(item.sold_lot)) {
+              showProfit[show].counted.add(item.sold_lot);
+              // Use lot_sold_price, or sum individual sold_prices for this lot
+              const lotItems = soldItems.filter(i => i.sold_lot === item.sold_lot);
+              const manual = parseMoney(item.lot_sold_price);
+              const sumIndiv = lotItems.reduce((s, i) => s + parseMoney(i.sold_price), 0);
+              showProfit[show].revenue += manual || sumIndiv;
+            }
+          } else {
+            showProfit[show].revenue += parseMoney(item.sold_price);
+          }
+        });
+        const showHTML = Object.entries(showProfit).sort((a, b) => {
+          const aNet = a[1].revenue - a[1].cost - (expensesByShow[a[0]] || 0);
+          const bNet = b[1].revenue - b[1].cost - (expensesByShow[b[0]] || 0);
+          return bNet - aNet;
+        }).map(([show, d]) => {
+          const showExp = expensesByShow[show] || 0;
+          const gross = d.revenue - d.cost;
+          const net = gross - showExp;
+          return `<div class="breakdown-item"><span class="breakdown-label">${show}</span><span class="breakdown-value" style="color:${net >= 0 ? 'var(--success)' : 'var(--danger)'}">$${net.toLocaleString()}</span></div>
+                  <div style="display:flex;gap:1rem;font-size:0.65rem;color:var(--text-muted);margin:0.15rem 0 0.5rem;padding-left:0.25rem;">Rev: $${d.revenue.toLocaleString()} · Card Cost: $${d.cost.toLocaleString()}${showExp ? ` · Expenses: $${showExp.toLocaleString()}` : ''}</div>`;
+        }).join('');
+        document.getElementById('finByShow').innerHTML = showHTML || '<div class="loading">No data</div>';
+
+        // ---- PROFIT BY BRAND ----
+        const brandProfit = {};
+        soldItems.forEach(item => {
+          const brand = item.brand.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+          if (!brandProfit[brand]) brandProfit[brand] = { revenue: 0, cost: 0, counted: new Set() };
+          brandProfit[brand].cost += parseMoney(item.cost) * (item.qty || 1);
+          if (item.sold_lot) {
+            // Distribute lot revenue proportionally by listed price
+            const lot = lots[item.sold_lot];
+            if (lot) {
+              const lotListedTotal = lot.items.reduce((s, i) => s + parseMoney(i.price) * (i.qty || 1), 0);
+              const itemListed = parseMoney(item.price) * (item.qty || 1);
+              const share = lotListedTotal > 0 ? (itemListed / lotListedTotal) * lot.revenue : 0;
+              brandProfit[brand].revenue += share;
+            }
+          } else {
+            brandProfit[brand].revenue += parseMoney(item.sold_price);
+          }
+        });
+        const brandHTML = Object.entries(brandProfit).sort((a, b) => (b[1].revenue - b[1].cost) - (a[1].revenue - a[1].cost)).map(([brand, d]) => {
+          const p = d.revenue - d.cost;
+          return `<div class="breakdown-item"><span class="breakdown-label">${brand}</span><span class="breakdown-value" style="color:${p >= 0 ? 'var(--success)' : 'var(--danger)'}">$${Math.round(p).toLocaleString()}</span></div>`;
+        }).join('');
+        document.getElementById('finByBrand').innerHTML = brandHTML || '<div class="loading">No data</div>';
+
+        // ---- LOT BREAKDOWN ----
+        const lotHTML = Object.entries(lots).sort((a, b) => b[1].revenue - a[1].revenue).map(([name, lot]) => {
+          const lotCost = lot.items.reduce((s, i) => s + parseMoney(i.cost) * (i.qty || 1), 0);
+          const p = lot.revenue - lotCost;
+          return `<div class="breakdown-item"><span class="breakdown-label">${name} <span style="color:var(--text-muted);font-size:0.65rem;">(${totalQty(lot.items)} items)</span></span><span class="breakdown-value" style="color:${p >= 0 ? 'var(--success)' : 'var(--danger)'}">$${p.toLocaleString()}</span></div>
+                  <div style="display:flex;gap:1rem;font-size:0.65rem;color:var(--text-muted);margin:0.15rem 0 0.5rem;padding-left:0.25rem;">Sold: $${lot.revenue.toLocaleString()} · Cost: $${lotCost.toLocaleString()}</div>`;
+        }).join('');
+        document.getElementById('finByLot').innerHTML = lotHTML || '<div class="loading">No lots</div>';
+
+        // ---- TOP PROFITABLE ITEMS ----
+        const itemProfits = soldItems.filter(i => !i.sold_lot).map(i => ({
+          name: i.name,
+          profit: parseMoney(i.sold_price) - (parseMoney(i.cost) * (i.qty || 1)),
+          sold: parseMoney(i.sold_price),
+          cost: parseMoney(i.cost) * (i.qty || 1)
+        })).sort((a, b) => b.profit - a.profit).slice(0, 8);
+        const topHTML = itemProfits.map(i => {
+          return `<div class="breakdown-item"><span class="breakdown-label" style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${i.name}</span><span class="breakdown-value" style="color:${i.profit >= 0 ? 'var(--success)' : 'var(--danger)'}">$${i.profit.toLocaleString()}</span></div>`;
+        }).join('');
+        document.getElementById('finTopItems').innerHTML = topHTML || '<div class="loading">No data</div>';
+
+        // ---- BAR CHART: Revenue vs Cost by Sale ----
+        const showEntries = Object.entries(showProfit).sort((a, b) => b[1].revenue - a[1].revenue);
+        if (showEntries.length) {
+          const maxVal = Math.max(...showEntries.map(([, d]) => Math.max(d.revenue, d.cost)), 1);
+          const barH = 28, gap = 8, labelW = 160, chartW = 600;
+          const svgH = showEntries.length * (barH * 2 + gap + 16) + 10;
+          let bars = '';
+          showEntries.forEach(([name, d], idx) => {
+            const y = idx * (barH * 2 + gap + 16);
+            const rW = Math.max((d.revenue / maxVal) * chartW, 2);
+            const cW = Math.max((d.cost / maxVal) * chartW, 2);
+            const shortName = name.length > 22 ? name.slice(0, 20) + '…' : name;
+            bars += `<text x="0" y="${y + 12}" fill="var(--text-secondary)" font-size="11" font-family="Inter,sans-serif">${shortName}</text>`;
+            bars += `<rect x="${labelW}" y="${y}" width="${rW}" height="${barH}" rx="4" fill="var(--success)" opacity="0.7"/>`;
+            bars += `<text x="${labelW + rW + 6}" y="${y + 18}" fill="var(--success)" font-size="11" font-family="Inter,sans-serif" font-weight="700">$${d.revenue.toLocaleString()}</text>`;
+            bars += `<rect x="${labelW}" y="${y + barH + 2}" width="${cW}" height="${barH}" rx="4" fill="var(--text-muted)" opacity="0.5"/>`;
+            bars += `<text x="${labelW + cW + 6}" y="${y + barH + 20}" fill="var(--text-muted)" font-size="11" font-family="Inter,sans-serif">$${d.cost.toLocaleString()}</text>`;
+          });
+          // Legend
+          bars += `<rect x="${labelW}" y="${svgH - 6}" width="12" height="12" rx="2" fill="var(--success)" opacity="0.7"/><text x="${labelW + 18}" y="${svgH + 5}" fill="var(--text-secondary)" font-size="10" font-family="Inter,sans-serif">Revenue</text>`;
+          bars += `<rect x="${labelW + 90}" y="${svgH - 6}" width="12" height="12" rx="2" fill="var(--text-muted)" opacity="0.5"/><text x="${labelW + 108}" y="${svgH + 5}" fill="var(--text-secondary)" font-size="10" font-family="Inter,sans-serif">Cost</text>`;
+          document.getElementById('finBarChart').innerHTML = `<svg viewBox="0 0 ${labelW + chartW + 100} ${svgH + 20}" width="100%" style="max-height:300px;">${bars}</svg>`;
+        } else {
+          document.getElementById('finBarChart').innerHTML = '<div class="loading">No data</div>';
+        }
+
+        // ---- PIE CHART: Revenue by Brand ----
+        const brandEntries = Object.entries(brandProfit).filter(([,d]) => d.revenue > 0).sort((a, b) => b[1].revenue - a[1].revenue);
+        if (brandEntries.length) {
+          const brandTotal = brandEntries.reduce((s, [, d]) => s + d.revenue, 0);
+          const colors = ['#f5b94b', '#3b82f6', '#22c55e', '#ef4444', '#a855f7', '#ec4899', '#14b8a6', '#f97316'];
+          let startAngle = 0;
+          const cx = 80, cy = 80, r = 70;
+          let paths = '';
+          let legend = '';
+          brandEntries.forEach(([brand, d], idx) => {
+            const pct = d.revenue / brandTotal;
+            const angle = pct * 360;
+            const endAngle = startAngle + angle;
+            const largeArc = angle > 180 ? 1 : 0;
+            const x1 = cx + r * Math.cos((startAngle - 90) * Math.PI / 180);
+            const y1 = cy + r * Math.sin((startAngle - 90) * Math.PI / 180);
+            const x2 = cx + r * Math.cos((endAngle - 90) * Math.PI / 180);
+            const y2 = cy + r * Math.sin((endAngle - 90) * Math.PI / 180);
+            const color = colors[idx % colors.length];
+            if (angle < 360) {
+              paths += `<path d="M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z" fill="${color}" opacity="0.8"/>`;
+            } else {
+              paths += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${color}" opacity="0.8"/>`;
+            }
+            legend += `<div class="donut-legend-item"><span class="donut-legend-dot" style="background:${color}"></span>${brand}<span class="donut-legend-val">$${Math.round(d.revenue).toLocaleString()} (${Math.round(pct * 100)}%)</span></div>`;
+            startAngle = endAngle;
+          });
+          document.getElementById('finPieChart').innerHTML = `
+            <svg viewBox="0 0 160 160" width="160" height="160" style="flex-shrink:0;">${paths}</svg>
+            <div class="donut-legend">${legend}</div>`;
+        } else {
+          document.getElementById('finPieChart').innerHTML = '<div class="loading">No data</div>';
+        }
+
+      } catch(e) { showToast('Failed to load financials', 'error'); console.error(e); }
+    }
+
+    // Shows
+    async function loadShows(){try{const d=await apiGet('shows?select=*&order=date.asc');const tb=document.getElementById('showsBody');tb.innerHTML='';if(!d.length){tb.innerHTML='<tr><td colspan="6" class="loading">No shows.</td></tr>';return;}window._shows=d;d.forEach(s=>{const dt=new Date(s.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'America/New_York'});const img=s.flyer_image?`<img src="${s.flyer_image}" style="height:36px;border-radius:3px;">`:'—';const typeBadge=s.show_type==='attending'?'<span class="lot-badge" style="background:var(--blue-dim);color:var(--blue);">Attending</span>':'<span class="lot-badge" style="background:var(--gold-dim);color:var(--gold-text);">Vending</span>';tb.innerHTML+=`<tr><td>${img}</td><td class="name-cell">${s.name}</td><td>${dt}</td><td>${s.location_name}</td><td>${typeBadge}</td><td><div class="action-btns"><button class="btn btn-sm" onclick="editShow('${s.id}')">Edit</button><button class="btn btn-sm btn-danger" onclick="deleteShow('${s.id}','${s.name.replace(/'/g,"\\'")}')">Del</button></div></td></tr>`;});renderCalendar();}catch(e){showToast('Failed','error');}}
+    function openShowModal(){document.getElementById('showModalTitle').textContent='Add Show';document.getElementById('showForm').reset();document.getElementById('showId').value='';uploadedFlyerUrl=null;resetFlyerDZ();flyerFI.value='';document.getElementById('showModal').classList.add('active');}
+    function editShow(id){const s=window._shows?.find(x=>x.id===id);if(!s)return;document.getElementById('showModalTitle').textContent='Edit Show';document.getElementById('showId').value=s.id;document.getElementById('showName').value=s.name;document.getElementById('showType').value=s.show_type||'vending';document.getElementById('showDate').value=new Date(s.date).toISOString().slice(0,16);document.getElementById('showUrl').value=s.event_url||'';document.getElementById('showLocName').value=s.location_name;document.getElementById('showAddress').value=s.address;document.getElementById('showEBTime').value=s.early_bird_time||'';document.getElementById('showEBPrice').value=s.early_bird_price||'';document.getElementById('showGATime').value=s.general_time||'';document.getElementById('showGAPrice').value=s.general_price||'';document.getElementById('showNotes').value=s.notes||'';document.getElementById('showFlyer').value=s.flyer_image||'';uploadedFlyerUrl=null;flyerFI.value='';if(s.flyer_image){flyerImg.src=s.flyer_image;flyerPrompt.style.display='none';flyerPreview.style.display='inline-block';}else{resetFlyerDZ();}document.getElementById('showModal').classList.add('active');}
+    document.getElementById('showForm').addEventListener('submit',async e=>{e.preventDefault();const id=document.getElementById('showId').value;const p={name:document.getElementById('showName').value.trim(),show_type:document.getElementById('showType').value,date:new Date(document.getElementById('showDate').value).toISOString(),event_url:document.getElementById('showUrl').value.trim()||null,location_name:document.getElementById('showLocName').value.trim(),address:document.getElementById('showAddress').value.trim(),early_bird_time:document.getElementById('showEBTime').value.trim()||null,early_bird_price:document.getElementById('showEBPrice').value.trim()||null,general_time:document.getElementById('showGATime').value.trim()||null,general_price:document.getElementById('showGAPrice').value.trim()||null,notes:document.getElementById('showNotes').value.trim()||null,flyer_image:document.getElementById('showFlyer').value.trim()||uploadedFlyerUrl||null};try{if(id){await apiPatch(`shows?id=eq.${id}`,p);}else{await apiPost('shows',p);}uploadedFlyerUrl=null;document.getElementById('showModal').classList.remove('active');showToast(id?'Updated':'Added','success');loadShows();}catch(e){showToast('Failed','error');}});
+    async function deleteShow(id,name){if(!confirm(`Delete "${name}"?`))return;try{await apiDelete(`shows?id=eq.${id}`);showToast('Deleted','success');loadShows();}catch(e){showToast('Failed','error');}}
+
+    // Show view toggle
+    function setShowView(view) {
+      document.getElementById('showsTableView').style.display = view === 'table' ? '' : 'none';
+      document.getElementById('showsCalendarView').style.display = view === 'calendar' ? '' : 'none';
+      document.getElementById('showViewTable').style.background = view === 'table' ? 'var(--gold-dim)' : 'transparent';
+      document.getElementById('showViewTable').style.color = view === 'table' ? 'var(--gold-text)' : 'var(--text-secondary)';
+      document.getElementById('showViewCal').style.background = view === 'calendar' ? 'var(--gold-dim)' : 'transparent';
+      document.getElementById('showViewCal').style.color = view === 'calendar' ? 'var(--gold-text)' : 'var(--text-secondary)';
+      if (view === 'calendar') renderCalendar();
+    }
+
+    // Calendar
+    let calMonth = new Date().getMonth(), calYear = new Date().getFullYear();
+    function calNavMonth(dir) { calMonth += dir; if (calMonth > 11) { calMonth = 0; calYear++; } if (calMonth < 0) { calMonth = 11; calYear--; } renderCalendar(); }
+
+    function renderCalendar() {
+      const shows = window._shows || [];
+      const grid = document.getElementById('calendarGrid');
+      const label = document.getElementById('calMonthLabel');
+      if (!grid) return;
+
+      label.textContent = new Date(calYear, calMonth).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+      const firstDay = new Date(calYear, calMonth, 1).getDay();
+      const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+      const today = new Date();
+
+      // Day headers
+      let html = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => `<div class="cal-header">${d}</div>`).join('');
+
+      // Empty cells before first day
+      for (let i = 0; i < firstDay; i++) html += '<div class="cal-day empty"></div>';
+
+      // Days
+      for (let d = 1; d <= daysInMonth; d++) {
+        const isToday = d === today.getDate() && calMonth === today.getMonth() && calYear === today.getFullYear();
+        const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+
+        // Find shows on this day
+        const dayShows = shows.filter(s => {
+          const sd = new Date(s.date).toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+          return sd === dateStr;
+        });
+
+        let events = dayShows.map(s => {
+          const cls = s.show_type === 'attending' ? 'attending' : 'vending';
+          return `<div class="cal-event ${cls}" onclick="editShow('${s.id}')" title="${s.name}">${s.name}</div>`;
+        }).join('');
+
+        html += `<div class="cal-day${isToday ? ' today' : ''}"><div class="cal-day-num">${d}</div>${events}</div>`;
+      }
+
+      grid.innerHTML = html;
+    }
+
+    // Flyer upload
+    const flyerDZ=document.getElementById('flyerDropZone'),flyerFI=document.getElementById('flyerFileInput'),flyerPrompt=document.getElementById('flyerDropPrompt'),flyerPreview=document.getElementById('flyerDropPreview'),flyerImg=document.getElementById('flyerPreviewImg');
+    flyerDZ.addEventListener('click',e=>{if(!e.target.closest('.drop-zone-remove'))flyerFI.click();});
+    flyerDZ.addEventListener('dragover',e=>{e.preventDefault();flyerDZ.classList.add('dragover');});
+    flyerDZ.addEventListener('dragleave',()=>{flyerDZ.classList.remove('dragover');});
+    flyerDZ.addEventListener('drop',e=>{e.preventDefault();flyerDZ.classList.remove('dragover');if(e.dataTransfer.files[0])handleFlyerFile(e.dataTransfer.files[0]);});
+    flyerFI.addEventListener('change',()=>{if(flyerFI.files[0])handleFlyerFile(flyerFI.files[0]);});
+    async function handleFlyerFile(file){if(file.size>5*1024*1024){showToast('Max 5MB','error');return;}flyerPrompt.innerHTML='<span class="drop-zone-uploading">Uploading...</span>';flyerPreview.style.display='none';try{const fn=`flyer-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g,'_')}`;const r=await fetch(`${SUPABASE_URL}/storage/v1/object/card-images/${fn}`,{method:'POST',headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':`Bearer ${accessToken}`,'Content-Type':file.type},body:file});if(!r.ok)throw new Error(await r.text());uploadedFlyerUrl=`${SUPABASE_URL}/storage/v1/object/public/card-images/${fn}`;flyerImg.src=URL.createObjectURL(file);flyerPrompt.style.display='none';flyerPreview.style.display='inline-block';document.getElementById('showFlyer').value='';showToast('Uploaded','success');}catch(e){showToast('Upload failed','error');resetFlyerDZ();}}
+    function removeFlyerImage(){uploadedFlyerUrl=null;resetFlyerDZ();flyerFI.value='';}
+    function resetFlyerDZ(){flyerPrompt.innerHTML='<span class="drop-zone-icon">🖼️</span><span>Drag & drop, or <label for="flyerFileInput" class="drop-zone-browse">browse</label></span><span class="drop-zone-hint">JPG, PNG, WebP — max 5MB</span>';flyerPrompt.style.display='flex';flyerPreview.style.display='none';}
+    document.getElementById('showFlyer').addEventListener('input',e=>{const u=e.target.value.trim();if(u&&u.startsWith('http')){flyerImg.src=u;flyerPrompt.style.display='none';flyerPreview.style.display='inline-block';uploadedFlyerUrl=null;}else if(!uploadedFlyerUrl){resetFlyerDZ();}});
+
+    // Connect links
+    async function loadLinks(){try{const d=await apiGet('connect_links?select=*&order=sort_order.asc');const tb=document.getElementById('linksBody');tb.innerHTML='';if(!d.length){tb.innerHTML='<tr><td colspan="5" class="loading">No links.</td></tr>';return;}window._links=d;d.forEach(l=>{tb.innerHTML+=`<tr><td>${l.icon}</td><td class="name-cell">${l.label}</td><td>${l.handle}</td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.url}</td><td><div class="action-btns"><button class="btn btn-sm" onclick="editLink('${l.id}')">Edit</button><button class="btn btn-sm btn-danger" onclick="deleteLink('${l.id}','${l.label.replace(/'/g,"\\'")}')">Del</button></div></td></tr>`;});}catch(e){showToast('Failed','error');}}
+    function openLinkModal(){document.getElementById('linkModalTitle').textContent='Add Link';document.getElementById('linkForm').reset();document.getElementById('linkId').value='';document.getElementById('linkModal').classList.add('active');}
+    function editLink(id){const l=window._links?.find(x=>x.id===id);if(!l)return;document.getElementById('linkModalTitle').textContent='Edit Link';document.getElementById('linkId').value=l.id;document.getElementById('linkLabel').value=l.label;document.getElementById('linkHandle').value=l.handle;document.getElementById('linkUrl').value=l.url;document.getElementById('linkIcon').value=l.icon;document.getElementById('linkSort').value=l.sort_order;document.getElementById('linkModal').classList.add('active');}
+    document.getElementById('linkForm').addEventListener('submit',async e=>{e.preventDefault();const id=document.getElementById('linkId').value;const p={label:document.getElementById('linkLabel').value.trim(),handle:document.getElementById('linkHandle').value.trim(),url:document.getElementById('linkUrl').value.trim(),icon:document.getElementById('linkIcon').value,sort_order:parseInt(document.getElementById('linkSort').value)||0};try{if(id){await apiPatch(`connect_links?id=eq.${id}`,p);}else{await apiPost('connect_links',p);}document.getElementById('linkModal').classList.remove('active');showToast(id?'Updated':'Added','success');loadLinks();}catch(e){showToast('Failed','error');}});
+    async function deleteLink(id,name){if(!confirm(`Delete "${name}"?`))return;try{await apiDelete(`connect_links?id=eq.${id}`);showToast('Deleted','success');loadLinks();}catch(e){showToast('Failed','error');}}
+
+    // Toast
+    function showToast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast ${type} show`;setTimeout(()=>{t.classList.remove('show');},2500);}
+
+    // Init
+    checkAuth();
+  </script>
+</body>
+</html>
