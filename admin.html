@@ -352,6 +352,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
           <span>Connect</span>
         </button>
+        <button class="sidebar-link" data-page="site">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <span>Site</span>
+        </button>
       </nav>
       <div class="sidebar-footer">
         <button class="sidebar-link" onclick="toggleExcludeMe()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><span id="excludeLabel">Exclude My Views</span></button>
@@ -976,6 +980,54 @@
           </table>
         </div>
       </div>
+
+      <!-- SITE PAGE -->
+      <div class="page" id="page-site">
+        <div class="sec-header">
+          <h2 class="sec-title">Site Settings</h2>
+        </div>
+
+        <!-- Hero Showcase -->
+        <div class="panel" style="margin-bottom:1.5rem;">
+          <div class="panel-header"><span class="panel-title">Hero Showcase</span><span style="font-size:0.68rem;color:var(--text-muted);margin-left:0.5rem;">Pick up to 3 items to display in the hero card fan</span></div>
+          <div class="panel-body">
+            <div id="heroShowcaseList" style="display:flex;flex-direction:column;gap:0.5rem;">
+              <div class="loading">Loading...</div>
+            </div>
+            <div style="margin-top:1rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+              <button class="btn btn-gold btn-sm" onclick="openHeroPickerModal()">+ Add to Showcase</button>
+              <div style="display:flex;align-items:center;gap:0.5rem;">
+                <label class="form-label" style="margin:0;white-space:nowrap;">Carousel Timer</label>
+                <input class="form-input" id="heroCarouselInterval" type="number" min="5" max="300" value="60" style="width:70px;font-size:0.78rem;padding:0.35rem 0.5rem;">
+                <span style="font-size:0.72rem;color:var(--text-muted);">seconds</span>
+                <button class="btn btn-sm" onclick="saveCarouselInterval()">Save</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Category Descriptions -->
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title">Category Descriptions</span><span style="font-size:0.68rem;color:var(--text-muted);margin-left:0.5rem;">Shown under each category in The Vault</span></div>
+          <div class="panel-body">
+            <div id="catDescEditor" style="display:flex;flex-direction:column;gap:0.85rem;">
+              <div class="loading">Loading...</div>
+            </div>
+            <div style="margin-top:1rem;display:flex;justify-content:flex-end;">
+              <button class="btn btn-gold" onclick="saveCatDescs()">Save Descriptions</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- HERO PICKER MODAL -->
+      <div class="modal-overlay" id="heroPickerModal">
+        <div class="modal" style="max-width:600px;">
+          <div class="modal-header"><h3>Pick Hero Showcase Item</h3><button class="modal-close" onclick="document.getElementById('heroPickerModal').classList.remove('active')">✕</button></div>
+          <input class="form-input" id="heroPickerSearch" placeholder="Search inventory..." style="margin-bottom:0.75rem;" oninput="renderHeroPicker()">
+          <div id="heroPickerList" style="max-height:400px;overflow-y:auto;display:flex;flex-direction:column;gap:0.35rem;"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1016,8 +1068,9 @@
           <textarea class="form-input" id="itemNotes" rows="4" style="resize:vertical;min-height:80px;" placeholder="e.g. Bought from John at Dallas show, slight whitening on back corner..."></textarea>
         </div>
         <div class="form-row">
-          <label class="form-check"><input type="checkbox" id="itemFeatured"><span class="form-check-label">Featured</span></label>
+          <label class="form-check"><input type="checkbox" id="itemFeatured" onchange="if(this.checked)document.getElementById('itemHeroShowcase').checked=false"><span class="form-check-label">Featured</span></label>
           <label class="form-check"><input type="checkbox" id="itemExclusive"><span class="form-check-label">Exclusive</span></label>
+          <label class="form-check"><input type="checkbox" id="itemHeroShowcase" onchange="if(this.checked)document.getElementById('itemFeatured').checked=false"><span class="form-check-label">Hero Showcase</span></label>
         </div>
         <div class="modal-footer"><button type="button" class="btn" onclick="closeItemModal()">Cancel</button><button type="submit" class="btn btn-gold" id="saveBtn">Save Item</button></div>
       </form>
@@ -1373,7 +1426,7 @@
       btn.textContent = 'Send Reset Link';
       btn.disabled = false;
     });
-    function showDashboard() { document.getElementById('authScreen').style.display='none'; document.getElementById('adminApp').style.display='flex'; loadAnalytics(); loadInventory(); loadShows(); loadLinks(); loadPayments(); loadPriceSetting(); loadPasswordSetting(); }
+    function showDashboard() { document.getElementById('authScreen').style.display='none'; document.getElementById('adminApp').style.display='flex'; loadAnalytics(); loadInventory(); loadShows(); loadLinks(); loadPayments(); loadPriceSetting(); loadPasswordSetting(); loadCatDescs(); loadHeroShowcase(); }
 
     // Page navigation
     document.querySelectorAll('.sidebar-link[data-page]').forEach(link => {
@@ -1386,6 +1439,7 @@
         document.getElementById('analyticsRange').style.display = link.dataset.page === 'dashboard' ? '' : 'none';
         if (link.dataset.page === 'sold') loadSold();
         if (link.dataset.page === 'financials') loadFinancials();
+        if (link.dataset.page === 'site') { loadCatDescs(); loadHeroShowcase(); }
       });
     });
 
@@ -1630,7 +1684,7 @@
 
     // Item modal
     function openAddModal(){document.getElementById('modalTitle').textContent='Add Item';document.getElementById('itemForm').reset();document.getElementById('itemId').value='';document.getElementById('itemSort').value=(window._items?.length||0)+1;uploadedImageUrl=null;resetDropZone();fileInput.value='';document.getElementById('itemModal').classList.add('active');}
-    function openEditModal(id){const i=window._items?.find(x=>x.id===id);if(!i)return;document.getElementById('modalTitle').textContent='Edit Item';document.getElementById('itemId').value=i.id;document.getElementById('itemName').value=i.name;document.getElementById('itemDetails').value=i.details;document.getElementById('itemPrice').value=i.price;document.getElementById('itemQty').value=i.qty;document.getElementById('itemSort').value=i.sort_order;document.getElementById('itemBrand').value=i.brand;document.getElementById('itemCategory').value=i.category;document.getElementById('itemImage').value=i.image||'';document.getElementById('itemFeatured').checked=i.featured;document.getElementById('itemExclusive').checked=i.exclusive;document.getElementById('itemTcgUrl').value=i.tcgplayer_url||'';document.getElementById('itemCost').value=i.cost||'';document.getElementById('itemNotes').value=i.notes||'';uploadedImageUrl=null;fileInput.value='';if(i.image){previewImg.src=i.image;dropPrompt.style.display='none';dropPreview.style.display='inline-block';}else{resetDropZone();}document.getElementById('itemModal').classList.add('active');}
+    function openEditModal(id){const i=window._items?.find(x=>x.id===id);if(!i)return;document.getElementById('modalTitle').textContent='Edit Item';document.getElementById('itemId').value=i.id;document.getElementById('itemName').value=i.name;document.getElementById('itemDetails').value=i.details;document.getElementById('itemPrice').value=i.price;document.getElementById('itemQty').value=i.qty;document.getElementById('itemSort').value=i.sort_order;document.getElementById('itemBrand').value=i.brand;document.getElementById('itemCategory').value=i.category;document.getElementById('itemImage').value=i.image||'';document.getElementById('itemFeatured').checked=i.featured;document.getElementById('itemExclusive').checked=i.exclusive;document.getElementById('itemHeroShowcase').checked=i.hero_showcase||false;document.getElementById('itemTcgUrl').value=i.tcgplayer_url||'';document.getElementById('itemCost').value=i.cost||'';document.getElementById('itemNotes').value=i.notes||'';uploadedImageUrl=null;fileInput.value='';if(i.image){previewImg.src=i.image;dropPrompt.style.display='none';dropPreview.style.display='inline-block';}else{resetDropZone();}document.getElementById('itemModal').classList.add('active');}
     function closeItemModal(){document.getElementById('itemModal').classList.remove('active');}
 
     // Image upload
@@ -1646,7 +1700,7 @@
     document.getElementById('itemImage').addEventListener('input',e=>{const u=e.target.value.trim();if(u&&u.startsWith('http')){previewImg.src=u;dropPrompt.style.display='none';dropPreview.style.display='inline-block';uploadedImageUrl=null;}else if(!uploadedImageUrl){resetDropZone();}});
 
     // Save item
-    document.getElementById('itemForm').addEventListener('submit',async e=>{e.preventDefault();const btn=document.getElementById('saveBtn');btn.textContent='Saving...';btn.disabled=true;const id=document.getElementById('itemId').value;const p={name:document.getElementById('itemName').value.trim(),details:document.getElementById('itemDetails').value.trim(),price:document.getElementById('itemPrice').value.trim(),cost:document.getElementById('itemCost').value.trim()||null,qty:parseInt(document.getElementById('itemQty').value)||1,sort_order:parseInt(document.getElementById('itemSort').value)||0,brand:document.getElementById('itemBrand').value,category:document.getElementById('itemCategory').value,image:document.getElementById('itemImage').value.trim()||uploadedImageUrl||null,featured:document.getElementById('itemFeatured').checked,exclusive:document.getElementById('itemExclusive').checked,tcgplayer_url:document.getElementById('itemTcgUrl').value.trim()||null,notes:document.getElementById('itemNotes').value.trim()||null};try{if(id){await apiPatch(`inventory?id=eq.${id}`,p);}else{await apiPost('inventory',p);}uploadedImageUrl=null;closeItemModal();showToast(id?'Updated':'Added','success');loadInventory();}catch(e){showToast('Failed: '+e.message,'error');}btn.textContent='Save Item';btn.disabled=false;});
+    document.getElementById('itemForm').addEventListener('submit',async e=>{e.preventDefault();const btn=document.getElementById('saveBtn');btn.textContent='Saving...';btn.disabled=true;const id=document.getElementById('itemId').value;const p={name:document.getElementById('itemName').value.trim(),details:document.getElementById('itemDetails').value.trim(),price:document.getElementById('itemPrice').value.trim(),cost:document.getElementById('itemCost').value.trim()||null,qty:parseInt(document.getElementById('itemQty').value)||1,sort_order:parseInt(document.getElementById('itemSort').value)||0,brand:document.getElementById('itemBrand').value,category:document.getElementById('itemCategory').value,image:document.getElementById('itemImage').value.trim()||uploadedImageUrl||null,featured:document.getElementById('itemFeatured').checked,exclusive:document.getElementById('itemExclusive').checked,hero_showcase:document.getElementById('itemHeroShowcase').checked,tcgplayer_url:document.getElementById('itemTcgUrl').value.trim()||null,notes:document.getElementById('itemNotes').value.trim()||null};try{if(id){await apiPatch(`inventory?id=eq.${id}`,p);}else{await apiPost('inventory',p);}uploadedImageUrl=null;closeItemModal();showToast(id?'Updated':'Added','success');loadInventory();}catch(e){showToast('Failed: '+e.message,'error');}btn.textContent='Save Item';btn.disabled=false;});
 
     // Delete
     function openDeleteModal(id,name){deleteId=id;document.getElementById('deleteName').textContent=name;document.getElementById('deleteModal').classList.add('active');}
@@ -2823,6 +2877,121 @@
     function editLink(id){const l=window._links?.find(x=>x.id===id);if(!l)return;document.getElementById('linkModalTitle').textContent='Edit Link';document.getElementById('linkId').value=l.id;document.getElementById('linkLabel').value=l.label;document.getElementById('linkHandle').value=l.handle;document.getElementById('linkUrl').value=l.url;document.getElementById('linkIcon').value=l.icon;document.getElementById('linkSort').value=l.sort_order;document.getElementById('linkModal').classList.add('active');}
     document.getElementById('linkForm').addEventListener('submit',async e=>{e.preventDefault();const id=document.getElementById('linkId').value;const p={label:document.getElementById('linkLabel').value.trim(),handle:document.getElementById('linkHandle').value.trim(),url:document.getElementById('linkUrl').value.trim(),icon:document.getElementById('linkIcon').value,sort_order:parseInt(document.getElementById('linkSort').value)||0};try{if(id){await apiPatch(`connect_links?id=eq.${id}`,p);}else{await apiPost('connect_links',p);}document.getElementById('linkModal').classList.remove('active');showToast(id?'Updated':'Added','success');loadLinks();}catch(e){showToast('Failed','error');}});
     async function deleteLink(id,name){if(!confirm(`Delete "${name}"?`))return;try{await apiDelete(`connect_links?id=eq.${id}`);showToast('Deleted','success');loadLinks();}catch(e){showToast('Failed','error');}}
+
+    // ========== CATEGORY DESCRIPTIONS ==========
+    const CAT_LABELS = { slabs: 'Slabs', sealed: 'Sealed Product', raw: 'Raw Cards', accessories: 'Accessories', collectibles: 'Collectibles' };
+    let _catDescs = {};
+
+    async function loadCatDescs() {
+      try {
+        const data = await apiGet('category_descriptions?select=*');
+        _catDescs = {};
+        data.forEach(d => _catDescs[d.category] = d.description);
+        const el = document.getElementById('catDescEditor');
+        el.innerHTML = Object.entries(CAT_LABELS).map(([key, label]) => `
+          <div>
+            <label class="form-label">${label}</label>
+            <input class="form-input" id="catDesc_${key}" value="${(_catDescs[key] || '').replace(/"/g, '&quot;')}" placeholder="Description shown under ${label}...">
+          </div>
+        `).join('');
+      } catch(e) { showToast('Failed to load descriptions', 'error'); }
+    }
+
+    async function saveCatDescs() {
+      try {
+        const cats = Object.keys(CAT_LABELS);
+        for (const cat of cats) {
+          const val = document.getElementById('catDesc_' + cat).value.trim();
+          await apiFetch(`category_descriptions?category=eq.${cat}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ description: val, updated_at: new Date().toISOString() })
+          });
+        }
+        showToast('Descriptions saved', 'success');
+      } catch(e) { showToast('Failed to save', 'error'); }
+    }
+
+    // ========== HERO SHOWCASE ==========
+    async function loadHeroShowcase() {
+      try {
+        // Load carousel interval
+        try {
+          const s = await apiGet('site_settings?key=eq.hero_carousel_interval&select=value');
+          if (s.length) document.getElementById('heroCarouselInterval').value = parseInt(s[0].value) || 60;
+        } catch(e) {}
+        const items = await apiGet('inventory?select=id,name,image,brand,hero_showcase&hero_showcase=eq.true&order=sort_order.asc');
+        const el = document.getElementById('heroShowcaseList');
+        if (!items.length) {
+          el.innerHTML = '<p style="font-size:0.82rem;color:var(--text-muted);">No items in showcase. Add up to 3.</p>';
+          return;
+        }
+        el.innerHTML = items.map(i => `
+          <div style="display:flex;align-items:center;gap:0.75rem;padding:0.6rem 0.75rem;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;">
+            ${i.image ? `<img src="${i.image}" style="width:40px;height:54px;object-fit:cover;border-radius:4px;border:1px solid var(--border);">` : '<div style="width:40px;height:54px;background:var(--bg-card-hover);border-radius:4px;"></div>'}
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:600;font-size:0.85rem;">${i.name}</div>
+              <div style="font-size:0.7rem;color:var(--text-muted);text-transform:capitalize;">${i.brand?.replace(/-/g,' ') || ''}</div>
+            </div>
+            <button class="btn btn-sm btn-danger" onclick="removeFromShowcase('${i.id}')">Remove</button>
+          </div>
+        `).join('');
+      } catch(e) { showToast('Failed to load showcase', 'error'); }
+    }
+
+    async function removeFromShowcase(id) {
+      try {
+        await apiPatch(`inventory?id=eq.${id}`, { hero_showcase: false });
+        showToast('Removed from showcase', 'success');
+        loadHeroShowcase();
+      } catch(e) { showToast('Failed', 'error'); }
+    }
+
+    async function saveCarouselInterval() {
+      const val = parseInt(document.getElementById('heroCarouselInterval').value) || 60;
+      try {
+        await apiFetch('site_settings?key=eq.hero_carousel_interval', {
+          method: 'PATCH',
+          body: JSON.stringify({ value: String(val), updated_at: new Date().toISOString() })
+        });
+        showToast(`Carousel set to ${val}s`, 'success');
+      } catch(e) { showToast('Failed to save', 'error'); }
+    }
+
+    function openHeroPickerModal() {
+      document.getElementById('heroPickerSearch').value = '';
+      renderHeroPicker();
+      document.getElementById('heroPickerModal').classList.add('active');
+    }
+
+    function renderHeroPicker() {
+      const q = document.getElementById('heroPickerSearch').value.toLowerCase().trim();
+      const items = (window._items || []).filter(i => !i.sold && !i.hero_showcase && !i.featured && i.visible && i.image);
+      const filtered = q ? items.filter(i => i.name.toLowerCase().includes(q) || i.brand.toLowerCase().includes(q)) : items.slice(0, 30);
+      const el = document.getElementById('heroPickerList');
+      el.innerHTML = filtered.map(i => `
+        <div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0.65rem;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:var(--transition);" onmouseover="this.style.borderColor='var(--border-hover)'" onmouseout="this.style.borderColor='var(--border)'" onclick="addToShowcase('${i.id}')">
+          <img src="${i.image}" style="width:36px;height:48px;object-fit:cover;border-radius:4px;border:1px solid var(--border);">
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:600;font-size:0.82rem;">${i.name}</div>
+            <div style="font-size:0.68rem;color:var(--text-muted);text-transform:capitalize;">${i.brand?.replace(/-/g,' ') || ''} · ${i.category}</div>
+          </div>
+          <span style="font-size:0.75rem;color:var(--gold-text);">+ Add</span>
+        </div>
+      `).join('') || '<p style="padding:1rem;color:var(--text-muted);font-size:0.82rem;">No matching items</p>';
+    }
+
+    async function addToShowcase(id) {
+      // Check count
+      const current = (window._items || []).filter(i => i.hero_showcase);
+      if (current.length >= 3) { showToast('Max 3 showcase items', 'error'); return; }
+      try {
+        await apiPatch(`inventory?id=eq.${id}`, { hero_showcase: true, featured: false });
+        document.getElementById('heroPickerModal').classList.remove('active');
+        showToast('Added to showcase', 'success');
+        loadInventory();
+        loadHeroShowcase();
+      } catch(e) { showToast('Failed', 'error'); }
+    }
 
     // Toast
     function showToast(msg,type='success'){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast ${type} show`;setTimeout(()=>{t.classList.remove('show');},2500);}
