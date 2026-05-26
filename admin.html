@@ -1038,24 +1038,39 @@
           </div>
         </div>
 
-        <!-- Sell Tags -->
+        <!-- Sell Section -->
         <div class="panel" style="margin-bottom:1.5rem;">
-          <div class="panel-header"><span class="panel-title">Sell/Trade Tags</span><span style="font-size:0.68rem;color:var(--text-muted);margin-left:0.5rem;">Shown on the "Got Cards to Sell?" section</span></div>
+          <div class="panel-header"><span class="panel-title">Sell/Trade Section</span><span style="font-size:0.68rem;color:var(--text-muted);margin-left:0.5rem;">"Got Cards to Sell?" section</span></div>
           <div class="panel-body" style="display:flex;flex-direction:column;gap:0.75rem;">
             <div>
-              <label class="form-label">Tag 1</label>
-              <input class="form-input" id="sellBadge1Label" placeholder="e.g. Graded Slabs" style="font-size:0.82rem;">
+              <label class="form-label">Title</label>
+              <input class="form-input" id="sellTitleInput" placeholder="e.g. Got Cards to Sell?" style="font-size:0.82rem;">
             </div>
             <div>
-              <label class="form-label">Tag 2</label>
-              <input class="form-input" id="sellBadge2Label" placeholder="e.g. Sealed Product" style="font-size:0.82rem;">
+              <label class="form-label">Description</label>
+              <textarea class="form-input" id="sellDescInput" rows="2" placeholder="e.g. We buy graded slabs..." style="font-size:0.82rem;resize:vertical;min-height:50px;"></textarea>
             </div>
-            <div>
-              <label class="form-label">Tag 3</label>
-              <input class="form-input" id="sellBadge3Label" placeholder="e.g. Singles & Bulk" style="font-size:0.82rem;">
+            <div style="border-top:1px solid var(--border);padding-top:0.75rem;margin-top:0.25rem;">
+              <label class="form-label" style="margin-bottom:0.5rem;">Tags</label>
+              <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                <input class="form-input" id="sellBadge1Label" placeholder="Tag 1" style="font-size:0.82rem;flex:1;min-width:120px;">
+                <input class="form-input" id="sellBadge2Label" placeholder="Tag 2" style="font-size:0.82rem;flex:1;min-width:120px;">
+                <input class="form-input" id="sellBadge3Label" placeholder="Tag 3" style="font-size:0.82rem;flex:1;min-width:120px;">
+              </div>
+            </div>
+            <div style="border-top:1px solid var(--border);padding-top:0.75rem;margin-top:0.25rem;">
+              <label class="form-label" style="margin-bottom:0.5rem;">"Send a DM" Links</label>
+              <div style="display:grid;grid-template-columns:1fr 2fr;gap:0.5rem;margin-bottom:0.5rem;">
+                <input class="form-input" id="sellDm1Label" placeholder="Label (e.g. Discord)" style="font-size:0.82rem;">
+                <input class="form-input" id="sellDm1Url" placeholder="URL (e.g. https://discord.gg/...)" style="font-size:0.82rem;">
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 2fr;gap:0.5rem;">
+                <input class="form-input" id="sellDm2Label" placeholder="Label (e.g. Instagram)" style="font-size:0.82rem;">
+                <input class="form-input" id="sellDm2Url" placeholder="URL (e.g. https://instagram.com/...)" style="font-size:0.82rem;">
+              </div>
             </div>
             <div style="display:flex;justify-content:flex-end;">
-              <button class="btn btn-gold btn-sm" onclick="saveSellBadges()">Save Tags</button>
+              <button class="btn btn-gold btn-sm" onclick="saveSellSection()">Save Sell Section</button>
             </div>
           </div>
         </div>
@@ -3081,25 +3096,37 @@
     // ========== SELL BADGES ==========
     async function loadSellBadges() {
       try {
-        const data = await apiGet('site_settings?key=like.sell_badge_*&select=key,value');
+        const data = await apiGet('site_settings?key=like.sell_*&select=key,value');
         const get = (k) => data.find(s => s.key === k)?.value || '';
+        document.getElementById('sellTitleInput').value = get('sell_title');
+        document.getElementById('sellDescInput').value = get('sell_description');
         document.getElementById('sellBadge1Label').value = get('sell_badge_1_label');
         document.getElementById('sellBadge2Label').value = get('sell_badge_2_label');
         document.getElementById('sellBadge3Label').value = get('sell_badge_3_label');
+        document.getElementById('sellDm1Label').value = get('sell_dm_1_label');
+        document.getElementById('sellDm1Url').value = get('sell_dm_1_url');
+        document.getElementById('sellDm2Label').value = get('sell_dm_2_label');
+        document.getElementById('sellDm2Url').value = get('sell_dm_2_url');
       } catch(e) {}
     }
 
-    async function saveSellBadges() {
+    async function saveSellSection() {
       try {
         const pairs = [
+          ['sell_title', document.getElementById('sellTitleInput').value.trim()],
+          ['sell_description', document.getElementById('sellDescInput').value.trim()],
           ['sell_badge_1_label', document.getElementById('sellBadge1Label').value.trim()],
           ['sell_badge_2_label', document.getElementById('sellBadge2Label').value.trim()],
           ['sell_badge_3_label', document.getElementById('sellBadge3Label').value.trim()],
+          ['sell_dm_1_label', document.getElementById('sellDm1Label').value.trim()],
+          ['sell_dm_1_url', document.getElementById('sellDm1Url').value.trim()],
+          ['sell_dm_2_label', document.getElementById('sellDm2Label').value.trim()],
+          ['sell_dm_2_url', document.getElementById('sellDm2Url').value.trim()],
         ];
         for (const [key, val] of pairs) {
           await apiFetch(`site_settings?key=eq.${key}`, { method: 'PATCH', body: JSON.stringify({ value: val, updated_at: new Date().toISOString() }) });
         }
-        showToast('Tags saved', 'success');
+        showToast('Sell section saved', 'success');
       } catch(e) { showToast('Failed to save', 'error'); }
     }
 

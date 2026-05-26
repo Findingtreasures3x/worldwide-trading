@@ -173,7 +173,7 @@
         <h2 class="sell-cta-title">Got Cards to <span class="gold-grad">Sell</span>?</h2>
         <p class="sell-cta-text">We buy graded slabs and sealed product at <strong style="color:var(--gold-text)">70–90% market value</strong>. Singles, collections, bulk — reach out and let's make a deal.</p>
         <div class="sell-cta-actions">
-          <a href="#connect" class="hero-cta">Send a DM →</a>
+          <a href="#" class="hero-cta" onclick="event.preventDefault();openDmModal()">Send a DM →</a>
           <span class="sell-cta-note">Quick response · Fair offers · Cash or trade</span>
         </div>
       </div>
@@ -221,10 +221,20 @@
           <span id="modalPrice" class="modal-price"></span>
         </div>
         <div class="modal-actions-row">
-          <a href="#payment" class="hero-cta" onclick="closeModal()" style="font-size:0.8rem;padding:0.6rem 1.25rem;">Pay Now</a>
+          <a href="#payment" class="hero-cta" onclick="closeModal()" style="font-size:0.8rem;padding:0.6rem 1.25rem;">Purchase</a>
           <a href="#connect" class="hero-cta-outline" onclick="closeModal()" style="font-size:0.8rem;padding:0.6rem 1.25rem;">DM to Hold</a>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- DM Modal -->
+  <div class="modal-overlay" id="dmModal" onclick="closeDmModal()">
+    <div class="modal-content" onclick="event.stopPropagation()" style="max-width:360px;text-align:center;padding:2rem;">
+      <button class="modal-close" onclick="closeDmModal()">&times;</button>
+      <h3 style="font-family:'Cinzel',serif;font-size:1.15rem;font-weight:700;margin-bottom:0.5rem;">Send a DM</h3>
+      <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:1.5rem;">Choose where to reach us</p>
+      <div id="dmModalLinks" style="display:flex;flex-direction:column;gap:0.6rem;"></div>
     </div>
   </div>
 
@@ -657,7 +667,7 @@
           fetch(`${SUPABASE_URL}/rest/v1/category_descriptions?select=*`, {
             headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
           }),
-          fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=in.(hero_carousel_interval,show_carousel_interval,announcement_enabled,announcement_text,hero_title,hero_subtitle,stats_grading,hero_bg_image,seo_title,seo_description,seo_og_image,sell_badge_1_icon,sell_badge_1_label,sell_badge_2_icon,sell_badge_2_label,sell_badge_3_icon,sell_badge_3_label)&select=key,value`, {
+          fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=in.(hero_carousel_interval,show_carousel_interval,announcement_enabled,announcement_text,hero_title,hero_subtitle,stats_grading,hero_bg_image,seo_title,seo_description,seo_og_image,sell_badge_1_label,sell_badge_2_label,sell_badge_3_label,sell_title,sell_description,sell_dm_1_label,sell_dm_1_url,sell_dm_2_label,sell_dm_2_url)&select=key,value`, {
             headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
           })
         ]);
@@ -717,6 +727,24 @@
             }
           }
 
+          // Sell section text
+          const sellTitle = get('sell_title');
+          const sellDesc = get('sell_description');
+          if (sellTitle) {
+            const el = document.querySelector('.sell-cta-title');
+            if (el) el.innerHTML = sellTitle.replace(/(Sell|Trade)/i, '<span class="gold-grad">$1</span>');
+          }
+          if (sellDesc) {
+            const el = document.querySelector('.sell-cta-text');
+            if (el) el.innerHTML = sellDesc.replace(/(\d+[–-]\d+%\s*market\s*value)/i, '<strong style="color:var(--gold-text)">$1</strong>');
+          }
+
+          // DM links for modal
+          window._dmLinks = [
+            { label: get('sell_dm_1_label'), url: get('sell_dm_1_url') },
+            { label: get('sell_dm_2_label'), url: get('sell_dm_2_url') }
+          ];
+
           // Stats bar grading
           const statsGrading = get('stats_grading');
           if (statsGrading) {
@@ -726,6 +754,22 @@
         } catch(e) {}
       } catch(e) {}
     }
+
+    // DM Modal
+    window._dmLinks = [];
+    function openDmModal() {
+      const el = document.getElementById('dmModalLinks');
+      el.innerHTML = window._dmLinks.filter(l => l.label && l.url).map(l =>
+        `<a href="${l.url}" target="_blank" rel="noopener" class="hero-cta-outline" style="width:100%;justify-content:center;font-size:0.85rem;padding:0.7rem 1.25rem;">${l.label}</a>`
+      ).join('');
+      document.getElementById('dmModal').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeDmModal() {
+      document.getElementById('dmModal').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDmModal(); });
 
     function dismissAnnouncement() {
       document.getElementById('announcementBar').style.display = 'none';
