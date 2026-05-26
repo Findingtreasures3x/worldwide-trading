@@ -979,38 +979,29 @@ body {
   letter-spacing: 0.02em;
 }
 
-.sell-cta-badges {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  flex-shrink: 0;
-}
-
-.sell-badge {
+.sell-cta-tags {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.85rem 1.25rem;
-  transition: var(--transition);
-}
-
-.sell-badge:hover {
-  border-color: var(--border-hover);
-  background: var(--bg-card-hover);
-}
-
-.sell-badge-icon {
-  font-size: 1.3rem;
+  flex-wrap: wrap;
   flex-shrink: 0;
 }
 
-.sell-badge-label {
-  font-weight: 600;
-  font-size: 0.85rem;
-  color: var(--text);
+.sell-tag {
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--gold-text);
+  padding: 0.5rem 1.25rem;
+  border: 1px solid rgba(245, 185, 75, 0.3);
+  border-radius: 100px;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+.sell-tag-sep {
+  color: var(--text-muted);
+  font-size: 1rem;
 }
 
 @media (max-width: 639px) {
@@ -1023,8 +1014,7 @@ body {
   .sell-cta-title { font-size: 1.5rem; }
   .sell-cta-text { font-size: 0.88rem; margin: 0 auto 1.25rem; }
   .sell-cta-actions { justify-content: center; flex-direction: column; gap: 0.75rem; }
-  .sell-cta-badges { flex-direction: row; flex-wrap: wrap; justify-content: center; }
-  .sell-badge { padding: 0.65rem 1rem; }
+  .sell-cta-tags { justify-content: center; }
 }
 
 @media (min-width: 640px) and (max-width: 1099px) {
@@ -1036,7 +1026,7 @@ body {
   }
   .sell-cta-text { margin: 0 auto 1.25rem; }
   .sell-cta-actions { justify-content: center; }
-  .sell-cta-badges { flex-direction: row; }
+  .sell-cta-tags { justify-content: center; }
 }
 
 /* ===================== SEARCH & FILTERS ===================== */
