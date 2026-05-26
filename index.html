@@ -177,7 +177,7 @@
           <span class="sell-cta-note">Quick response · Fair offers · Cash or trade</span>
         </div>
       </div>
-      <div class="sell-cta-badges">
+      <div class="sell-cta-badges" id="sellBadges">
         <div class="sell-badge"><span class="sell-badge-icon">💎</span><span class="sell-badge-label">Graded Slabs</span></div>
         <div class="sell-badge"><span class="sell-badge-icon">📦</span><span class="sell-badge-label">Sealed Product</span></div>
         <div class="sell-badge"><span class="sell-badge-icon">🃏</span><span class="sell-badge-label">Singles & Bulk</span></div>
@@ -655,7 +655,7 @@
           fetch(`${SUPABASE_URL}/rest/v1/category_descriptions?select=*`, {
             headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
           }),
-          fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=in.(hero_carousel_interval,show_carousel_interval,announcement_enabled,announcement_text,hero_title,hero_subtitle,stats_grading,hero_bg_image,seo_title,seo_description,seo_og_image)&select=key,value`, {
+          fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=in.(hero_carousel_interval,show_carousel_interval,announcement_enabled,announcement_text,hero_title,hero_subtitle,stats_grading,hero_bg_image,seo_title,seo_description,seo_og_image,sell_badge_1_icon,sell_badge_1_label,sell_badge_2_icon,sell_badge_2_label,sell_badge_3_icon,sell_badge_3_label)&select=key,value`, {
             headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
           })
         ]);
@@ -699,6 +699,19 @@
           const heroBg = get('hero_bg_image');
           if (heroBg) {
             document.querySelector('.hero').style.backgroundImage = `url('${heroBg}')`;
+          }
+
+          // Sell badges
+          const b1i = get('sell_badge_1_icon'), b1l = get('sell_badge_1_label');
+          const b2i = get('sell_badge_2_icon'), b2l = get('sell_badge_2_label');
+          const b3i = get('sell_badge_3_icon'), b3l = get('sell_badge_3_label');
+          if (b1i || b1l || b2i || b2l || b3i || b3l) {
+            const el = document.getElementById('sellBadges');
+            if (el) {
+              el.innerHTML = [[b1i,b1l],[b2i,b2l],[b3i,b3l]].filter(([i,l]) => i || l).map(([icon, label]) =>
+                `<div class="sell-badge"><span class="sell-badge-icon">${icon}</span><span class="sell-badge-label">${label}</span></div>`
+              ).join('');
+            }
           }
 
           // Stats bar grading

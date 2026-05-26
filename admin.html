@@ -1038,6 +1038,28 @@
           </div>
         </div>
 
+        <!-- Sell Badges -->
+        <div class="panel" style="margin-bottom:1.5rem;">
+          <div class="panel-header"><span class="panel-title">Sell/Trade Badges</span><span style="font-size:0.68rem;color:var(--text-muted);margin-left:0.5rem;">Icons and labels on the "Got Cards to Sell?" section</span></div>
+          <div class="panel-body" style="display:flex;flex-direction:column;gap:0.75rem;">
+            <div style="display:grid;grid-template-columns:60px 1fr;gap:0.5rem;align-items:center;" class="sell-badge-row">
+              <div><label class="form-label">Icon 1</label><input class="form-input" id="sellBadge1Icon" style="font-size:1.2rem;text-align:center;padding:0.35rem;"></div>
+              <div><label class="form-label">Label 1</label><input class="form-input" id="sellBadge1Label" style="font-size:0.82rem;"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:60px 1fr;gap:0.5rem;align-items:center;">
+              <div><label class="form-label">Icon 2</label><input class="form-input" id="sellBadge2Icon" style="font-size:1.2rem;text-align:center;padding:0.35rem;"></div>
+              <div><label class="form-label">Label 2</label><input class="form-input" id="sellBadge2Label" style="font-size:0.82rem;"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:60px 1fr;gap:0.5rem;align-items:center;">
+              <div><label class="form-label">Icon 3</label><input class="form-input" id="sellBadge3Icon" style="font-size:1.2rem;text-align:center;padding:0.35rem;"></div>
+              <div><label class="form-label">Label 3</label><input class="form-input" id="sellBadge3Label" style="font-size:0.82rem;"></div>
+            </div>
+            <div style="display:flex;justify-content:flex-end;">
+              <button class="btn btn-gold btn-sm" onclick="saveSellBadges()">Save Badges</button>
+            </div>
+          </div>
+        </div>
+
         <!-- Hero Text -->
         <div class="panel" style="margin-bottom:1.5rem;">
           <div class="panel-header"><span class="panel-title">Hero Text</span><span style="font-size:0.68rem;color:var(--text-muted);margin-left:0.5rem;">Main heading and subtitle on the landing page</span></div>
@@ -1568,7 +1590,7 @@
       localStorage.setItem('wt-admin-page', pageName);
       if (pageName === 'sold') loadSold();
       if (pageName === 'financials') loadFinancials();
-      if (pageName === 'site') { loadCatDescs(); loadHeroShowcase(); loadLinks(); loadPayments(); loadPriceSetting(); loadPasswordSetting(); loadAnnouncement(); loadHeroText(); loadStatsBar(); loadHeroBg(); loadSeo(); loadShowCarouselInterval(); }
+      if (pageName === 'site') { loadCatDescs(); loadHeroShowcase(); loadLinks(); loadPayments(); loadPriceSetting(); loadPasswordSetting(); loadAnnouncement(); loadSellBadges(); loadHeroText(); loadStatsBar(); loadHeroBg(); loadSeo(); loadShowCarouselInterval(); }
     }
 
     document.querySelectorAll('.sidebar-link[data-page]').forEach(link => {
@@ -3055,6 +3077,37 @@
     function editLink(id){const l=window._links?.find(x=>x.id===id);if(!l)return;document.getElementById('linkModalTitle').textContent='Edit Link';document.getElementById('linkId').value=l.id;document.getElementById('linkLabel').value=l.label;document.getElementById('linkHandle').value=l.handle;document.getElementById('linkUrl').value=l.url;document.getElementById('linkIcon').value=l.icon;document.getElementById('linkSort').value=l.sort_order;document.getElementById('linkModal').classList.add('active');}
     document.getElementById('linkForm').addEventListener('submit',async e=>{e.preventDefault();const id=document.getElementById('linkId').value;const p={label:document.getElementById('linkLabel').value.trim(),handle:document.getElementById('linkHandle').value.trim(),url:document.getElementById('linkUrl').value.trim(),icon:document.getElementById('linkIcon').value,sort_order:parseInt(document.getElementById('linkSort').value)||0};try{if(id){await apiPatch(`connect_links?id=eq.${id}`,p);}else{await apiPost('connect_links',p);}document.getElementById('linkModal').classList.remove('active');showToast(id?'Updated':'Added','success');loadLinks();}catch(e){showToast('Failed','error');}});
     async function deleteLink(id,name){if(!confirm(`Delete "${name}"?`))return;try{await apiDelete(`connect_links?id=eq.${id}`);showToast('Deleted','success');loadLinks();}catch(e){showToast('Failed','error');}}
+
+    // ========== SELL BADGES ==========
+    async function loadSellBadges() {
+      try {
+        const data = await apiGet('site_settings?key=like.sell_badge_*&select=key,value');
+        const get = (k) => data.find(s => s.key === k)?.value || '';
+        document.getElementById('sellBadge1Icon').value = get('sell_badge_1_icon');
+        document.getElementById('sellBadge1Label').value = get('sell_badge_1_label');
+        document.getElementById('sellBadge2Icon').value = get('sell_badge_2_icon');
+        document.getElementById('sellBadge2Label').value = get('sell_badge_2_label');
+        document.getElementById('sellBadge3Icon').value = get('sell_badge_3_icon');
+        document.getElementById('sellBadge3Label').value = get('sell_badge_3_label');
+      } catch(e) {}
+    }
+
+    async function saveSellBadges() {
+      try {
+        const pairs = [
+          ['sell_badge_1_icon', document.getElementById('sellBadge1Icon').value.trim()],
+          ['sell_badge_1_label', document.getElementById('sellBadge1Label').value.trim()],
+          ['sell_badge_2_icon', document.getElementById('sellBadge2Icon').value.trim()],
+          ['sell_badge_2_label', document.getElementById('sellBadge2Label').value.trim()],
+          ['sell_badge_3_icon', document.getElementById('sellBadge3Icon').value.trim()],
+          ['sell_badge_3_label', document.getElementById('sellBadge3Label').value.trim()],
+        ];
+        for (const [key, val] of pairs) {
+          await apiFetch(`site_settings?key=eq.${key}`, { method: 'PATCH', body: JSON.stringify({ value: val, updated_at: new Date().toISOString() }) });
+        }
+        showToast('Badges saved', 'success');
+      } catch(e) { showToast('Failed to save', 'error'); }
+    }
 
     // ========== SEO ==========
     async function loadSeo() {
