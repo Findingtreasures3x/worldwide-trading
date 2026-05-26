@@ -665,7 +665,8 @@
           const settings = await settingsRes.json();
           const get = (k) => settings.find(s => s.key === k)?.value || '';
           window._heroCarouselInterval = parseInt(get('hero_carousel_interval')) || 60;
-          window._showCarouselInterval = parseInt(get('show_carousel_interval')) || 6;
+          const sci = get('show_carousel_interval');
+          window._showCarouselInterval = sci !== '' ? parseInt(sci) : 6;
 
           // Announcement banner
           if (get('announcement_enabled') === 'true' && get('announcement_text') && !sessionStorage.getItem('wt-announcement-dismissed')) {
@@ -962,12 +963,14 @@
     }
     function carouselMove(dir) { carouselGo(carouselIdx + dir); }
 
-    // Auto-rotate every 6 seconds
+    // Auto-rotate shows
     function startCarouselAuto() {
       stopCarouselAuto();
-      const showInterval = window._showCarouselInterval;
-      if (showInterval && showInterval > 0) {
-        carouselAutoTimer = setInterval(() => carouselMove(1), showInterval * 1000);
+      const interval = window._showCarouselInterval;
+      // Only auto-rotate if explicitly set to > 0 (0 = off, null/undefined = wait for setting)
+      if (interval === 0) return;
+      if (interval && interval > 0) {
+        carouselAutoTimer = setInterval(() => carouselMove(1), interval * 1000);
       }
     }
     function stopCarouselAuto() {
