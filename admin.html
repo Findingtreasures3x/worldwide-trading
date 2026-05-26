@@ -986,6 +986,14 @@
               </div>
               <button class="btn btn-sm" onclick="saveStatsBar()">Save</button>
             </div>
+            <div style="display:flex;gap:0.75rem;align-items:flex-end;flex-wrap:wrap;">
+              <div style="display:flex;align-items:center;gap:0.5rem;">
+                <label class="form-label" style="margin:0;white-space:nowrap;">Show Carousel Timer</label>
+                <input class="form-input" id="showCarouselInterval" type="number" min="3" max="60" value="6" style="width:70px;font-size:0.78rem;padding:0.35rem 0.5rem;">
+                <span style="font-size:0.72rem;color:var(--text-muted);">seconds</span>
+                <button class="btn btn-sm" onclick="saveShowCarouselInterval()">Save</button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1546,7 +1554,7 @@
         document.getElementById('analyticsRange').style.display = link.dataset.page === 'dashboard' ? '' : 'none';
         if (link.dataset.page === 'sold') loadSold();
         if (link.dataset.page === 'financials') loadFinancials();
-        if (link.dataset.page === 'site') { loadCatDescs(); loadHeroShowcase(); loadLinks(); loadPayments(); loadPriceSetting(); loadPasswordSetting(); loadAnnouncement(); loadHeroText(); loadStatsBar(); loadHeroBg(); loadSeo(); }
+        if (link.dataset.page === 'site') { loadCatDescs(); loadHeroShowcase(); loadLinks(); loadPayments(); loadPriceSetting(); loadPasswordSetting(); loadAnnouncement(); loadHeroText(); loadStatsBar(); loadHeroBg(); loadSeo(); loadShowCarouselInterval(); }
       });
     });
 
@@ -3115,6 +3123,22 @@
         const val = document.getElementById('statsGradingInput').value.trim();
         await apiFetch('site_settings?key=eq.stats_grading', { method: 'PATCH', body: JSON.stringify({ value: val, updated_at: new Date().toISOString() }) });
         showToast('Stats bar saved', 'success');
+      } catch(e) { showToast('Failed to save', 'error'); }
+    }
+
+    // ========== SHOW CAROUSEL TIMER ==========
+    async function loadShowCarouselInterval() {
+      try {
+        const data = await apiGet('site_settings?key=eq.show_carousel_interval&select=value');
+        if (data.length) document.getElementById('showCarouselInterval').value = parseInt(data[0].value) || 6;
+      } catch(e) {}
+    }
+
+    async function saveShowCarouselInterval() {
+      const val = parseInt(document.getElementById('showCarouselInterval').value) || 6;
+      try {
+        await apiFetch('site_settings?key=eq.show_carousel_interval', { method: 'PATCH', body: JSON.stringify({ value: String(val), updated_at: new Date().toISOString() }) });
+        showToast(`Show carousel set to ${val}s`, 'success');
       } catch(e) { showToast('Failed to save', 'error'); }
     }
 

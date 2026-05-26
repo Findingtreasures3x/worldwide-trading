@@ -655,7 +655,7 @@
           fetch(`${SUPABASE_URL}/rest/v1/category_descriptions?select=*`, {
             headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
           }),
-          fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=in.(hero_carousel_interval,announcement_enabled,announcement_text,hero_title,hero_subtitle,stats_grading,hero_bg_image,seo_title,seo_description,seo_og_image)&select=key,value`, {
+          fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=in.(hero_carousel_interval,show_carousel_interval,announcement_enabled,announcement_text,hero_title,hero_subtitle,stats_grading,hero_bg_image,seo_title,seo_description,seo_og_image)&select=key,value`, {
             headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
           })
         ]);
@@ -665,6 +665,7 @@
           const settings = await settingsRes.json();
           const get = (k) => settings.find(s => s.key === k)?.value || '';
           window._heroCarouselInterval = parseInt(get('hero_carousel_interval')) || 60;
+          window._showCarouselInterval = parseInt(get('show_carousel_interval')) || 6;
 
           // Announcement banner
           if (get('announcement_enabled') === 'true' && get('announcement_text') && !sessionStorage.getItem('wt-announcement-dismissed')) {
@@ -964,7 +965,8 @@
     // Auto-rotate every 6 seconds
     function startCarouselAuto() {
       stopCarouselAuto();
-      carouselAutoTimer = setInterval(() => carouselMove(1), 6000);
+      const showInterval = (window._showCarouselInterval || 6) * 1000;
+      carouselAutoTimer = setInterval(() => carouselMove(1), showInterval);
     }
     function stopCarouselAuto() {
       if (carouselAutoTimer) { clearInterval(carouselAutoTimer); carouselAutoTimer = null; }

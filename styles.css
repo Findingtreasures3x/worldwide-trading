@@ -2397,21 +2397,27 @@ body {
   .countdown-num { font-size: 1.3rem; }
   .show-link-btn { width: 100%; justify-content: center; border-radius: var(--radius); }
 
-  /* Payment — large tap targets */
+  /* Payment — single column on mobile, clean and centered */
   .payment-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr !important;
     max-width: 100%;
     gap: 0.75rem;
   }
 
   .cash-card {
-    grid-column: 1 / -1;
-    padding: 1.25rem;
+    padding: 1rem;
   }
 
   .qr-card {
     padding: 1rem;
     border-radius: var(--radius);
+    flex-direction: row;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .qr-card .qr-img {
+    max-width: 100px;
   }
 
   .qr-label {
