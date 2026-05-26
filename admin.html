@@ -261,6 +261,13 @@
 
     .loading { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.82rem; }
 
+    /* Drag handle */
+    .drag-handle { cursor: grab; color: var(--text-muted); font-size: 0.9rem; user-select: none; padding: 0.2rem; }
+    .drag-handle:hover { color: var(--text-secondary); }
+    .drag-handle:active { cursor: grabbing; }
+    tr.dragging { opacity: 0.4; background: var(--gold-dim) !important; }
+    tr.drag-over td { border-top: 2px solid var(--gold) !important; }
+
     /* Mobile */
     @media (max-width: 768px) {
       .sidebar { width: 60px; }
@@ -448,9 +455,22 @@
         <div class="sec-header">
           <h2 class="sec-title">Inventory (<span id="itemCount">0</span>)</h2>
           <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
-            <div id="bulkActions" style="display:none;align-items:center;gap:0.5rem;">
+            <div id="bulkActions" style="display:none;align-items:center;gap:0.4rem;flex-wrap:wrap;">
               <span style="font-size:0.8rem;color:var(--text-secondary);"><span id="selectedCount">0</span> selected</span>
-              <button class="btn btn-sm" style="background:var(--success-dim);color:var(--success);" onclick="bulkSell()">Sell Selected</button>
+              <button class="btn btn-sm" style="background:var(--success-dim);color:var(--success);" onclick="bulkSell()">Sell</button>
+              <button class="btn btn-sm" onclick="bulkVisibility(true)">Show</button>
+              <button class="btn btn-sm" onclick="bulkVisibility(false)">Hide</button>
+              <button class="btn btn-sm" onclick="bulkFeature(true)">Feature</button>
+              <button class="btn btn-sm" onclick="bulkFeature(false)">Unfeature</button>
+              <select class="form-select" id="bulkCategorySelect" onchange="bulkChangeCategory(this.value)" style="width:auto;font-size:0.68rem;padding:0.3rem 1.3rem 0.3rem 0.5rem;">
+                <option value="">Category...</option>
+                <option value="slabs">Slabs</option>
+                <option value="sealed">Sealed</option>
+                <option value="raw">Raw</option>
+                <option value="accessories">Accessories</option>
+                <option value="collectibles">Collectibles</option>
+              </select>
+              <button class="btn btn-sm btn-danger" onclick="bulkDelete()">Delete</button>
               <button class="btn btn-sm" onclick="clearSelection()">Clear</button>
             </div>
             <button class="btn btn-gold" onclick="openAddModal()">+ Add Item</button>
@@ -1083,7 +1103,7 @@
           <div class="panel-body" style="padding:0;">
             <div class="table-scroll">
               <table class="tbl">
-                <thead><tr><th>QR</th><th>Name</th><th>Type</th><th>Order</th><th>Visible</th><th>Actions</th></tr></thead>
+                <thead><tr><th></th><th>QR</th><th>Name</th><th>Type</th><th>Visible</th><th>Actions</th></tr></thead>
                 <tbody id="paymentsBody"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody>
               </table>
             </div>
@@ -1099,7 +1119,7 @@
           <div class="panel-body" style="padding:0;">
             <div class="table-scroll">
               <table class="tbl">
-                <thead><tr><th>Icon</th><th>Label</th><th>Handle</th><th>URL</th><th>Actions</th></tr></thead>
+                <thead><tr><th></th><th>Icon</th><th>Label</th><th>Handle</th><th>URL</th><th>Actions</th></tr></thead>
                 <tbody id="linksBody"><tr><td colspan="5" class="loading">Loading...</td></tr></tbody>
               </table>
             </div>
@@ -1342,11 +1362,12 @@
         const tb = document.getElementById('paymentsBody'); tb.innerHTML = '';
         if (!data.length) { tb.innerHTML = '<tr><td colspan="6" class="loading">No payment methods.</td></tr>'; return; }
         window._payments = data;
-        data.forEach(p => {
+        data.forEach((p, idx) => {
           const img = p.qr_image ? `<img src="${p.qr_image}" style="height:40px;border-radius:4px;">` : '—';
           const vis = p.visible ? `<button class="btn btn-sm" onclick="togglePaymentVisible('${p.id}',false)">👁️</button>` : `<button class="btn btn-sm" style="opacity:0.4" onclick="togglePaymentVisible('${p.id}',true)">🚫</button>`;
-          tb.innerHTML += `<tr><td>${img}</td><td class="name-cell">${p.name}</td><td><span class="brand-badge">${p.type}</span></td><td>${p.sort_order}</td><td>${vis}</td><td><div class="action-btns"><button class="btn btn-sm" onclick="editPayment('${p.id}')">Edit</button><button class="btn btn-sm btn-danger" onclick="deletePayment('${p.id}','${p.name}')">Del</button></div></td></tr>`;
+          tb.innerHTML += `<tr draggable="true" data-id="${p.id}" data-table="payment_methods"><td class="drag-handle">⠿</td><td>${img}</td><td class="name-cell">${p.name}</td><td><span class="brand-badge">${p.type}</span></td><td>${vis}</td><td><div class="action-btns"><button class="btn btn-sm" onclick="editPayment('${p.id}')">Edit</button><button class="btn btn-sm btn-danger" onclick="deletePayment('${p.id}','${p.name}')">Del</button></div></td></tr>`;
         });
+        initDragReorder(tb, 'payment_methods', loadPayments);
       } catch(e) { showToast('Failed', 'error'); }
     }
 
@@ -2628,6 +2649,52 @@
       document.getElementById('soldModal').classList.add('active');
     }
 
+    async function bulkVisibility(visible) {
+      const ids = getSelectedIds();
+      if (!ids.length) return;
+      if (!confirm(`${visible ? 'Show' : 'Hide'} ${ids.length} item${ids.length > 1 ? 's' : ''} on site?`)) return;
+      try {
+        for (const id of ids) await apiPatch(`inventory?id=eq.${id}`, { visible });
+        showToast(`${ids.length} item${ids.length > 1 ? 's' : ''} ${visible ? 'shown' : 'hidden'}`, 'success');
+        clearSelection(); loadInventory();
+      } catch(e) { showToast('Failed', 'error'); }
+    }
+
+    async function bulkFeature(featured) {
+      const ids = getSelectedIds();
+      if (!ids.length) return;
+      try {
+        for (const id of ids) await apiPatch(`inventory?id=eq.${id}`, { featured });
+        showToast(`${ids.length} item${ids.length > 1 ? 's' : ''} ${featured ? 'featured' : 'unfeatured'}`, 'success');
+        clearSelection(); loadInventory();
+      } catch(e) { showToast('Failed', 'error'); }
+    }
+
+    async function bulkChangeCategory(cat) {
+      if (!cat) return;
+      const ids = getSelectedIds();
+      if (!ids.length) { document.getElementById('bulkCategorySelect').value = ''; return; }
+      if (!confirm(`Change ${ids.length} item${ids.length > 1 ? 's' : ''} to "${cat}"?`)) { document.getElementById('bulkCategorySelect').value = ''; return; }
+      try {
+        for (const id of ids) await apiPatch(`inventory?id=eq.${id}`, { category: cat });
+        showToast(`${ids.length} item${ids.length > 1 ? 's' : ''} moved to ${cat}`, 'success');
+        document.getElementById('bulkCategorySelect').value = '';
+        clearSelection(); loadInventory();
+      } catch(e) { showToast('Failed', 'error'); }
+    }
+
+    async function bulkDelete() {
+      const ids = getSelectedIds();
+      const names = getSelectedNames();
+      if (!ids.length) return;
+      if (!confirm(`Permanently delete ${ids.length} item${ids.length > 1 ? 's' : ''}? This cannot be undone.`)) return;
+      try {
+        for (const id of ids) await apiDelete(`inventory?id=eq.${id}`);
+        showToast(`${ids.length} item${ids.length > 1 ? 's' : ''} deleted`, 'success');
+        clearSelection(); loadInventory();
+      } catch(e) { showToast('Failed', 'error'); }
+    }
+
     // ========== PRICE VISIBILITY ==========
     async function loadPriceSetting() {
       try {
@@ -2958,7 +3025,7 @@
     document.getElementById('showFlyer').addEventListener('input',e=>{const u=e.target.value.trim();if(u&&u.startsWith('http')){flyerImg.src=u;flyerPrompt.style.display='none';flyerPreview.style.display='inline-block';uploadedFlyerUrl=null;}else if(!uploadedFlyerUrl){resetFlyerDZ();}});
 
     // Connect links
-    async function loadLinks(){try{const d=await apiGet('connect_links?select=*&order=sort_order.asc');const tb=document.getElementById('linksBody');tb.innerHTML='';if(!d.length){tb.innerHTML='<tr><td colspan="5" class="loading">No links.</td></tr>';return;}window._links=d;d.forEach(l=>{tb.innerHTML+=`<tr><td>${l.icon}</td><td class="name-cell">${l.label}</td><td>${l.handle}</td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.url}</td><td><div class="action-btns"><button class="btn btn-sm" onclick="editLink('${l.id}')">Edit</button><button class="btn btn-sm btn-danger" onclick="deleteLink('${l.id}','${l.label.replace(/'/g,"\\'")}')">Del</button></div></td></tr>`;});}catch(e){showToast('Failed','error');}}
+    async function loadLinks(){try{const d=await apiGet('connect_links?select=*&order=sort_order.asc');const tb=document.getElementById('linksBody');tb.innerHTML='';if(!d.length){tb.innerHTML='<tr><td colspan="6" class="loading">No links.</td></tr>';return;}window._links=d;d.forEach(l=>{tb.innerHTML+=`<tr draggable="true" data-id="${l.id}" data-table="connect_links"><td class="drag-handle">⠿</td><td>${l.icon}</td><td class="name-cell">${l.label}</td><td>${l.handle}</td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.url}</td><td><div class="action-btns"><button class="btn btn-sm" onclick="editLink('${l.id}')">Edit</button><button class="btn btn-sm btn-danger" onclick="deleteLink('${l.id}','${l.label.replace(/'/g,"\\'")}')">Del</button></div></td></tr>`;});initDragReorder(tb,'connect_links',loadLinks);}catch(e){showToast('Failed','error');}}
     function openLinkModal(){document.getElementById('linkModalTitle').textContent='Add Link';document.getElementById('linkForm').reset();document.getElementById('linkId').value='';document.getElementById('linkModal').classList.add('active');}
     function editLink(id){const l=window._links?.find(x=>x.id===id);if(!l)return;document.getElementById('linkModalTitle').textContent='Edit Link';document.getElementById('linkId').value=l.id;document.getElementById('linkLabel').value=l.label;document.getElementById('linkHandle').value=l.handle;document.getElementById('linkUrl').value=l.url;document.getElementById('linkIcon').value=l.icon;document.getElementById('linkSort').value=l.sort_order;document.getElementById('linkModal').classList.add('active');}
     document.getElementById('linkForm').addEventListener('submit',async e=>{e.preventDefault();const id=document.getElementById('linkId').value;const p={label:document.getElementById('linkLabel').value.trim(),handle:document.getElementById('linkHandle').value.trim(),url:document.getElementById('linkUrl').value.trim(),icon:document.getElementById('linkIcon').value,sort_order:parseInt(document.getElementById('linkSort').value)||0};try{if(id){await apiPatch(`connect_links?id=eq.${id}`,p);}else{await apiPost('connect_links',p);}document.getElementById('linkModal').classList.remove('active');showToast(id?'Updated':'Added','success');loadLinks();}catch(e){showToast('Failed','error');}});
@@ -3206,6 +3273,51 @@
         loadInventory();
         loadHeroShowcase();
       } catch(e) { showToast('Failed', 'error'); }
+    }
+
+    // ========== DRAG TO REORDER ==========
+    function initDragReorder(tbody, tableName, reloadFn) {
+      let dragRow = null;
+      tbody.querySelectorAll('tr[draggable]').forEach(row => {
+        row.addEventListener('dragstart', e => {
+          dragRow = row;
+          row.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+        });
+        row.addEventListener('dragend', () => {
+          row.classList.remove('dragging');
+          tbody.querySelectorAll('tr').forEach(r => r.classList.remove('drag-over'));
+          dragRow = null;
+        });
+        row.addEventListener('dragover', e => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          if (row !== dragRow) {
+            tbody.querySelectorAll('tr').forEach(r => r.classList.remove('drag-over'));
+            row.classList.add('drag-over');
+          }
+        });
+        row.addEventListener('dragleave', () => { row.classList.remove('drag-over'); });
+        row.addEventListener('drop', async e => {
+          e.preventDefault();
+          if (!dragRow || dragRow === row) return;
+          // Reorder in DOM
+          const rows = [...tbody.querySelectorAll('tr[draggable]')];
+          const fromIdx = rows.indexOf(dragRow);
+          const toIdx = rows.indexOf(row);
+          if (fromIdx < toIdx) row.after(dragRow); else row.before(dragRow);
+          // Save new order to DB
+          const newRows = [...tbody.querySelectorAll('tr[draggable]')];
+          try {
+            for (let i = 0; i < newRows.length; i++) {
+              const id = newRows[i].dataset.id;
+              await apiFetch(`${tableName}?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify({ sort_order: i + 1 }) });
+            }
+            showToast('Order saved', 'success');
+            reloadFn();
+          } catch(e) { showToast('Failed to save order', 'error'); }
+        });
+      });
     }
 
     // Toast
