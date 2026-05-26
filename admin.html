@@ -987,10 +987,14 @@
               <button class="btn btn-sm" onclick="saveStatsBar()">Save</button>
             </div>
             <div style="display:flex;gap:0.75rem;align-items:flex-end;flex-wrap:wrap;">
-              <div style="display:flex;align-items:center;gap:0.5rem;">
-                <label class="form-label" style="margin:0;white-space:nowrap;">Show Carousel Timer</label>
-                <input class="form-input" id="showCarouselInterval" type="number" min="0" max="60" value="6" style="width:70px;font-size:0.78rem;padding:0.35rem 0.5rem;">
-                <span style="font-size:0.72rem;color:var(--text-muted);">seconds (0 = off)</span>
+              <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+                <label class="form-label" style="margin:0;white-space:nowrap;">Show Carousel</label>
+                <label style="display:flex;align-items:center;gap:0.35rem;font-size:0.78rem;color:var(--text-secondary);cursor:pointer;">
+                  <input type="checkbox" id="showCarouselEnabled" style="accent-color:var(--gold);">
+                  Auto-rotate
+                </label>
+                <input class="form-input" id="showCarouselInterval" type="number" min="3" max="60" value="6" style="width:70px;font-size:0.78rem;padding:0.35rem 0.5rem;">
+                <span style="font-size:0.72rem;color:var(--text-muted);">seconds</span>
                 <button class="btn btn-sm" onclick="saveShowCarouselInterval()">Save</button>
               </div>
             </div>
@@ -3130,15 +3134,26 @@
     async function loadShowCarouselInterval() {
       try {
         const data = await apiGet('site_settings?key=eq.show_carousel_interval&select=value');
-        if (data.length) document.getElementById('showCarouselInterval').value = parseInt(data[0].value) || 6;
+        if (data.length) {
+          const val = parseInt(data[0].value);
+          if (val === 0) {
+            document.getElementById('showCarouselEnabled').checked = false;
+            document.getElementById('showCarouselInterval').value = 6;
+          } else {
+            document.getElementById('showCarouselEnabled').checked = true;
+            document.getElementById('showCarouselInterval').value = val || 6;
+          }
+        }
       } catch(e) {}
     }
 
     async function saveShowCarouselInterval() {
-      const val = parseInt(document.getElementById('showCarouselInterval').value) || 6;
+      const enabled = document.getElementById('showCarouselEnabled').checked;
+      const seconds = parseInt(document.getElementById('showCarouselInterval').value) || 6;
+      const val = enabled ? seconds : 0;
       try {
         await apiFetch('site_settings?key=eq.show_carousel_interval', { method: 'PATCH', body: JSON.stringify({ value: String(val), updated_at: new Date().toISOString() }) });
-        showToast(`Show carousel set to ${val}s`, 'success');
+        showToast(enabled ? `Show carousel set to ${seconds}s` : 'Show carousel off', 'success');
       } catch(e) { showToast('Failed to save', 'error'); }
     }
 
