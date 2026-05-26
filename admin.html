@@ -376,7 +376,7 @@
       </div>
 
       <!-- DASHBOARD PAGE -->
-      <div class="page active" id="page-dashboard">
+      <div class="page" id="page-dashboard">
         <!-- KPI Cards Row -->
         <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.65rem;margin-bottom:1.25rem;" id="kpiGrid">
           <div class="stat-card"><div class="stat-card-label">Page Views</div><div class="stat-card-value gold" id="aViews">—</div><div class="stat-card-delta" id="aViewsDelta"></div><div class="sparkline" id="aViewsSpark"></div></div>
@@ -1549,11 +1549,8 @@
       document.getElementById('authScreen').style.display='none';
       document.getElementById('adminApp').style.display='flex';
       loadAnalytics(); loadInventory(); loadShows();
-      // Restore last active page
-      const lastPage = localStorage.getItem('wt-admin-page');
-      if (lastPage && lastPage !== 'dashboard') {
-        navigateToPage(lastPage);
-      }
+      // Restore last active page or default to dashboard
+      navigateToPage(localStorage.getItem('wt-admin-page') || 'dashboard');
     }
 
     // Page navigation
