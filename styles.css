@@ -1417,6 +1417,12 @@ body {
   border: 1px solid rgba(78, 205, 196, 0.25);
 }
 
+.item-tag.new-tag {
+  background: rgba(59, 130, 246, 0.12);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
 .item-details {
   font-size: 0.72rem;
   color: var(--text-secondary);

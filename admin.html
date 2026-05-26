@@ -959,6 +959,35 @@
               </label>
               <input class="form-input" id="sitePasswordField" placeholder="Set password..." style="width:160px;font-size:0.78rem;padding:0.35rem 0.6rem;display:none;" onchange="saveSitePassword(this.value)">
             </div>
+            <div style="display:flex;gap:0.75rem;align-items:flex-end;flex-wrap:wrap;">
+              <div style="flex:1;min-width:150px;">
+                <label class="form-label">Stats Bar — Grading</label>
+                <input class="form-input" id="statsGradingInput" placeholder="e.g. PSA · BGS · CGC" style="font-size:0.82rem;">
+              </div>
+              <button class="btn btn-sm" onclick="saveStatsBar()">Save</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SEO / Sharing -->
+        <div class="panel" style="margin-bottom:1.5rem;">
+          <div class="panel-header"><span class="panel-title">SEO & Sharing</span><span style="font-size:0.68rem;color:var(--text-muted);margin-left:0.5rem;">Controls what shows when your link is shared</span></div>
+          <div class="panel-body" style="display:flex;flex-direction:column;gap:0.75rem;">
+            <div>
+              <label class="form-label">Page Title</label>
+              <input class="form-input" id="seoTitleInput" placeholder="e.g. Worldwide Trading — Buy · Sell · Trade" style="font-size:0.82rem;">
+            </div>
+            <div>
+              <label class="form-label">Description</label>
+              <textarea class="form-input" id="seoDescInput" rows="2" placeholder="Short description for search engines and link previews..." style="font-size:0.82rem;resize:vertical;min-height:50px;"></textarea>
+            </div>
+            <div>
+              <label class="form-label">Share Image URL <span style="color:var(--text-muted);font-weight:400;">(shown when link is shared on social)</span></label>
+              <input class="form-input" id="seoOgImageInput" placeholder="https://... or logo.png" style="font-size:0.82rem;">
+            </div>
+            <div style="display:flex;justify-content:flex-end;">
+              <button class="btn btn-gold btn-sm" onclick="saveSeo()">Save SEO</button>
+            </div>
           </div>
         </div>
 
@@ -991,6 +1020,24 @@
             </div>
             <div style="display:flex;justify-content:flex-end;">
               <button class="btn btn-gold btn-sm" onclick="saveHeroText()">Save Hero Text</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hero Background -->
+        <div class="panel" style="margin-bottom:1.5rem;">
+          <div class="panel-header"><span class="panel-title">Hero Background</span><span style="font-size:0.68rem;color:var(--text-muted);margin-left:0.5rem;">Background image behind the hero section</span></div>
+          <div class="panel-body" style="display:flex;flex-direction:column;gap:0.75rem;">
+            <div id="heroBgPreview" style="display:none;margin-bottom:0.5rem;">
+              <img id="heroBgPreviewImg" src="" style="max-height:100px;border-radius:8px;border:1px solid var(--border);">
+            </div>
+            <input class="form-input" id="heroBgInput" placeholder="Paste image URL or upload below..." style="font-size:0.82rem;">
+            <div class="drop-zone" id="heroBgDropZone" style="min-height:70px;">
+              <div class="drop-zone-prompt" id="heroBgDropPrompt"><span class="drop-zone-icon">🖼️</span><span>Drag & drop, or <label for="heroBgFileInput" class="drop-zone-browse">browse</label></span><span class="drop-zone-hint">JPG, PNG, WebP — max 5MB</span></div>
+              <input type="file" id="heroBgFileInput" accept="image/jpeg,image/png,image/webp" style="display:none;">
+            </div>
+            <div style="display:flex;justify-content:flex-end;">
+              <button class="btn btn-gold btn-sm" onclick="saveHeroBg()">Save Background</button>
             </div>
           </div>
         </div>
@@ -1478,7 +1525,7 @@
         document.getElementById('analyticsRange').style.display = link.dataset.page === 'dashboard' ? '' : 'none';
         if (link.dataset.page === 'sold') loadSold();
         if (link.dataset.page === 'financials') loadFinancials();
-        if (link.dataset.page === 'site') { loadCatDescs(); loadHeroShowcase(); loadLinks(); loadPayments(); loadPriceSetting(); loadPasswordSetting(); loadAnnouncement(); loadHeroText(); }
+        if (link.dataset.page === 'site') { loadCatDescs(); loadHeroShowcase(); loadLinks(); loadPayments(); loadPriceSetting(); loadPasswordSetting(); loadAnnouncement(); loadHeroText(); loadStatsBar(); loadHeroBg(); loadSeo(); }
       });
     });
 
@@ -2916,6 +2963,93 @@
     function editLink(id){const l=window._links?.find(x=>x.id===id);if(!l)return;document.getElementById('linkModalTitle').textContent='Edit Link';document.getElementById('linkId').value=l.id;document.getElementById('linkLabel').value=l.label;document.getElementById('linkHandle').value=l.handle;document.getElementById('linkUrl').value=l.url;document.getElementById('linkIcon').value=l.icon;document.getElementById('linkSort').value=l.sort_order;document.getElementById('linkModal').classList.add('active');}
     document.getElementById('linkForm').addEventListener('submit',async e=>{e.preventDefault();const id=document.getElementById('linkId').value;const p={label:document.getElementById('linkLabel').value.trim(),handle:document.getElementById('linkHandle').value.trim(),url:document.getElementById('linkUrl').value.trim(),icon:document.getElementById('linkIcon').value,sort_order:parseInt(document.getElementById('linkSort').value)||0};try{if(id){await apiPatch(`connect_links?id=eq.${id}`,p);}else{await apiPost('connect_links',p);}document.getElementById('linkModal').classList.remove('active');showToast(id?'Updated':'Added','success');loadLinks();}catch(e){showToast('Failed','error');}});
     async function deleteLink(id,name){if(!confirm(`Delete "${name}"?`))return;try{await apiDelete(`connect_links?id=eq.${id}`);showToast('Deleted','success');loadLinks();}catch(e){showToast('Failed','error');}}
+
+    // ========== SEO ==========
+    async function loadSeo() {
+      try {
+        const data = await apiGet('site_settings?key=in.(seo_title,seo_description,seo_og_image)&select=key,value');
+        const get = (k) => data.find(s => s.key === k)?.value || '';
+        document.getElementById('seoTitleInput').value = get('seo_title');
+        document.getElementById('seoDescInput').value = get('seo_description');
+        document.getElementById('seoOgImageInput').value = get('seo_og_image');
+      } catch(e) {}
+    }
+
+    async function saveSeo() {
+      try {
+        const title = document.getElementById('seoTitleInput').value.trim();
+        const desc = document.getElementById('seoDescInput').value.trim();
+        const ogImage = document.getElementById('seoOgImageInput').value.trim();
+        await apiFetch('site_settings?key=eq.seo_title', { method: 'PATCH', body: JSON.stringify({ value: title, updated_at: new Date().toISOString() }) });
+        await apiFetch('site_settings?key=eq.seo_description', { method: 'PATCH', body: JSON.stringify({ value: desc, updated_at: new Date().toISOString() }) });
+        await apiFetch('site_settings?key=eq.seo_og_image', { method: 'PATCH', body: JSON.stringify({ value: ogImage, updated_at: new Date().toISOString() }) });
+        showToast('SEO settings saved', 'success');
+      } catch(e) { showToast('Failed to save', 'error'); }
+    }
+
+    // ========== HERO BACKGROUND ==========
+    let uploadedHeroBgUrl = null;
+
+    async function loadHeroBg() {
+      try {
+        const data = await apiGet('site_settings?key=eq.hero_bg_image&select=value');
+        if (data.length && data[0].value) {
+          document.getElementById('heroBgInput').value = data[0].value;
+          document.getElementById('heroBgPreviewImg').src = data[0].value;
+          document.getElementById('heroBgPreview').style.display = 'block';
+        }
+      } catch(e) {}
+    }
+
+    async function saveHeroBg() {
+      try {
+        const val = uploadedHeroBgUrl || document.getElementById('heroBgInput').value.trim();
+        await apiFetch('site_settings?key=eq.hero_bg_image', { method: 'PATCH', body: JSON.stringify({ value: val, updated_at: new Date().toISOString() }) });
+        uploadedHeroBgUrl = null;
+        showToast('Hero background saved', 'success');
+        loadHeroBg();
+      } catch(e) { showToast('Failed to save', 'error'); }
+    }
+
+    // Hero bg upload
+    const heroBgDZ = document.getElementById('heroBgDropZone');
+    const heroBgFI = document.getElementById('heroBgFileInput');
+    heroBgDZ.addEventListener('click', e => { if (!e.target.closest('.drop-zone-remove')) heroBgFI.click(); });
+    heroBgDZ.addEventListener('dragover', e => { e.preventDefault(); heroBgDZ.classList.add('dragover'); });
+    heroBgDZ.addEventListener('dragleave', () => { heroBgDZ.classList.remove('dragover'); });
+    heroBgDZ.addEventListener('drop', e => { e.preventDefault(); heroBgDZ.classList.remove('dragover'); if (e.dataTransfer.files[0]) handleHeroBgFile(e.dataTransfer.files[0]); });
+    heroBgFI.addEventListener('change', () => { if (heroBgFI.files[0]) handleHeroBgFile(heroBgFI.files[0]); });
+    async function handleHeroBgFile(file) {
+      if (file.size > 5 * 1024 * 1024) { showToast('Max 5MB', 'error'); return; }
+      document.getElementById('heroBgDropPrompt').innerHTML = '<span class="drop-zone-uploading">Uploading...</span>';
+      try {
+        const fn = `hero-bg-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        const r = await fetch(`${SUPABASE_URL}/storage/v1/object/card-images/${fn}`, { method: 'POST', headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${accessToken}`, 'Content-Type': file.type }, body: file });
+        if (!r.ok) throw new Error(await r.text());
+        uploadedHeroBgUrl = `${SUPABASE_URL}/storage/v1/object/public/card-images/${fn}`;
+        document.getElementById('heroBgInput').value = uploadedHeroBgUrl;
+        document.getElementById('heroBgPreviewImg').src = URL.createObjectURL(file);
+        document.getElementById('heroBgPreview').style.display = 'block';
+        document.getElementById('heroBgDropPrompt').innerHTML = '<span style="color:var(--success);font-size:0.78rem;">✓ Uploaded — click Save</span>';
+        showToast('Uploaded', 'success');
+      } catch(e) { showToast('Upload failed', 'error'); document.getElementById('heroBgDropPrompt').innerHTML = '<span class="drop-zone-icon">🖼️</span><span>Drag & drop, or <label for="heroBgFileInput" class="drop-zone-browse">browse</label></span>'; }
+    }
+
+    // ========== STATS BAR ==========
+    async function loadStatsBar() {
+      try {
+        const data = await apiGet('site_settings?key=eq.stats_grading&select=value');
+        if (data.length) document.getElementById('statsGradingInput').value = data[0].value;
+      } catch(e) {}
+    }
+
+    async function saveStatsBar() {
+      try {
+        const val = document.getElementById('statsGradingInput').value.trim();
+        await apiFetch('site_settings?key=eq.stats_grading', { method: 'PATCH', body: JSON.stringify({ value: val, updated_at: new Date().toISOString() }) });
+        showToast('Stats bar saved', 'success');
+      } catch(e) { showToast('Failed to save', 'error'); }
+    }
 
     // ========== ANNOUNCEMENT BANNER ==========
     async function loadAnnouncement() {

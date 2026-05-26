@@ -87,7 +87,7 @@
         <div class="stat-label">Items Listed</div>
       </div>
       <div class="stat">
-        <div class="stat-value">PSA · BGS</div>
+        <div class="stat-value" id="statsGrading">PSA · BGS</div>
         <div class="stat-label">Grading Companies</div>
       </div>
       <div class="stat" id="countdownStat" style="display:none;">
@@ -145,6 +145,7 @@
         <span class="filter-separator" style="margin-left:auto;">Sort</span>
         <select class="sort-select" id="sortSelect">
           <option value="sort_order">Featured</option>
+          <option value="newest">New Arrivals</option>
           <option value="price_desc">Price: High → Low</option>
           <option value="price_asc">Price: Low → High</option>
           <option value="name_asc">Name: A → Z</option>
@@ -409,7 +410,9 @@
       });
 
       // Sort
-      if (currentSort === 'price_desc') {
+      if (currentSort === 'newest') {
+        filtered.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+      } else if (currentSort === 'price_desc') {
         filtered.sort((a, b) => parsePrice(b.price) - parsePrice(a.price));
       } else if (currentSort === 'price_asc') {
         filtered.sort((a, b) => parsePrice(a.price) - parsePrice(b.price));
@@ -468,6 +471,8 @@
 
         items.forEach(item => {
           const qtyBadge = item.qty > 1 ? `<span class="item-qty">x${item.qty}</span>` : '';
+          const isNew = item.created_at && (Date.now() - new Date(item.created_at).getTime()) < 7 * 86400000;
+          const newTag = isNew ? `<span class="item-tag new-tag">New</span>` : '';
           const featuredTag = item.featured ? `<span class="item-tag featured-tag">Featured</span>` : '';
           const exclusiveTag = item.exclusive ? `<span class="item-tag exclusive-tag">Exclusive</span>` : '';
           const priceLabel = showPrices
@@ -490,7 +495,7 @@
                 <div class="item-info">
                   ${item.tcgplayer_url ? `<a href="${item.tcgplayer_url}" target="_blank" rel="noopener" class="item-name" style="color:inherit;text-decoration:none;" onmouseover="this.style.color='var(--gold-text)'" onmouseout="this.style.color='inherit'">${item.name}${qtyBadge} <span style="font-size:0.65rem;opacity:0.5;">↗</span></a>` : `<span class="item-name">${item.name}${qtyBadge}</span>`}
                   <span class="item-details">${item.details}</span>
-                  <div class="item-tags">${featuredTag}${exclusiveTag}</div>
+                  <div class="item-tags">${newTag}${featuredTag}${exclusiveTag}</div>
                 </div>
                 ${priceLabel}
               </div>
@@ -641,7 +646,7 @@
           fetch(`${SUPABASE_URL}/rest/v1/category_descriptions?select=*`, {
             headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
           }),
-          fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=in.(hero_carousel_interval,announcement_enabled,announcement_text,hero_title,hero_subtitle)&select=key,value`, {
+          fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=in.(hero_carousel_interval,announcement_enabled,announcement_text,hero_title,hero_subtitle,stats_grading,hero_bg_image,seo_title,seo_description,seo_og_image)&select=key,value`, {
             headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
           })
         ]);
@@ -668,6 +673,28 @@
           }
           if (heroSubtitle) {
             document.querySelector('.hero-sub').innerHTML = heroSubtitle.replace(/(\d+[–-]\d+%\s*market\s*value)/i, '<strong style="color:var(--gold-text)">$1</strong>');
+          }
+
+          // SEO
+          const seoTitle = get('seo_title');
+          const seoDesc = get('seo_description');
+          const seoOg = get('seo_og_image');
+          if (seoTitle) document.title = seoTitle;
+          if (seoDesc) { const m = document.querySelector('meta[name="description"]'); if (m) m.content = seoDesc; const og = document.querySelector('meta[property="og:description"]'); if (og) og.content = seoDesc; }
+          if (seoTitle) { const og = document.querySelector('meta[property="og:title"]'); if (og) og.content = seoTitle; }
+          if (seoOg) { const og = document.querySelector('meta[property="og:image"]'); if (og) og.content = seoOg; }
+
+          // Hero background
+          const heroBg = get('hero_bg_image');
+          if (heroBg) {
+            document.querySelector('.hero').style.backgroundImage = `url('${heroBg}')`;
+          }
+
+          // Stats bar grading
+          const statsGrading = get('stats_grading');
+          if (statsGrading) {
+            const gradingEl = document.getElementById('statsGrading');
+            if (gradingEl) gradingEl.textContent = statsGrading;
           }
         } catch(e) {}
       } catch(e) {}
