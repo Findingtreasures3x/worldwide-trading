@@ -1545,21 +1545,35 @@
       btn.textContent = 'Send Reset Link';
       btn.disabled = false;
     });
-    function showDashboard() { document.getElementById('authScreen').style.display='none'; document.getElementById('adminApp').style.display='flex'; loadAnalytics(); loadInventory(); loadShows(); loadLinks(); loadPayments(); loadPriceSetting(); loadPasswordSetting(); loadCatDescs(); loadHeroShowcase(); }
+    function showDashboard() {
+      document.getElementById('authScreen').style.display='none';
+      document.getElementById('adminApp').style.display='flex';
+      loadAnalytics(); loadInventory(); loadShows();
+      // Restore last active page
+      const lastPage = localStorage.getItem('wt-admin-page');
+      if (lastPage && lastPage !== 'dashboard') {
+        navigateToPage(lastPage);
+      }
+    }
 
     // Page navigation
+    function navigateToPage(pageName) {
+      document.querySelectorAll('.sidebar-link[data-page]').forEach(l => l.classList.remove('active'));
+      const activeLink = document.querySelector(`.sidebar-link[data-page="${pageName}"]`);
+      if (activeLink) activeLink.classList.add('active');
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      const pageEl = document.getElementById('page-' + pageName);
+      if (pageEl) pageEl.classList.add('active');
+      document.getElementById('pageTitle').textContent = activeLink?.querySelector('span')?.textContent || '';
+      document.getElementById('analyticsRange').style.display = pageName === 'dashboard' ? '' : 'none';
+      localStorage.setItem('wt-admin-page', pageName);
+      if (pageName === 'sold') loadSold();
+      if (pageName === 'financials') loadFinancials();
+      if (pageName === 'site') { loadCatDescs(); loadHeroShowcase(); loadLinks(); loadPayments(); loadPriceSetting(); loadPasswordSetting(); loadAnnouncement(); loadHeroText(); loadStatsBar(); loadHeroBg(); loadSeo(); loadShowCarouselInterval(); }
+    }
+
     document.querySelectorAll('.sidebar-link[data-page]').forEach(link => {
-      link.addEventListener('click', () => {
-        document.querySelectorAll('.sidebar-link[data-page]').forEach(l => l.classList.remove('active'));
-        link.classList.add('active');
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.getElementById('page-' + link.dataset.page).classList.add('active');
-        document.getElementById('pageTitle').textContent = link.querySelector('span')?.textContent || '';
-        document.getElementById('analyticsRange').style.display = link.dataset.page === 'dashboard' ? '' : 'none';
-        if (link.dataset.page === 'sold') loadSold();
-        if (link.dataset.page === 'financials') loadFinancials();
-        if (link.dataset.page === 'site') { loadCatDescs(); loadHeroShowcase(); loadLinks(); loadPayments(); loadPriceSetting(); loadPasswordSetting(); loadAnnouncement(); loadHeroText(); loadStatsBar(); loadHeroBg(); loadSeo(); loadShowCarouselInterval(); }
-      });
+      link.addEventListener('click', () => navigateToPage(link.dataset.page));
     });
 
     // Timezone helper — format date in ET
@@ -3133,26 +3147,20 @@
     // ========== SHOW CAROUSEL TIMER ==========
     async function loadShowCarouselInterval() {
       try {
-        const data = await apiGet('site_settings?key=eq.show_carousel_interval&select=value');
-        if (data.length) {
-          const val = parseInt(data[0].value);
-          if (val === 0) {
-            document.getElementById('showCarouselEnabled').checked = false;
-            document.getElementById('showCarouselInterval').value = 6;
-          } else {
-            document.getElementById('showCarouselEnabled').checked = true;
-            document.getElementById('showCarouselInterval').value = val || 6;
-          }
-        }
+        const data = await apiGet('site_settings?key=in.(show_carousel_interval,show_carousel_speed)&select=key,value');
+        const interval = data.find(s => s.key === 'show_carousel_interval');
+        const speed = data.find(s => s.key === 'show_carousel_speed');
+        document.getElementById('showCarouselEnabled').checked = interval ? parseInt(interval.value) !== 0 : true;
+        document.getElementById('showCarouselInterval').value = speed ? parseInt(speed.value) || 6 : 6;
       } catch(e) {}
     }
 
     async function saveShowCarouselInterval() {
       const enabled = document.getElementById('showCarouselEnabled').checked;
       const seconds = parseInt(document.getElementById('showCarouselInterval').value) || 6;
-      const val = enabled ? seconds : 0;
       try {
-        await apiFetch('site_settings?key=eq.show_carousel_interval', { method: 'PATCH', body: JSON.stringify({ value: String(val), updated_at: new Date().toISOString() }) });
+        await apiFetch('site_settings?key=eq.show_carousel_interval', { method: 'PATCH', body: JSON.stringify({ value: enabled ? String(seconds) : '0', updated_at: new Date().toISOString() }) });
+        await apiFetch('site_settings?key=eq.show_carousel_speed', { method: 'PATCH', body: JSON.stringify({ value: String(seconds), updated_at: new Date().toISOString() }) });
         showToast(enabled ? `Show carousel set to ${seconds}s` : 'Show carousel off', 'success');
       } catch(e) { showToast('Failed to save', 'error'); }
     }
