@@ -1057,6 +1057,35 @@ body {
   flex-shrink: 0;
 }
 
+.controls-top {
+  display: contents;
+}
+
+.filter-toggle {
+  display: none;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.filter-toggle:hover,
+.filter-toggle.active {
+  border-color: var(--border-hover);
+  color: var(--gold-text);
+  background: var(--gold-dim);
+}
+
 .search-input {
   width: 100%;
   padding: 0.65rem 1rem;
@@ -2139,10 +2168,14 @@ body {
     font-size: 0.55rem;
   }
 
-  /* Sections — full bleed feel */
+  /* Sections — full bleed feel, tighter gaps */
   .section {
-    padding: 1.75rem 1rem;
+    padding: 1.25rem 1rem;
     max-width: 100vw;
+  }
+
+  .sell-cta-section {
+    padding: 1rem 1rem;
   }
 
   .section-title {
@@ -2150,7 +2183,16 @@ body {
   }
 
   .section-header {
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .section-header-right {
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+  }
+
+  .section-count {
+    font-size: 0.72rem;
   }
 
   .section-subtitle {
@@ -2162,27 +2204,54 @@ body {
     margin: 0;
   }
 
-  /* Search — full width, prominent */
+  /* Hide detailed category counts on mobile */
+  .section-count#categoryCounts {
+    display: none;
+  }
+
+  /* Search + filter toggle row */
+  .controls-top {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .controls-top .search-input {
+    flex: 1;
+    margin-bottom: 0;
+  }
+
+  .filter-toggle {
+    display: flex;
+  }
+
   .search-input {
     font-size: 16px; /* prevents iOS zoom on focus */
     padding: 0.75rem 1rem;
     border-radius: var(--radius);
   }
 
-  /* Filters — swipeable pill row */
+  /* Filters — collapsed by default on mobile */
   .filter-row {
+    display: none;
     flex-direction: column;
     align-items: stretch;
     gap: 0.6rem;
+    max-width: 100%;
+    margin-top: 0.75rem;
+  }
+
+  .filter-row.open {
+    display: flex;
+  }
+
+  .filter-separator {
+    display: none;
   }
 
   .controls {
     max-width: 100%;
     overflow: hidden;
-  }
-
-  .filter-row {
-    max-width: 100%;
   }
 
   .filters {

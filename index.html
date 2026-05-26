@@ -125,8 +125,14 @@
       </div>
     </div>
     <div class="controls">
-      <input type="text" id="searchInput" class="search-input" placeholder="Search by name, set, or grading...">
-      <div class="filter-row">
+      <div class="controls-top">
+        <input type="text" id="searchInput" class="search-input" placeholder="Search by name, set, or grading...">
+        <button class="filter-toggle" id="filterToggle" onclick="document.getElementById('filterRow').classList.toggle('open');this.classList.toggle('active');">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          Filters
+        </button>
+      </div>
+      <div class="filter-row" id="filterRow">
         <div class="filters" id="brandFilters">
           <button class="filter-btn active" data-filter="all">All</button>
         </div>
