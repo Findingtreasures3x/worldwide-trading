@@ -36,6 +36,12 @@
 
   <style id="gateStyle">.top-nav,.hero,.section,.footer,.section-divider,.stats-bar{visibility:hidden;}</style>
 
+  <!-- Announcement Banner -->
+  <div id="announcementBar" class="announcement-bar" style="display:none;">
+    <span id="announcementText"></span>
+    <button class="announcement-close" onclick="dismissAnnouncement()" aria-label="Close">&times;</button>
+  </div>
+
   <!-- Sticky Nav -->
   <nav class="top-nav">
     <div class="nav-inner">
@@ -605,27 +611,54 @@
       }
     });
 
-    // Load category descriptions from DB
+    // Load site settings from DB
     window._catDescs = {};
     window._heroCarouselInterval = 60;
-    async function fetchCatDescs() {
+    async function fetchSiteSettings() {
       try {
-        const [descRes, intervalRes] = await Promise.all([
+        const [descRes, settingsRes] = await Promise.all([
           fetch(`${SUPABASE_URL}/rest/v1/category_descriptions?select=*`, {
             headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
           }),
-          fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=eq.hero_carousel_interval&select=value`, {
+          fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=in.(hero_carousel_interval,announcement_enabled,announcement_text,hero_title,hero_subtitle)&select=key,value`, {
             headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
           })
         ]);
         const data = await descRes.json();
         data.forEach(d => { window._catDescs[d.category] = d.description; });
-        try { const s = await intervalRes.json(); if (s.length) window._heroCarouselInterval = parseInt(s[0].value) || 60; } catch(e) {}
+        try {
+          const settings = await settingsRes.json();
+          const get = (k) => settings.find(s => s.key === k)?.value || '';
+          window._heroCarouselInterval = parseInt(get('hero_carousel_interval')) || 60;
+
+          // Announcement banner
+          if (get('announcement_enabled') === 'true' && get('announcement_text') && !sessionStorage.getItem('wt-announcement-dismissed')) {
+            document.getElementById('announcementText').textContent = get('announcement_text');
+            document.getElementById('announcementBar').style.display = 'block';
+          }
+
+          // Hero text
+          const heroTitle = get('hero_title');
+          const heroSubtitle = get('hero_subtitle');
+          if (heroTitle) {
+            const h1 = document.querySelector('.hero h1');
+            // Parse title: wrap words ending with . in gold-grad spans
+            h1.innerHTML = heroTitle.split(/\s+/).map(w => w.endsWith('.') ? `<span class="gold-grad">${w}</span>` : w).join(' ');
+          }
+          if (heroSubtitle) {
+            document.querySelector('.hero-sub').innerHTML = heroSubtitle.replace(/(\d+[–-]\d+%\s*market\s*value)/i, '<strong style="color:var(--gold-text)">$1</strong>');
+          }
+        } catch(e) {}
       } catch(e) {}
     }
 
+    function dismissAnnouncement() {
+      document.getElementById('announcementBar').style.display = 'none';
+      sessionStorage.setItem('wt-announcement-dismissed', '1');
+    }
+
     // Load all data
-    fetchCatDescs().then(() => fetchInventory());
+    fetchSiteSettings().then(() => fetchInventory());
     fetchShows();
     fetchConnectLinks();
     fetchPaymentMethods();

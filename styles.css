@@ -78,6 +78,37 @@ body {
   width: 100%;
 }
 
+/* ===================== ANNOUNCEMENT ===================== */
+.announcement-bar {
+  background: var(--gold);
+  color: #0d0d0f;
+  text-align: center;
+  padding: 0.5rem 2.5rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  position: relative;
+  z-index: 101;
+  letter-spacing: 0.01em;
+}
+
+.announcement-close {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: rgba(0, 0, 0, 0.5);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.2rem;
+  line-height: 1;
+}
+
+.announcement-close:hover {
+  color: #0d0d0f;
+}
+
 /* ===================== NAV ===================== */
 .top-nav {
   position: sticky;

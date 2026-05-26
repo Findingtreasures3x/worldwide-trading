@@ -344,14 +344,6 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           <span>Shows</span>
         </button>
-        <button class="sidebar-link" data-page="payments">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-          <span>Payments</span>
-        </button>
-        <button class="sidebar-link" data-page="connect">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-          <span>Connect</span>
-        </button>
         <button class="sidebar-link" data-page="site">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
           <span>Site</span>
@@ -461,15 +453,6 @@
               <button class="btn btn-sm" style="background:var(--success-dim);color:var(--success);" onclick="bulkSell()">Sell Selected</button>
               <button class="btn btn-sm" onclick="clearSelection()">Clear</button>
             </div>
-            <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.78rem;color:var(--text-secondary);cursor:pointer;">
-              <input type="checkbox" id="showPricesToggle" onchange="toggleShowPrices(this.checked)" style="accent-color:var(--gold);">
-              Show prices on site
-            </label>
-            <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.78rem;color:var(--text-secondary);cursor:pointer;">
-              <input type="checkbox" id="sitePasswordToggle" onchange="toggleSitePassword(this.checked)" style="accent-color:var(--gold);">
-              Password protect site
-            </label>
-            <input class="form-input" id="sitePasswordField" placeholder="Set password..." style="width:140px;font-size:0.75rem;padding:0.3rem 0.5rem;display:none;" onchange="saveSitePassword(this.value)">
             <button class="btn btn-gold" onclick="openAddModal()">+ Add Item</button>
           </div>
         </div>
@@ -912,19 +895,7 @@
         </div>
       </div>
 
-      <!-- PAYMENTS PAGE -->
-      <div class="page" id="page-payments">
-        <div class="sec-header">
-          <h2 class="sec-title">Payment Methods</h2>
-          <button class="btn btn-gold" onclick="openPaymentModal()">+ Add Method</button>
-        </div>
-        <div class="table-scroll">
-          <table class="tbl">
-            <thead><tr><th>QR</th><th>Name</th><th>Type</th><th>Order</th><th>Visible</th><th>Actions</th></tr></thead>
-            <tbody id="paymentsBody"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody>
-          </table>
-        </div>
-      </div>
+      <!-- Payment modal moved; page consolidated into Site -->
 
       <!-- PAYMENT MODAL -->
       <div class="modal-overlay" id="paymentModal">
@@ -967,47 +938,84 @@
         </div>
       </div>
 
-      <!-- CONNECT PAGE -->
-      <div class="page" id="page-connect">
-        <div class="sec-header">
-          <h2 class="sec-title">Connect Links</h2>
-          <button class="btn btn-gold" onclick="openLinkModal()">+ Add Link</button>
-        </div>
-        <div class="table-scroll">
-          <table class="tbl">
-            <thead><tr><th>Icon</th><th>Label</th><th>Handle</th><th>URL</th><th>Actions</th></tr></thead>
-            <tbody id="linksBody"><tr><td colspan="5" class="loading">Loading...</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- SITE PAGE -->
+      <!-- SITE PAGE (Control Center) -->
       <div class="page" id="page-site">
         <div class="sec-header">
-          <h2 class="sec-title">Site Settings</h2>
+          <h2 class="sec-title">Site Control Center</h2>
+        </div>
+
+        <!-- General Settings -->
+        <div class="panel" style="margin-bottom:1.5rem;">
+          <div class="panel-header"><span class="panel-title">General Settings</span></div>
+          <div class="panel-body" style="display:flex;flex-direction:column;gap:1rem;">
+            <div style="display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;">
+              <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.82rem;color:var(--text-secondary);cursor:pointer;">
+                <input type="checkbox" id="showPricesToggle" onchange="toggleShowPrices(this.checked)" style="accent-color:var(--gold);">
+                Show prices on site
+              </label>
+              <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.82rem;color:var(--text-secondary);cursor:pointer;">
+                <input type="checkbox" id="sitePasswordToggle" onchange="toggleSitePassword(this.checked)" style="accent-color:var(--gold);">
+                Password protect site
+              </label>
+              <input class="form-input" id="sitePasswordField" placeholder="Set password..." style="width:160px;font-size:0.78rem;padding:0.35rem 0.6rem;display:none;" onchange="saveSitePassword(this.value)">
+            </div>
+          </div>
+        </div>
+
+        <!-- Announcement Banner -->
+        <div class="panel" style="margin-bottom:1.5rem;">
+          <div class="panel-header"><span class="panel-title">Announcement Banner</span><span style="font-size:0.68rem;color:var(--text-muted);margin-left:0.5rem;">Shown at the top of the site</span></div>
+          <div class="panel-body" style="display:flex;flex-direction:column;gap:0.75rem;">
+            <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.82rem;color:var(--text-secondary);cursor:pointer;">
+              <input type="checkbox" id="announcementToggle" style="accent-color:var(--gold);">
+              Enable announcement
+            </label>
+            <input class="form-input" id="announcementText" placeholder="e.g. See us at The Big Show this Sunday — Table 42!" style="font-size:0.82rem;">
+            <div style="display:flex;justify-content:flex-end;">
+              <button class="btn btn-gold btn-sm" onclick="saveAnnouncement()">Save Announcement</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hero Text -->
+        <div class="panel" style="margin-bottom:1.5rem;">
+          <div class="panel-header"><span class="panel-title">Hero Text</span><span style="font-size:0.68rem;color:var(--text-muted);margin-left:0.5rem;">Main heading and subtitle on the landing page</span></div>
+          <div class="panel-body" style="display:flex;flex-direction:column;gap:0.75rem;">
+            <div>
+              <label class="form-label">Title</label>
+              <input class="form-input" id="heroTitleInput" placeholder="e.g. Buy. Sell. Trade." style="font-size:0.82rem;">
+            </div>
+            <div>
+              <label class="form-label">Subtitle</label>
+              <textarea class="form-input" id="heroSubtitleInput" rows="2" placeholder="e.g. Graded slabs & sealed product..." style="font-size:0.82rem;resize:vertical;min-height:50px;"></textarea>
+            </div>
+            <div style="display:flex;justify-content:flex-end;">
+              <button class="btn btn-gold btn-sm" onclick="saveHeroText()">Save Hero Text</button>
+            </div>
+          </div>
         </div>
 
         <!-- Hero Showcase -->
         <div class="panel" style="margin-bottom:1.5rem;">
-          <div class="panel-header"><span class="panel-title">Hero Showcase</span><span style="font-size:0.68rem;color:var(--text-muted);margin-left:0.5rem;">Pick up to 3 items to display in the hero card fan</span></div>
+          <div class="panel-header"><span class="panel-title">Hero Showcase</span><span style="font-size:0.68rem;color:var(--text-muted);margin-left:0.5rem;">Pick up to 3 items for the hero card fan</span></div>
           <div class="panel-body">
             <div id="heroShowcaseList" style="display:flex;flex-direction:column;gap:0.5rem;">
               <div class="loading">Loading...</div>
             </div>
-            <div style="margin-top:1rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+            <div style="margin-top:1rem;">
               <button class="btn btn-gold btn-sm" onclick="openHeroPickerModal()">+ Add to Showcase</button>
-              <div style="display:flex;align-items:center;gap:0.5rem;">
-                <label class="form-label" style="margin:0;white-space:nowrap;">Carousel Timer</label>
-                <input class="form-input" id="heroCarouselInterval" type="number" min="5" max="300" value="60" style="width:70px;font-size:0.78rem;padding:0.35rem 0.5rem;">
-                <span style="font-size:0.72rem;color:var(--text-muted);">seconds</span>
-                <button class="btn btn-sm" onclick="saveCarouselInterval()">Save</button>
-              </div>
+            </div>
+            <div style="margin-top:1rem;display:flex;align-items:center;gap:0.5rem;">
+              <label class="form-label" style="margin:0;white-space:nowrap;">Carousel Timer</label>
+              <input class="form-input" id="heroCarouselInterval" type="number" min="5" max="300" value="60" style="width:70px;font-size:0.78rem;padding:0.35rem 0.5rem;">
+              <span style="font-size:0.72rem;color:var(--text-muted);">seconds</span>
+              <button class="btn btn-sm" onclick="saveCarouselInterval()">Save</button>
             </div>
           </div>
         </div>
 
         <!-- Category Descriptions -->
-        <div class="panel">
+        <div class="panel" style="margin-bottom:1.5rem;">
           <div class="panel-header"><span class="panel-title">Category Descriptions</span><span style="font-size:0.68rem;color:var(--text-muted);margin-left:0.5rem;">Shown under each category in The Vault</span></div>
           <div class="panel-body">
             <div id="catDescEditor" style="display:flex;flex-direction:column;gap:0.85rem;">
@@ -1015,6 +1023,38 @@
             </div>
             <div style="margin-top:1rem;display:flex;justify-content:flex-end;">
               <button class="btn btn-gold" onclick="saveCatDescs()">Save Descriptions</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Methods -->
+        <div class="panel" style="margin-bottom:1.5rem;">
+          <div class="panel-header">
+            <span class="panel-title">Payment Methods</span>
+            <button class="btn btn-gold btn-sm" onclick="openPaymentModal()">+ Add Method</button>
+          </div>
+          <div class="panel-body" style="padding:0;">
+            <div class="table-scroll">
+              <table class="tbl">
+                <thead><tr><th>QR</th><th>Name</th><th>Type</th><th>Order</th><th>Visible</th><th>Actions</th></tr></thead>
+                <tbody id="paymentsBody"><tr><td colspan="6" class="loading">Loading...</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Connect Links -->
+        <div class="panel" style="margin-bottom:1.5rem;">
+          <div class="panel-header">
+            <span class="panel-title">Connect Links</span>
+            <button class="btn btn-gold btn-sm" onclick="openLinkModal()">+ Add Link</button>
+          </div>
+          <div class="panel-body" style="padding:0;">
+            <div class="table-scroll">
+              <table class="tbl">
+                <thead><tr><th>Icon</th><th>Label</th><th>Handle</th><th>URL</th><th>Actions</th></tr></thead>
+                <tbody id="linksBody"><tr><td colspan="5" class="loading">Loading...</td></tr></tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -1068,9 +1108,8 @@
           <textarea class="form-input" id="itemNotes" rows="4" style="resize:vertical;min-height:80px;" placeholder="e.g. Bought from John at Dallas show, slight whitening on back corner..."></textarea>
         </div>
         <div class="form-row">
-          <label class="form-check"><input type="checkbox" id="itemFeatured" onchange="if(this.checked)document.getElementById('itemHeroShowcase').checked=false"><span class="form-check-label">Featured</span></label>
+          <label class="form-check"><input type="checkbox" id="itemFeatured"><span class="form-check-label">Featured</span></label>
           <label class="form-check"><input type="checkbox" id="itemExclusive"><span class="form-check-label">Exclusive</span></label>
-          <label class="form-check"><input type="checkbox" id="itemHeroShowcase" onchange="if(this.checked)document.getElementById('itemFeatured').checked=false"><span class="form-check-label">Hero Showcase</span></label>
         </div>
         <div class="modal-footer"><button type="button" class="btn" onclick="closeItemModal()">Cancel</button><button type="submit" class="btn btn-gold" id="saveBtn">Save Item</button></div>
       </form>
@@ -1439,7 +1478,7 @@
         document.getElementById('analyticsRange').style.display = link.dataset.page === 'dashboard' ? '' : 'none';
         if (link.dataset.page === 'sold') loadSold();
         if (link.dataset.page === 'financials') loadFinancials();
-        if (link.dataset.page === 'site') { loadCatDescs(); loadHeroShowcase(); }
+        if (link.dataset.page === 'site') { loadCatDescs(); loadHeroShowcase(); loadLinks(); loadPayments(); loadPriceSetting(); loadPasswordSetting(); loadAnnouncement(); loadHeroText(); }
       });
     });
 
@@ -1684,7 +1723,7 @@
 
     // Item modal
     function openAddModal(){document.getElementById('modalTitle').textContent='Add Item';document.getElementById('itemForm').reset();document.getElementById('itemId').value='';document.getElementById('itemSort').value=(window._items?.length||0)+1;uploadedImageUrl=null;resetDropZone();fileInput.value='';document.getElementById('itemModal').classList.add('active');}
-    function openEditModal(id){const i=window._items?.find(x=>x.id===id);if(!i)return;document.getElementById('modalTitle').textContent='Edit Item';document.getElementById('itemId').value=i.id;document.getElementById('itemName').value=i.name;document.getElementById('itemDetails').value=i.details;document.getElementById('itemPrice').value=i.price;document.getElementById('itemQty').value=i.qty;document.getElementById('itemSort').value=i.sort_order;document.getElementById('itemBrand').value=i.brand;document.getElementById('itemCategory').value=i.category;document.getElementById('itemImage').value=i.image||'';document.getElementById('itemFeatured').checked=i.featured;document.getElementById('itemExclusive').checked=i.exclusive;document.getElementById('itemHeroShowcase').checked=i.hero_showcase||false;document.getElementById('itemTcgUrl').value=i.tcgplayer_url||'';document.getElementById('itemCost').value=i.cost||'';document.getElementById('itemNotes').value=i.notes||'';uploadedImageUrl=null;fileInput.value='';if(i.image){previewImg.src=i.image;dropPrompt.style.display='none';dropPreview.style.display='inline-block';}else{resetDropZone();}document.getElementById('itemModal').classList.add('active');}
+    function openEditModal(id){const i=window._items?.find(x=>x.id===id);if(!i)return;document.getElementById('modalTitle').textContent='Edit Item';document.getElementById('itemId').value=i.id;document.getElementById('itemName').value=i.name;document.getElementById('itemDetails').value=i.details;document.getElementById('itemPrice').value=i.price;document.getElementById('itemQty').value=i.qty;document.getElementById('itemSort').value=i.sort_order;document.getElementById('itemBrand').value=i.brand;document.getElementById('itemCategory').value=i.category;document.getElementById('itemImage').value=i.image||'';document.getElementById('itemFeatured').checked=i.featured;document.getElementById('itemExclusive').checked=i.exclusive;document.getElementById('itemTcgUrl').value=i.tcgplayer_url||'';document.getElementById('itemCost').value=i.cost||'';document.getElementById('itemNotes').value=i.notes||'';uploadedImageUrl=null;fileInput.value='';if(i.image){previewImg.src=i.image;dropPrompt.style.display='none';dropPreview.style.display='inline-block';}else{resetDropZone();}document.getElementById('itemModal').classList.add('active');}
     function closeItemModal(){document.getElementById('itemModal').classList.remove('active');}
 
     // Image upload
@@ -1700,7 +1739,7 @@
     document.getElementById('itemImage').addEventListener('input',e=>{const u=e.target.value.trim();if(u&&u.startsWith('http')){previewImg.src=u;dropPrompt.style.display='none';dropPreview.style.display='inline-block';uploadedImageUrl=null;}else if(!uploadedImageUrl){resetDropZone();}});
 
     // Save item
-    document.getElementById('itemForm').addEventListener('submit',async e=>{e.preventDefault();const btn=document.getElementById('saveBtn');btn.textContent='Saving...';btn.disabled=true;const id=document.getElementById('itemId').value;const p={name:document.getElementById('itemName').value.trim(),details:document.getElementById('itemDetails').value.trim(),price:document.getElementById('itemPrice').value.trim(),cost:document.getElementById('itemCost').value.trim()||null,qty:parseInt(document.getElementById('itemQty').value)||1,sort_order:parseInt(document.getElementById('itemSort').value)||0,brand:document.getElementById('itemBrand').value,category:document.getElementById('itemCategory').value,image:document.getElementById('itemImage').value.trim()||uploadedImageUrl||null,featured:document.getElementById('itemFeatured').checked,exclusive:document.getElementById('itemExclusive').checked,hero_showcase:document.getElementById('itemHeroShowcase').checked,tcgplayer_url:document.getElementById('itemTcgUrl').value.trim()||null,notes:document.getElementById('itemNotes').value.trim()||null};try{if(id){await apiPatch(`inventory?id=eq.${id}`,p);}else{await apiPost('inventory',p);}uploadedImageUrl=null;closeItemModal();showToast(id?'Updated':'Added','success');loadInventory();}catch(e){showToast('Failed: '+e.message,'error');}btn.textContent='Save Item';btn.disabled=false;});
+    document.getElementById('itemForm').addEventListener('submit',async e=>{e.preventDefault();const btn=document.getElementById('saveBtn');btn.textContent='Saving...';btn.disabled=true;const id=document.getElementById('itemId').value;const p={name:document.getElementById('itemName').value.trim(),details:document.getElementById('itemDetails').value.trim(),price:document.getElementById('itemPrice').value.trim(),cost:document.getElementById('itemCost').value.trim()||null,qty:parseInt(document.getElementById('itemQty').value)||1,sort_order:parseInt(document.getElementById('itemSort').value)||0,brand:document.getElementById('itemBrand').value,category:document.getElementById('itemCategory').value,image:document.getElementById('itemImage').value.trim()||uploadedImageUrl||null,featured:document.getElementById('itemFeatured').checked,exclusive:document.getElementById('itemExclusive').checked,tcgplayer_url:document.getElementById('itemTcgUrl').value.trim()||null,notes:document.getElementById('itemNotes').value.trim()||null};try{if(id){await apiPatch(`inventory?id=eq.${id}`,p);}else{await apiPost('inventory',p);}uploadedImageUrl=null;closeItemModal();showToast(id?'Updated':'Added','success');loadInventory();}catch(e){showToast('Failed: '+e.message,'error');}btn.textContent='Save Item';btn.disabled=false;});
 
     // Delete
     function openDeleteModal(id,name){deleteId=id;document.getElementById('deleteName').textContent=name;document.getElementById('deleteModal').classList.add('active');}
@@ -2877,6 +2916,48 @@
     function editLink(id){const l=window._links?.find(x=>x.id===id);if(!l)return;document.getElementById('linkModalTitle').textContent='Edit Link';document.getElementById('linkId').value=l.id;document.getElementById('linkLabel').value=l.label;document.getElementById('linkHandle').value=l.handle;document.getElementById('linkUrl').value=l.url;document.getElementById('linkIcon').value=l.icon;document.getElementById('linkSort').value=l.sort_order;document.getElementById('linkModal').classList.add('active');}
     document.getElementById('linkForm').addEventListener('submit',async e=>{e.preventDefault();const id=document.getElementById('linkId').value;const p={label:document.getElementById('linkLabel').value.trim(),handle:document.getElementById('linkHandle').value.trim(),url:document.getElementById('linkUrl').value.trim(),icon:document.getElementById('linkIcon').value,sort_order:parseInt(document.getElementById('linkSort').value)||0};try{if(id){await apiPatch(`connect_links?id=eq.${id}`,p);}else{await apiPost('connect_links',p);}document.getElementById('linkModal').classList.remove('active');showToast(id?'Updated':'Added','success');loadLinks();}catch(e){showToast('Failed','error');}});
     async function deleteLink(id,name){if(!confirm(`Delete "${name}"?`))return;try{await apiDelete(`connect_links?id=eq.${id}`);showToast('Deleted','success');loadLinks();}catch(e){showToast('Failed','error');}}
+
+    // ========== ANNOUNCEMENT BANNER ==========
+    async function loadAnnouncement() {
+      try {
+        const data = await apiGet('site_settings?key=in.(announcement_enabled,announcement_text)&select=key,value');
+        const enabled = data.find(s => s.key === 'announcement_enabled');
+        const text = data.find(s => s.key === 'announcement_text');
+        document.getElementById('announcementToggle').checked = enabled?.value === 'true';
+        document.getElementById('announcementText').value = text?.value || '';
+      } catch(e) {}
+    }
+
+    async function saveAnnouncement() {
+      try {
+        const enabled = document.getElementById('announcementToggle').checked;
+        const text = document.getElementById('announcementText').value.trim();
+        await apiFetch('site_settings?key=eq.announcement_enabled', { method: 'PATCH', body: JSON.stringify({ value: String(enabled), updated_at: new Date().toISOString() }) });
+        await apiFetch('site_settings?key=eq.announcement_text', { method: 'PATCH', body: JSON.stringify({ value: text, updated_at: new Date().toISOString() }) });
+        showToast('Announcement saved', 'success');
+      } catch(e) { showToast('Failed to save', 'error'); }
+    }
+
+    // ========== HERO TEXT ==========
+    async function loadHeroText() {
+      try {
+        const data = await apiGet('site_settings?key=in.(hero_title,hero_subtitle)&select=key,value');
+        const title = data.find(s => s.key === 'hero_title');
+        const subtitle = data.find(s => s.key === 'hero_subtitle');
+        document.getElementById('heroTitleInput').value = title?.value || '';
+        document.getElementById('heroSubtitleInput').value = subtitle?.value || '';
+      } catch(e) {}
+    }
+
+    async function saveHeroText() {
+      try {
+        const title = document.getElementById('heroTitleInput').value.trim();
+        const subtitle = document.getElementById('heroSubtitleInput').value.trim();
+        await apiFetch('site_settings?key=eq.hero_title', { method: 'PATCH', body: JSON.stringify({ value: title, updated_at: new Date().toISOString() }) });
+        await apiFetch('site_settings?key=eq.hero_subtitle', { method: 'PATCH', body: JSON.stringify({ value: subtitle, updated_at: new Date().toISOString() }) });
+        showToast('Hero text saved', 'success');
+      } catch(e) { showToast('Failed to save', 'error'); }
+    }
 
     // ========== CATEGORY DESCRIPTIONS ==========
     const CAT_LABELS = { slabs: 'Slabs', sealed: 'Sealed Product', raw: 'Raw Cards', accessories: 'Accessories', collectibles: 'Collectibles' };
