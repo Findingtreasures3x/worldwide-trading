@@ -989,8 +989,8 @@
             <div style="display:flex;gap:0.75rem;align-items:flex-end;flex-wrap:wrap;">
               <div style="display:flex;align-items:center;gap:0.5rem;">
                 <label class="form-label" style="margin:0;white-space:nowrap;">Show Carousel Timer</label>
-                <input class="form-input" id="showCarouselInterval" type="number" min="3" max="60" value="6" style="width:70px;font-size:0.78rem;padding:0.35rem 0.5rem;">
-                <span style="font-size:0.72rem;color:var(--text-muted);">seconds</span>
+                <input class="form-input" id="showCarouselInterval" type="number" min="0" max="60" value="6" style="width:70px;font-size:0.78rem;padding:0.35rem 0.5rem;">
+                <span style="font-size:0.72rem;color:var(--text-muted);">seconds (0 = off)</span>
                 <button class="btn btn-sm" onclick="saveShowCarouselInterval()">Save</button>
               </div>
             </div>

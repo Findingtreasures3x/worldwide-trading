@@ -965,8 +965,10 @@
     // Auto-rotate every 6 seconds
     function startCarouselAuto() {
       stopCarouselAuto();
-      const showInterval = (window._showCarouselInterval || 6) * 1000;
-      carouselAutoTimer = setInterval(() => carouselMove(1), showInterval);
+      const showInterval = window._showCarouselInterval;
+      if (showInterval && showInterval > 0) {
+        carouselAutoTimer = setInterval(() => carouselMove(1), showInterval * 1000);
+      }
     }
     function stopCarouselAuto() {
       if (carouselAutoTimer) { clearInterval(carouselAutoTimer); carouselAutoTimer = null; }
