@@ -899,6 +899,7 @@
 
     function renderShows(shows) {
       const title = shows.length > 1 ? 'Upcoming Shows' : 'Next Show';
+      const perPage = getPerPage();
 
       const cardsHTML = shows.map((show, idx) => {
         const showDate = new Date(show.date);
@@ -917,7 +918,7 @@
         const stubMonth = showDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).toUpperCase();
 
         return `
-          <div class="show-card${idx === 0 ? ' carousel-active' : ''}">
+          <div class="show-card${idx < perPage ? ' carousel-visible' : ''}">
             ${flyerHTML}
             <div class="show-details">
               <h3 class="show-name">${show.name}</h3>
@@ -944,10 +945,11 @@
           </div>`;
       }).join('');
 
-      const navHTML = shows.length > 1 ? `
-        <div class="carousel-nav">
+      const totalPages = Math.ceil(shows.length / perPage);
+      const navHTML = totalPages > 1 ? `
+        <div class="carousel-nav has-pages">
           <button class="carousel-btn" id="carouselPrev" onclick="carouselMove(-1)">‹</button>
-          <div class="carousel-dots" id="carouselDots">${shows.map((_, i) => `<button class="carousel-dot${i === 0 ? ' active' : ''}" onclick="carouselGo(${i})"></button>`).join('')}</div>
+          <div class="carousel-dots" id="carouselDots">${Array.from({length: totalPages}, (_, i) => `<button class="carousel-dot${i === 0 ? ' active' : ''}" onclick="carouselGo(${i})"></button>`).join('')}</div>
           <button class="carousel-btn" id="carouselNext" onclick="carouselMove(1)">›</button>
         </div>` : '';
 
@@ -999,21 +1001,25 @@
     }
 
     // ========== CAROUSEL ==========
-    let carouselIdx = 0;
+    let carouselIdx = 0; // page index
     let carouselAutoTimer = null;
 
-    function carouselGo(idx) {
+    function getPerPage() { return window.innerWidth >= 960 ? 2 : 1; }
+
+    function carouselGo(pageIdx) {
       const carousel = document.getElementById('showCarousel');
       if (!carousel) return;
-      const cards = carousel.querySelectorAll('.show-card');
-      if (idx < 0) idx = cards.length - 1;
-      if (idx >= cards.length) idx = 0;
-      carouselIdx = idx;
+      const cards = [...carousel.querySelectorAll('.show-card')];
+      const perPage = getPerPage();
+      const totalPages = Math.ceil(cards.length / perPage);
+      if (pageIdx < 0) pageIdx = totalPages - 1;
+      if (pageIdx >= totalPages) pageIdx = 0;
+      carouselIdx = pageIdx;
+      const startIdx = pageIdx * perPage;
       cards.forEach((c, i) => {
-        c.classList.toggle('carousel-active', i === idx);
-        c.style.transform = '';
+        c.classList.toggle('carousel-visible', i >= startIdx && i < startIdx + perPage);
       });
-      document.querySelectorAll('.carousel-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+      document.querySelectorAll('.carousel-dot').forEach((d, i) => d.classList.toggle('active', i === pageIdx));
     }
     function carouselMove(dir) { carouselGo(carouselIdx + dir); }
 
@@ -1041,6 +1047,9 @@
 
     // Start auto-rotate after shows load (called from renderShows)
     setTimeout(() => { if (document.getElementById('showCarousel')) startCarouselAuto(); }, 3000);
+
+    // Recalculate carousel on resize
+    window.addEventListener('resize', () => { carouselGo(0); });
 
     // ========== CONNECT LINKS ==========
     const ICON_MAP = {
