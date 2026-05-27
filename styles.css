@@ -423,14 +423,16 @@ body {
   gap: 0.5rem;
   background: transparent;
   color: var(--text);
-  font-weight: 600;
-  font-size: 0.9rem;
-  padding: 0.75rem 1.75rem;
+  font-weight: 800;
+  font-size: 0.82rem;
+  padding: 0.85rem 2rem;
   border-radius: 100px;
   text-decoration: none;
   transition: var(--transition);
-  border: 1px solid var(--border-hover);
+  border: 1.5px solid var(--border-hover);
   cursor: pointer;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 .hero-cta-outline:hover {
   border-color: var(--gold);
@@ -458,21 +460,22 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  background: var(--gold);
+  background: linear-gradient(180deg, #fbd07c 0%, #f5b94b 40%, #d4972f 100%);
   color: #0d0d0f;
-  font-weight: 700;
-  font-size: 0.9rem;
-  padding: 0.75rem 1.75rem;
+  font-weight: 800;
+  font-size: 0.82rem;
+  padding: 0.85rem 2rem;
   border-radius: 100px;
   text-decoration: none;
   transition: var(--transition);
   border: none;
   cursor: pointer;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .hero-cta:hover {
-  box-shadow: 0 0 0 6px var(--gold-glow), 0 8px 24px rgba(245, 185, 75, 0.2);
+  box-shadow: 0 0 0 6px var(--gold-glow), 0 8px 24px rgba(245, 185, 75, 0.25);
   transform: translateY(-1px);
 }
 
@@ -831,15 +834,17 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  background: var(--gold);
+  background: linear-gradient(180deg, #fbd07c 0%, #f5b94b 40%, #d4972f 100%);
   color: #0d0d0f;
-  font-weight: 700;
-  font-size: 0.85rem;
-  padding: 0.6rem 1.5rem;
+  font-weight: 800;
+  font-size: 0.78rem;
+  padding: 0.7rem 1.75rem;
   border-radius: 100px;
   text-decoration: none;
   transition: var(--transition);
   align-self: flex-start;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .show-link-btn:hover {
