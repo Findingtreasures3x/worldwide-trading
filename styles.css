@@ -689,14 +689,7 @@ body {
 .show-carousel {
   display: block;
   width: 100%;
-}
-
-.show-card {
-  display: none;
-}
-
-.show-card.carousel-active {
-  display: flex;
+  max-width: 800px;
 }
 
 /* Carousel nav: always visible when multiple shows */
@@ -710,7 +703,7 @@ body {
 
 /* Show card — horizontal on desktop */
 .show-card {
-  display: flex;
+  display: none;
   flex-direction: row;
   align-items: stretch;
   background: var(--bg-card);
@@ -718,6 +711,10 @@ body {
   border-radius: var(--radius-lg);
   overflow: hidden;
   min-width: 0;
+}
+
+.show-card.carousel-active {
+  display: flex;
 }
 
 .show-flyer-link {
