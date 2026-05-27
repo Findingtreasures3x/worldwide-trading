@@ -352,6 +352,7 @@
         renderHeroFeatured(showcaseItems.length ? showcaseItems : allItems.filter(i => i.featured && i.image).slice(0, 3));
         buildBrandFilters();
         renderInventory();
+        restoreScroll();
       } catch (err) {
         console.error('Fetch error:', err);
         document.getElementById('inventory-container').innerHTML =
@@ -1137,6 +1138,19 @@
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') closeModal();
     });
+
+    // Save scroll position on refresh
+    window.addEventListener('beforeunload', () => {
+      sessionStorage.setItem('wt-scroll', window.scrollY);
+    });
+    function restoreScroll() {
+      const saved = sessionStorage.getItem('wt-scroll');
+      if (saved) {
+        setTimeout(() => window.scrollTo(0, parseInt(saved)), 100);
+        setTimeout(() => window.scrollTo(0, parseInt(saved)), 500);
+        sessionStorage.removeItem('wt-scroll');
+      }
+    }
 
     // Smooth scroll offset for sticky nav + close mobile menu
     document.querySelectorAll('a[href^="#"]').forEach(link => {
