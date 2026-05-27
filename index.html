@@ -930,7 +930,7 @@
                   <span class="show-meta-icon">📍</span>
                   <div><a href="${mapsUrl}" target="_blank" rel="noopener" class="show-address-link"><strong>${show.location_name}</strong><span>${show.address}</span></a></div>
                 </div>
-                ${ticketLine ? `<div class="show-meta-item"><span class="show-meta-icon">🎟️</span><div><strong>${ticketLine}</strong>${show.notes ? `<span class="show-notes-text">${show.notes.length > 80 ? show.notes.slice(0, 80) + '...' : show.notes}</span>` : ''}</div></div>` : ''}
+                ${ticketLine ? `<div class="show-meta-item"><span class="show-meta-icon">🎟️</span><div><strong>${ticketLine}</strong>${show.notes ? `<span class="show-notes-text">${show.notes.length > 80 ? show.notes.slice(0, 80) + '... ' + (show.event_url ? `<a href="${show.event_url}" target="_blank" rel="noopener" style="color:var(--gold-text);text-decoration:none;font-weight:600;">Read more</a>` : '') : show.notes}</span>` : ''}</div></div>` : ''}
               </div>
               <div class="show-doors-label">Doors open in</div>
               <div class="countdown" data-show-date="${show.date}">
@@ -945,7 +945,7 @@
       }).join('');
 
       const navHTML = shows.length > 1 ? `
-        <div class="carousel-nav has-multiple">
+        <div class="carousel-nav">
           <button class="carousel-btn" id="carouselPrev" onclick="carouselMove(-1)">‹</button>
           <div class="carousel-dots" id="carouselDots">${shows.map((_, i) => `<button class="carousel-dot${i === 0 ? ' active' : ''}" onclick="carouselGo(${i})"></button>`).join('')}</div>
           <button class="carousel-btn" id="carouselNext" onclick="carouselMove(1)">›</button>
@@ -995,7 +995,7 @@
       countdownInterval = setInterval(updateAllCountdowns, 1000);
 
       // Start auto-carousel on mobile and narrow desktop (under 960px)
-      if (shows.length > 1) startCarouselAuto();
+      if (shows.length > 1 && window.innerWidth < 960) startCarouselAuto();
     }
 
     // ========== CAROUSEL ==========

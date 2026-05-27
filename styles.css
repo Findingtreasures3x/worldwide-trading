@@ -685,16 +685,15 @@ body {
 
 /* ===================== NEXT SHOW ===================== */
 
-/* Always carousel mode — show one at a time */
+/* Desktop: 2-column grid for shows */
 .show-carousel {
-  display: block;
-  width: 100%;
-  max-width: 800px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
 }
 
-/* Carousel nav: always visible when multiple shows */
+/* Carousel nav: hidden on desktop */
 .carousel-nav { display: none; align-items: center; gap: 0.5rem; }
-.carousel-nav.has-multiple { display: flex; }
 .carousel-btn { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: var(--transition); }
 .carousel-btn:hover { border-color: var(--border-hover); color: var(--gold-text); background: var(--bg-card-hover); }
 .carousel-dots { display: flex; gap: 0.35rem; }
@@ -703,7 +702,7 @@ body {
 
 /* Show card — horizontal on desktop */
 .show-card {
-  display: none;
+  display: flex;
   flex-direction: row;
   align-items: stretch;
   background: var(--bg-card);
@@ -711,10 +710,6 @@ body {
   border-radius: var(--radius-lg);
   overflow: hidden;
   min-width: 0;
-}
-
-.show-card.carousel-active {
-  display: flex;
 }
 
 .show-flyer-link {
@@ -883,9 +878,12 @@ body {
   margin-bottom: 0.25rem;
 }
 
-/* Mobile show tweaks */
+/* Mobile: carousel mode for shows */
 @media (max-width: 959px) {
-  .show-card { flex-direction: column; }
+  .show-carousel { display: block; width: 100%; }
+  .carousel-nav { display: flex; }
+  .show-card { display: none; flex-direction: column; }
+  .show-card.carousel-active { display: flex; }
   .show-flyer-link { flex: none; max-width: 100%; }
   .show-flyer { height: auto; max-height: 300px; object-fit: contain; object-position: center; background: var(--bg-card); }
 }
