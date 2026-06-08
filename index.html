@@ -390,8 +390,16 @@
     }
 
     // ========== PARSE PRICE FOR SORTING ==========
-    function parsePrice(priceStr) {
-      return parseFloat(priceStr.replace(/[$,]/g, '')) || 0;
+    function parsePrice(p) {
+      if (p == null) return 0;
+      if (typeof p === 'number') return p;
+      return parseFloat(String(p).replace(/[^0-9.\-]/g, '')) || 0;
+    }
+    function fmtPrice(p) {
+      if (p == null || p === '') return '—';
+      const num = typeof p === 'number' ? p : parseFloat(String(p).replace(/[^0-9.\-]/g, ''));
+      if (isNaN(num)) return '—';
+      return '$' + num.toLocaleString('en-US', { minimumFractionDigits: num % 1 !== 0 ? 2 : 0, maximumFractionDigits: 2 });
     }
 
     // ========== PARSE GRADING INFO ==========
@@ -419,7 +427,7 @@
         const matchSearch = currentSearch === '' ||
           item.name.toLowerCase().includes(currentSearch) ||
           item.details.toLowerCase().includes(currentSearch);
-        const itemPrice = parseFloat((item.price || '').replace(/[^0-9.]/g, '')) || 0;
+        const itemPrice = parsePrice(item.price);
         const matchPrice = currentMaxPrice === Infinity || itemPrice < currentMaxPrice;
         return matchBrand && matchCat && matchSearch && matchPrice;
       });
@@ -490,15 +498,16 @@
           const newTag = isNew ? `<span class="item-tag new-tag">New</span>` : '';
           const featuredTag = item.featured ? `<span class="item-tag featured-tag">Featured</span>` : '';
           const exclusiveTag = item.exclusive ? `<span class="item-tag exclusive-tag">Exclusive</span>` : '';
+          const priceFmt = fmtPrice(item.price);
           const priceLabel = showPrices
             ? (item.qty > 1
-              ? `<span class="item-price">${item.price}<span class="price-each"> /ea</span></span>`
-              : `<span class="item-price">${item.price}</span>`)
+              ? `<span class="item-price">${priceFmt}<span class="price-each"> /ea</span></span>`
+              : `<span class="item-price">${priceFmt}</span>`)
             : '';
           const featuredClass = item.featured ? ' featured' : '';
           const slabFrame = getSlabFrame(item.details);
           const escAttr = s => s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;');
-          const safePrice = showPrices ? (item.qty > 1 ? `${item.price} /ea (x${item.qty})` : item.price) : '';
+          const safePrice = showPrices ? (item.qty > 1 ? `${priceFmt} /ea (x${item.qty})` : priceFmt) : '';
           const imageHTML = item.image
             ? `<div class="item-image-wrap">${slabFrame}<img src="${item.image}" alt="${escAttr(item.name)}" class="item-image" loading="lazy" data-modal-img="${escAttr(item.image)}" data-modal-name="${escAttr(item.name)}" data-modal-details="${escAttr(item.details)}" data-modal-price="${escAttr(safePrice)}" data-modal-url="${escAttr(item.tcgplayer_url || '')}" onclick="openModal(this.dataset.modalImg, this.dataset.modalName, this.dataset.modalDetails, this.dataset.modalPrice, this.dataset.modalUrl)"></div>`
             : `<div class="item-image-wrap item-image-placeholder">${slabFrame}<span class="item-brand-dot ${item.brand} large"></span></div>`;

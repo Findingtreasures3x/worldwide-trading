@@ -1872,7 +1872,7 @@
     document.getElementById('itemImage').addEventListener('input',e=>{const u=e.target.value.trim();if(u&&u.startsWith('http')){previewImg.src=u;dropPrompt.style.display='none';dropPreview.style.display='inline-block';uploadedImageUrl=null;}else if(!uploadedImageUrl){resetDropZone();}});
 
     // Save item
-    document.getElementById('itemForm').addEventListener('submit',async e=>{e.preventDefault();const btn=document.getElementById('saveBtn');btn.textContent='Saving...';btn.disabled=true;const id=document.getElementById('itemId').value;const p={name:document.getElementById('itemName').value.trim(),details:document.getElementById('itemDetails').value.trim(),price:document.getElementById('itemPrice').value.trim(),cost:document.getElementById('itemCost').value.trim()||null,qty:parseInt(document.getElementById('itemQty').value)||1,sort_order:parseInt(document.getElementById('itemSort').value)||0,brand:document.getElementById('itemBrand').value,category:document.getElementById('itemCategory').value,image:document.getElementById('itemImage').value.trim()||uploadedImageUrl||null,featured:document.getElementById('itemFeatured').checked,exclusive:document.getElementById('itemExclusive').checked,tcgplayer_url:document.getElementById('itemTcgUrl').value.trim()||null,notes:document.getElementById('itemNotes').value.trim()||null};try{if(id){await apiPatch(`inventory?id=eq.${id}`,p);}else{await apiPost('inventory',p);}uploadedImageUrl=null;closeItemModal();showToast(id?'Updated':'Added','success');loadInventory();}catch(e){showToast('Failed: '+e.message,'error');}btn.textContent='Save Item';btn.disabled=false;});
+    document.getElementById('itemForm').addEventListener('submit',async e=>{e.preventDefault();const btn=document.getElementById('saveBtn');btn.textContent='Saving...';btn.disabled=true;const id=document.getElementById('itemId').value;const p={name:document.getElementById('itemName').value.trim(),details:document.getElementById('itemDetails').value.trim(),price:parseMoney(document.getElementById('itemPrice').value)||0,cost:parseMoney(document.getElementById('itemCost').value)||null,qty:parseInt(document.getElementById('itemQty').value)||1,sort_order:parseInt(document.getElementById('itemSort').value)||0,brand:document.getElementById('itemBrand').value,category:document.getElementById('itemCategory').value,image:document.getElementById('itemImage').value.trim()||uploadedImageUrl||null,featured:document.getElementById('itemFeatured').checked,exclusive:document.getElementById('itemExclusive').checked,tcgplayer_url:document.getElementById('itemTcgUrl').value.trim()||null,notes:document.getElementById('itemNotes').value.trim()||null};try{if(id){await apiPatch(`inventory?id=eq.${id}`,p);}else{await apiPost('inventory',p);}uploadedImageUrl=null;closeItemModal();showToast(id?'Updated':'Added','success');loadInventory();}catch(e){showToast('Failed: '+e.message,'error');}btn.textContent='Save Item';btn.disabled=false;});
 
     // Delete
     function openDeleteModal(id,name){deleteId=id;document.getElementById('deleteName').textContent=name;document.getElementById('deleteModal').classList.add('active');}
@@ -1885,7 +1885,17 @@
     let invSortCol = null;
     let invSortDir = 'asc';
 
-    function parsePrice(p) { return parseFloat((p || '').replace(/[^0-9.]/g, '')) || 0; }
+    function parsePrice(p) {
+      if (p == null) return 0;
+      if (typeof p === 'number') return p;
+      return parseFloat(String(p).replace(/[^0-9.\-]/g, '')) || 0;
+    }
+    function fmtPrice(p) {
+      if (p == null || p === '') return '—';
+      const num = typeof p === 'number' ? p : parseFloat(String(p).replace(/[^0-9.\-]/g, ''));
+      if (isNaN(num)) return '—';
+      return '$' + num.toLocaleString('en-US', { minimumFractionDigits: num % 1 !== 0 ? 2 : 0, maximumFractionDigits: 2 });
+    }
 
     // Sort click handler
     document.addEventListener('click', e => {
@@ -1913,7 +1923,7 @@
       const fFeat = document.getElementById('invFilterFeatured')?.value || '';
 
       let data = (window._items || []).filter(i => {
-        if (search && !(i.name.toLowerCase().includes(search) || i.details.toLowerCase().includes(search) || i.brand.toLowerCase().includes(search) || i.category.toLowerCase().includes(search) || i.price.toLowerCase().includes(search))) return false;
+        if (search && !(i.name.toLowerCase().includes(search) || i.details.toLowerCase().includes(search) || i.brand.toLowerCase().includes(search) || i.category.toLowerCase().includes(search) || String(i.price ?? '').includes(search))) return false;
         if (fBrand && i.brand !== fBrand) return false;
         if (fCat && i.category !== fCat) return false;
         if (fVis === 'visible' && i.visible === false) return false;
@@ -1963,7 +1973,7 @@
         const bl = item.brand.replace(/-/g,' ').replace(/\b\w/g, c => c.toUpperCase());
         const safeName = item.name.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;');
         const notePreview = item.notes ? `<div class="note-clickable" style="font-size:0.68rem;color:var(--text-muted);margin-top:0.15rem;max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;" data-note="${item.notes.replace(/"/g,'&quot;').replace(/</g,'&lt;')}">📝 ${item.notes.replace(/</g,'&lt;')}</div>` : '';
-        tbody.innerHTML += `<tr${rs}><td><input type="checkbox" class="item-check" value="${item.id}" data-name="${safeName}" onchange="updateSelection()" style="accent-color:var(--gold);"></td><td class="img-cell">${img}</td><td class="name-cell"><span style="cursor:pointer;" data-action="edit" data-id="${item.id}">${item.name}</span>${feat}${notePreview}</td><td>${item.details}</td><td><span class="brand-badge">${bl}</span></td><td style="text-transform:capitalize">${item.category}</td><td class="price-cell">${item.price}</td><td>${item.qty}</td><td>${vis}</td><td><div class="action-btns"><button class="btn btn-sm" data-action="edit" data-id="${item.id}">Edit</button><button class="btn btn-sm" style="background:var(--success-dim);color:var(--success);" data-action="sell" data-id="${item.id}" data-name="${safeName}">Sell</button><button class="btn btn-sm btn-danger" data-action="delete" data-id="${item.id}" data-name="${safeName}">Del</button></div></td></tr>`;
+        tbody.innerHTML += `<tr${rs}><td><input type="checkbox" class="item-check" value="${item.id}" data-name="${safeName}" onchange="updateSelection()" style="accent-color:var(--gold);"></td><td class="img-cell">${img}</td><td class="name-cell"><span style="cursor:pointer;" data-action="edit" data-id="${item.id}">${item.name}</span>${feat}${notePreview}</td><td>${item.details}</td><td><span class="brand-badge">${bl}</span></td><td style="text-transform:capitalize">${item.category}</td><td class="price-cell">${fmtPrice(item.price)}</td><td>${item.qty}</td><td>${vis}</td><td><div class="action-btns"><button class="btn btn-sm" data-action="edit" data-id="${item.id}">Edit</button><button class="btn btn-sm" style="background:var(--success-dim);color:var(--success);" data-action="sell" data-id="${item.id}" data-name="${safeName}">Sell</button><button class="btn btn-sm btn-danger" data-action="delete" data-id="${item.id}" data-name="${safeName}">Del</button></div></td></tr>`;
       });
 
       // Pagination controls
@@ -2026,7 +2036,7 @@
       const idStr = document.getElementById('soldItemId').value;
       const ids = idStr.split(',');
       const showVal = document.getElementById('soldShowCustom').value.trim() || document.getElementById('soldShow').value || null;
-      const priceVal = document.getElementById('soldPriceInput').value.trim() || null;
+      const priceVal = parseMoney(document.getElementById('soldPriceInput').value) || null;
       const buyerVal = document.getElementById('soldBuyerInput').value.trim() || null;
       const lotVal = document.getElementById('soldLotInput').value.trim() || (ids.length > 1 ? `Lot ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'})}` : null);
       const notesVal = document.getElementById('soldNotesInput').value.trim() || null;
@@ -2179,7 +2189,7 @@
 
         Object.entries(showGroups).forEach(([showName, group]) => {
           const allInGroup = [...Object.values(group.lots).flat(), ...group.individuals];
-          const totalListed = allInGroup.reduce((s, i) => s + (parseFloat(i.price.replace(/[^0-9.]/g,'')) || 0) * (i.qty || 1), 0);
+          const totalListed = allInGroup.reduce((s, i) => s + parsePrice(i.price) * (i.qty || 1), 0);
           // For sold total: count each lot's sold price once, not per item
           let totalSold = group.individuals.reduce((s, i) => s + parseMoney(i.sold_price), 0);
           Object.values(group.lots).forEach(lotItems => {
@@ -2235,7 +2245,7 @@
     }
 
     function buildLotCard(lotName, items) {
-      const totalListed = items.reduce((s, i) => s + (parseFloat(i.price.replace(/[^0-9.]/g,'')) || 0) * (i.qty || 1), 0);
+      const totalListed = items.reduce((s, i) => s + parsePrice(i.price) * (i.qty || 1), 0);
       const totalCost = items.reduce((s, i) => s + parseMoney(i.cost) * (i.qty || 1), 0);
       // Lot sold price: manual lot_sold_price takes priority, otherwise sum individual sold_prices
       const manualLotPrice = items[0].lot_sold_price;
@@ -2250,12 +2260,12 @@
       let itemRows = items.map(item => {
         const img = item.image ? `<img src="${item.image}" alt="${item.name}">` : `<div class="no-img">—</div>`;
         const qty = (item.qty || 1) > 1 ? ` <span style="color:var(--text-muted);">x${item.qty}</span>` : '';
-        const costStr = item.cost ? `<span style="color:var(--text-muted);font-size:0.7rem;"> (cost: ${item.cost})</span>` : '';
-        const soldStr = item.sold_price ? `<span style="color:var(--success);font-size:0.7rem;"> → ${item.sold_price}</span>` : '';
+        const costStr = item.cost != null ? `<span style="color:var(--text-muted);font-size:0.7rem;"> (cost: ${fmtPrice(item.cost)})</span>` : '';
+        const soldStr = item.sold_price != null ? `<span style="color:var(--success);font-size:0.7rem;"> → ${fmtPrice(item.sold_price)})</span>` : '';
         let itemNote = '';
         if (item.notes) itemNote += `<div class="note-clickable" style="font-size:0.68rem;color:var(--text-muted);margin-top:0.15rem;max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;" data-note="${item.notes.replace(/"/g,'&quot;').replace(/</g,'&lt;')}">📋 ${item.notes.replace(/</g,'&lt;')}</div>`;
         if (item.sold_notes) itemNote += `<div class="note-clickable" style="font-size:0.68rem;color:var(--gold-text);opacity:0.7;margin-top:0.1rem;max-width:250px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;" data-note="${item.sold_notes.replace(/"/g,'&quot;').replace(/</g,'&lt;')}">📝 ${item.sold_notes.replace(/</g,'&lt;')}</div>`;
-        return `<tr><td class="img-cell">${img}</td><td class="name-cell">${item.name}${qty}${itemNote}</td><td>${item.details}</td><td class="price-cell">${item.price}${soldStr}${costStr}</td><td><div class="action-btns"><button class="btn btn-sm" onclick="openEditSoldModal('${item.id}')">Edit</button><button class="btn btn-sm" onclick="unsoldItem('${item.id}')">Remove</button></div></td></tr>`;
+        return `<tr><td class="img-cell">${img}</td><td class="name-cell">${item.name}${qty}${itemNote}</td><td>${item.details}</td><td class="price-cell">${fmtPrice(item.price)}${soldStr}${costStr}</td><td><div class="action-btns"><button class="btn btn-sm" onclick="openEditSoldModal('${item.id}')">Edit</button><button class="btn btn-sm" onclick="unsoldItem('${item.id}')">Remove</button></div></td></tr>`;
       }).join('');
 
       const notesHtml = notes ? `<div class="note-clickable" style="font-size:0.72rem;color:var(--text-muted);padding:0.25rem 1rem 0.65rem;cursor:pointer;line-height:1.5;border-top:1px solid var(--border);" data-note="${notes.replace(/"/g,'&quot;').replace(/</g,'&lt;')}"><span style="opacity:0.7;">📝</span> ${notes.length > 150 ? notes.replace(/</g,'&lt;').slice(0, 150) + '... <span style="color:var(--gold-text);">(click to read more)</span>' : notes.replace(/</g,'&lt;')}</div>` : '';
@@ -2339,7 +2349,7 @@
       btn.textContent = 'Saving...'; btn.disabled = true;
       const id = document.getElementById('editSoldId').value;
       const showVal = document.getElementById('editSoldShowCustom').value.trim() || document.getElementById('editSoldShow').value || null;
-      const priceVal = document.getElementById('editSoldPrice').value.trim() || null;
+      const priceVal = parseMoney(document.getElementById('editSoldPrice').value) || null;
       const buyerVal = document.getElementById('editSoldBuyer').value.trim() || null;
       const lotVal = document.getElementById('editSoldLot').value.trim() || null;
       const itemNotesVal = document.getElementById('editSoldItemNotes').value.trim() || null;
@@ -2348,7 +2358,7 @@
       const newQty = parseInt(document.getElementById('editSoldQty')?.value) || origQty;
       try {
         // Update this record
-        const costVal = document.getElementById('editSoldCost').value.trim() || null;
+        const costVal = parseMoney(document.getElementById('editSoldCost').value) || null;
         await apiPatch(`inventory?id=eq.${id}`, {
           sold_show: showVal, sold_price: priceVal, sold_buyer: buyerVal,
           sold_lot: lotVal, notes: itemNotesVal, sold_notes: notesVal, sold_qty: newQty, qty: newQty, cost: costVal
@@ -2401,7 +2411,7 @@
       document.getElementById('editLotSoldPrice').value = lotManualPrice || (lotSumPrice ? `$${lotSumPrice}` : '');
       // Sum cost across all items in lot
       const lotTotalCost = lotItems.reduce((s, i) => s + parseMoney(i.cost) * (i.qty || 1), 0);
-      document.getElementById('editLotCost').value = lotTotalCost ? `$${lotTotalCost}` : '';
+      document.getElementById('editLotCost').value = lotTotalCost ? fmtPrice(lotTotalCost) : '';
       document.getElementById('editLotBuyerInput').value = lotItems[0].sold_buyer || '';
       document.getElementById('editLotNotes').value = lotItems[0].lot_notes || '';
       try {
@@ -2419,7 +2429,7 @@
       e.preventDefault();
       const oldName = document.getElementById('editLotName').value;
       const newName = document.getElementById('editLotNewName').value.trim();
-      const soldPrice = document.getElementById('editLotSoldPrice').value.trim() || null;
+      const soldPrice = parseMoney(document.getElementById('editLotSoldPrice').value) || null;
       const buyer = document.getElementById('editLotBuyerInput').value.trim() || null;
       const show = document.getElementById('editLotShow').value || null;
       const notes = document.getElementById('editLotNotes').value.trim() || null;
@@ -2490,7 +2500,7 @@
       const id = document.getElementById('expenseId').value;
       const p = {
         category: document.getElementById('expenseCategory').value,
-        amount: document.getElementById('expenseAmount').value.trim(),
+        amount: parseMoney(document.getElementById('expenseAmount').value) || 0,
         description: document.getElementById('expenseDesc').value.trim() || null,
         show_name: document.getElementById('expenseShow').value || null,
         expense_date: document.getElementById('expenseDate').value || null,
@@ -2527,7 +2537,7 @@
         const cat = catLabels[exp.category] || exp.category;
         catTotals[cat] = (catTotals[cat] || 0) + amt;
         const dt = exp.expense_date ? new Date(exp.expense_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
-        tbody.innerHTML += `<tr><td>${dt}</td><td><span class="brand-badge">${cat}</span></td><td>${exp.description || '—'}</td><td>${exp.show_name || 'General'}</td><td class="price-cell">${exp.amount}</td><td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${exp.notes || '—'}</td><td><div class="action-btns"><button class="btn btn-sm" onclick="openExpenseModal('${exp.id}')">Edit</button><button class="btn btn-sm btn-danger" onclick="deleteExpense('${exp.id}')">Del</button></div></td></tr>`;
+        tbody.innerHTML += `<tr><td>${dt}</td><td><span class="brand-badge">${cat}</span></td><td>${exp.description || '—'}</td><td>${exp.show_name || 'General'}</td><td class="price-cell">${fmtPrice(exp.amount)}</td><td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${exp.notes || '—'}</td><td><div class="action-btns"><button class="btn btn-sm" onclick="openExpenseModal('${exp.id}')">Edit</button><button class="btn btn-sm btn-danger" onclick="deleteExpense('${exp.id}')">Del</button></div></td></tr>`;
       });
 
       // Expense KPI summary by category
@@ -2548,7 +2558,8 @@
 
     // ========== MONEY INPUT FORMATTING ==========
     function formatMoney(val) {
-      const num = parseFloat(val.replace(/[^0-9.]/g, ''));
+      if (val == null || val === '') return '';
+      const num = typeof val === 'number' ? val : parseFloat(String(val).replace(/[^0-9.\-]/g, ''));
       if (isNaN(num)) return '';
       return '$' + num.toLocaleString('en-US', { minimumFractionDigits: num % 1 !== 0 ? 2 : 0, maximumFractionDigits: 2 });
     }
@@ -2658,7 +2669,7 @@
       e.preventDefault();
       const ids = [...document.querySelectorAll('.sold-check:checked')].map(cb => cb.value);
       const lotName = document.getElementById('bulkLotName').value.trim();
-      const lotPrice = document.getElementById('bulkLotPrice').value.trim() || null;
+      const lotPrice = parseMoney(document.getElementById('bulkLotPrice').value) || null;
       const lotBuyer = document.getElementById('bulkLotBuyer').value.trim() || null;
       const lotNotes = document.getElementById('bulkLotNotes').value.trim() || null;
       if (!ids.length || !lotName) return;
@@ -2802,7 +2813,11 @@
     }
 
     // ========== FINANCIALS ==========
-    function parseMoney(s) { return parseFloat((s || '').replace(/[^0-9.\-]/g, '')) || 0; }
+    function parseMoney(s) {
+      if (s == null) return 0;
+      if (typeof s === 'number') return s;
+      return parseFloat(String(s).replace(/[^0-9.\-]/g, '')) || 0;
+    }
 
     async function loadFinancials() {
       try {
