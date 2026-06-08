@@ -903,7 +903,12 @@
 
       const cardsHTML = shows.map((show, idx) => {
         const showDate = new Date(show.date);
-        const dateStr = showDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+        let dateStr = showDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+        if (show.end_date) {
+          const endDate = new Date(show.end_date);
+          const endStr = endDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+          dateStr += ' – ' + endStr;
+        }
         const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(show.address)}`;
         const earlyBird = show.early_bird_time ? `Early Bird ${show.early_bird_time}` : '';
         const general = show.general_time ? `GA ${show.general_time}` : '';
