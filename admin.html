@@ -1592,7 +1592,7 @@
       document.getElementById('adminApp').style.display='flex';
       loadAnalytics(); loadInventory(); loadShows();
       // Restore last active page or default to dashboard
-      navigateToPage(localStorage.getItem('wt-admin-page') || 'dashboard');
+      navigateToPage(sessionStorage.getItem('wt-admin-page') || 'dashboard');
     }
 
     // Page navigation
@@ -1605,7 +1605,7 @@
       if (pageEl) pageEl.classList.add('active');
       document.getElementById('pageTitle').textContent = activeLink?.querySelector('span')?.textContent || '';
       document.getElementById('analyticsRange').style.display = pageName === 'dashboard' ? '' : 'none';
-      localStorage.setItem('wt-admin-page', pageName);
+      sessionStorage.setItem('wt-admin-page', pageName);
       if (pageName === 'sold') loadSold();
       if (pageName === 'financials') loadFinancials();
       if (pageName === 'site') { loadCatDescs(); loadHeroShowcase(); loadLinks(); loadPayments(); loadPriceSetting(); loadPasswordSetting(); loadAnnouncement(); loadSellBadges(); loadHeroText(); loadStatsBar(); loadHeroBg(); loadSeo(); loadShowCarouselInterval(); }
