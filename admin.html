@@ -331,7 +331,7 @@
         <div class="sidebar-brand-sub">Admin Terminal</div>
       </div>
       <nav class="sidebar-nav">
-        <button class="sidebar-link active" data-page="dashboard">
+        <button class="sidebar-link" data-page="dashboard">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="4" rx="1"/><rect x="14" y="10" width="7" height="11" rx="1"/><rect x="3" y="13" width="7" height="8" rx="1"/></svg>
           <span>Dashboard</span>
         </button>
@@ -1589,10 +1589,10 @@
     });
     function showDashboard() {
       document.getElementById('authScreen').style.display='none';
+      // Navigate BEFORE showing the app — no flash
+      navigateToPage(sessionStorage.getItem('wt-admin-page') || 'dashboard');
       document.getElementById('adminApp').style.display='flex';
       loadAnalytics(); loadInventory(); loadShows();
-      // Restore last active page or default to dashboard
-      navigateToPage(sessionStorage.getItem('wt-admin-page') || 'dashboard');
     }
 
     // Page navigation
