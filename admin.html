@@ -367,9 +367,9 @@
     <div class="main">
       <div class="top-bar">
         <span class="top-bar-title" id="pageTitle">Dashboard</span>
-        <select class="form-select" id="analyticsRange" style="width:auto;font-size:0.72rem;padding:0.35rem 1.5rem 0.35rem 0.6rem;" onchange="loadAnalytics()">
+        <select class="form-select" id="analyticsRange" style="width:auto;font-size:0.72rem;padding:0.35rem 1.5rem 0.35rem 0.6rem;" onchange="sessionStorage.setItem('wt-analytics-range',this.value);loadAnalytics()">
           <option value="7">Last 7 days</option>
-          <option value="30" selected>Last 30 days</option>
+          <option value="30">Last 30 days</option>
           <option value="90">Last 90 days</option>
           <option value="365">All time</option>
         </select>
@@ -1406,6 +1406,9 @@
       _myVisitorId = isExcluded ? localStorage.getItem('wt-admin-vid') : null;
       const label = document.getElementById('excludeLabel');
       if (label && isExcluded) label.textContent = 'Include My Views';
+      // Restore analytics range
+      const savedRange = sessionStorage.getItem('wt-analytics-range');
+      if (savedRange) document.getElementById('analyticsRange').value = savedRange;
     })();
 
     // ========== PAYMENTS ==========
