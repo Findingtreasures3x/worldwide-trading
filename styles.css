@@ -891,54 +891,34 @@ body {
   flex: 1;
 }
 
-/* Map card */
-.show-map-card {
-  flex: 0 0 280px;
+/* Sidebar for single show */
+.show-sidebar {
+  flex: 0 0 240px;
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  text-decoration: none;
-  background: var(--bg-raised);
+  gap: 0.75rem;
   border-left: 1px solid var(--border);
-  transition: var(--transition);
-  cursor: pointer;
-}
-
-.show-map-card:hover {
-  background: var(--bg-card-hover);
-}
-
-.show-map-visual {
-  flex: 1;
-  display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(20,20,22,0.95) 0%, rgba(30,28,24,0.9) 100%);
-  position: relative;
-  min-height: 140px;
 }
 
-.show-map-pin {
+/* 2x2 countdown grid */
+.countdown-2x2 {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  width: 100%;
+  margin: 0.25rem 0;
+}
+
+.countdown-2x2 .countdown-unit {
+  min-width: 0;
+  padding: 0.75rem 0.5rem;
+}
+
+.countdown-2x2 .countdown-num {
   font-size: 2rem;
-  filter: drop-shadow(0 2px 8px rgba(245,185,75,0.3));
-}
-
-.show-map-info {
-  padding: 0.85rem 1rem;
-  border-top: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
-.show-map-name {
-  font-weight: 700;
-  font-size: 0.8rem;
-  color: var(--text);
-}
-
-.show-map-addr {
-  font-size: 0.72rem;
-  color: var(--text-muted);
 }
 
 .show-booth-pill {
@@ -977,13 +957,17 @@ body {
   .show-card-single .show-flyer-link {
     flex: none;
   }
-  .show-map-card {
+  .show-sidebar {
     flex: none;
     border-left: none;
     border-top: 1px solid var(--border);
+    padding: 1.25rem;
   }
-  .show-map-visual {
-    min-height: 100px;
+  .countdown-2x2 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .countdown-2x2 .countdown-num {
+    font-size: 1.3rem;
   }
 }
 
