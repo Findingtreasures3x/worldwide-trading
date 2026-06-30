@@ -910,7 +910,7 @@
       const title = shows.length > 1 ? 'Upcoming Shows' : 'Next Show';
       const perPage = getPerPage();
 
-      const cardsHTML = shows.map((show, idx) => {
+      function buildShowCard(show, idx, isSingle) {
         const showDate = new Date(show.date);
         let dateStr = showDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
         if (show.end_date) {
@@ -926,15 +926,53 @@
         const flyerHTML = show.flyer_image
           ? `<a href="${show.event_url || '#'}" target="_blank" rel="noopener" class="show-flyer-link"><img src="${show.flyer_image}" alt="${show.name}" class="show-flyer" loading="lazy"></a>`
           : '';
+        const boothHTML = show.booth_number ? `<span class="show-booth-pill">FIND ME AT <strong>#${show.booth_number}</strong></span>` : '';
 
-        const stubDay = showDate.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase();
-        const stubDate = showDate.getDate();
-        const stubMonth = showDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).toUpperCase();
+        // Google Calendar link
+        const calStart = showDate.toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'');
+        const calEnd = show.end_date ? new Date(show.end_date).toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'') : new Date(showDate.getTime() + 8*3600000).toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'');
+        const calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(show.name)}&dates=${calStart}/${calEnd}&location=${encodeURIComponent(show.address)}&details=${encodeURIComponent(show.event_url || '')}`;
 
+        if (isSingle) {
+          // Single show — full width 3-column layout
+          return `
+          <div class="show-card show-card-single carousel-visible">
+            ${flyerHTML}
+            <div class="show-details">
+              ${boothHTML}
+              <h3 class="show-name">${show.name}</h3>
+              <div class="show-meta">
+                <div class="show-meta-item">
+                  <span class="show-meta-icon">📅</span>
+                  <div><strong>${dateStr}</strong>${timeStr ? `<span>${timeStr}</span>` : ''}</div>
+                </div>
+                <div class="show-meta-item">
+                  <span class="show-meta-icon">📍</span>
+                  <div><a href="${mapsUrl}" target="_blank" rel="noopener" class="show-address-link"><strong>${show.location_name}</strong><span>${show.address}</span></a></div>
+                </div>
+                ${ticketLine ? `<div class="show-meta-item"><span class="show-meta-icon">🎟️</span><div><strong>${ticketLine}</strong>${show.notes ? `<span class="show-notes-text">${show.notes.length > 80 ? show.notes.slice(0, 80) + '... ' + (show.event_url ? `<a href="${show.event_url}" target="_blank" rel="noopener" style="color:var(--gold-text);text-decoration:none;font-weight:600;">Read more</a>` : '') : show.notes}</span>` : ''}</div></div>` : ''}
+              </div>
+            </div>
+            <div class="show-sidebar">
+              <div class="show-doors-label">Doors open in</div>
+              <div class="countdown countdown-grid" data-show-date="${show.date}">
+                <div class="countdown-unit"><span class="countdown-num cd-days">--</span><span class="countdown-label">Days</span></div>
+                <div class="countdown-unit"><span class="countdown-num cd-hours">--</span><span class="countdown-label">Hours</span></div>
+                <div class="countdown-unit"><span class="countdown-num cd-mins">--</span><span class="countdown-label">Min</span></div>
+                <div class="countdown-unit"><span class="countdown-num cd-secs">--</span><span class="countdown-label">Sec</span></div>
+              </div>
+              ${show.event_url ? `<a href="${show.event_url}" target="_blank" rel="noopener" class="show-link-btn" style="width:100%;justify-content:center;">Event Details →</a>` : ''}
+              <a href="${calUrl}" target="_blank" rel="noopener" class="hero-cta-outline" style="width:100%;justify-content:center;font-size:0.72rem;padding:0.65rem 1rem;">+ ADD TO CALENDAR</a>
+            </div>
+          </div>`;
+        }
+
+        // Multi-show card (standard)
         return `
           <div class="show-card${idx < perPage ? ' carousel-visible' : ''}">
             ${flyerHTML}
             <div class="show-details">
+              ${boothHTML}
               <h3 class="show-name">${show.name}</h3>
               <div class="show-meta">
                 <div class="show-meta-item">
@@ -954,10 +992,16 @@
                 <div class="countdown-unit"><span class="countdown-num cd-mins">--</span><span class="countdown-label">Min</span></div>
                 <div class="countdown-unit"><span class="countdown-num cd-secs">--</span><span class="countdown-label">Sec</span></div>
               </div>
-              ${show.event_url ? `<a href="${show.event_url}" target="_blank" rel="noopener" class="show-link-btn">Event Details →</a>` : ''}
+              <div class="show-actions">
+                ${show.event_url ? `<a href="${show.event_url}" target="_blank" rel="noopener" class="show-link-btn">Event Details →</a>` : ''}
+                <a href="${calUrl}" target="_blank" rel="noopener" class="hero-cta-outline" style="font-size:0.72rem;padding:0.55rem 1rem;">+ ADD TO CALENDAR</a>
+              </div>
             </div>
           </div>`;
-      }).join('');
+      }
+
+      const isSingle = shows.length === 1;
+      const cardsHTML = shows.map((show, idx) => buildShowCard(show, idx, isSingle)).join('');
 
       const totalPages = Math.ceil(shows.length / perPage);
       const navHTML = totalPages > 1 ? `

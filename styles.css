@@ -877,6 +877,86 @@ body {
 .stub-day { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
 .stub-date { font-family: 'Cinzel', serif; font-size: 2.5rem; font-weight: 800; line-height: 1; }
 .stub-month { font-size: 0.6rem; font-weight: 600; letter-spacing: 0.05em; }
+/* Single show — 3-column layout */
+.show-card-single {
+  display: flex;
+  flex-direction: row;
+}
+
+.show-card-single .show-flyer-link {
+  flex: 0 0 220px;
+}
+
+.show-card-single .show-details {
+  flex: 1;
+}
+
+.show-sidebar {
+  flex: 0 0 220px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border-left: 1px solid var(--border);
+  align-items: center;
+  justify-content: center;
+}
+
+.countdown-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.countdown-grid .countdown-unit {
+  min-width: 0;
+}
+
+.show-booth-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--gold-text);
+  background: var(--gold-dim);
+  border: 1px solid rgba(245, 185, 75, 0.25);
+  padding: 0.3rem 0.75rem;
+  border-radius: 100px;
+  margin-bottom: 0.5rem;
+}
+
+.show-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 0.25rem;
+}
+
+/* Single show grid: full width */
+.show-carousel:has(.show-card-single) {
+  grid-template-columns: 1fr;
+}
+
+@media (max-width: 959px) {
+  .show-card-single {
+    flex-direction: column;
+  }
+  .show-card-single .show-flyer-link {
+    flex: none;
+  }
+  .show-sidebar {
+    flex: none;
+    border-left: none;
+    border-top: 1px solid var(--border);
+    padding: 1.25rem;
+  }
+}
+
 .show-doors-label {
   font-size: 0.6rem;
   font-weight: 600;
