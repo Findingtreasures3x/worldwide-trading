@@ -990,9 +990,20 @@ body {
 
 @media (max-width: 959px) {
   .show-single-top {
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
     gap: 0.75rem;
-    padding: 1rem;
+    padding: 1.25rem 1rem;
+  }
+  .show-single-top .show-single-header {
+    align-items: center;
+  }
+  .show-single-top .show-name {
+    font-size: 1.3rem !important;
+  }
+  .show-single-top > div:last-child {
+    margin-left: 0;
   }
   .show-single-bottom {
     flex-direction: column;
@@ -1012,6 +1023,9 @@ body {
   .countdown-inline .countdown-unit {
     min-width: 50px;
     padding: 0.5rem 0.4rem;
+  }
+  .show-single-btns {
+    width: 100%;
   }
 }
 
