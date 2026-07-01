@@ -963,17 +963,16 @@ body {
 .show-booth-pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  font-size: 0.65rem;
-  font-weight: 700;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   color: var(--gold-text);
   background: var(--gold-dim);
-  border: 1px solid rgba(245, 185, 75, 0.25);
-  padding: 0.3rem 0.75rem;
+  border: 1.5px solid rgba(245, 185, 75, 0.35);
+  padding: 0.55rem 1.25rem;
   border-radius: 100px;
-  margin-bottom: 0.5rem;
 }
 
 .show-actions {

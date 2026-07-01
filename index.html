@@ -941,7 +941,7 @@
               ${show.flyer_image ? `<a href="${show.event_url || '#'}" target="_blank" rel="noopener" class="show-single-flyer"><img src="${show.flyer_image}" alt="${show.name}" loading="lazy"></a>` : ''}
               <div class="show-single-header">
                 <h3 class="show-name" style="font-size:1.8rem;">${show.name}</h3>
-                ${show.notes ? `<span style="font-size:0.85rem;color:var(--text-secondary);line-height:1.4;">${show.notes.length > 120 ? show.notes.slice(0, 120) + '...' : show.notes}</span>` : ''}
+                ${show.subtitle ? `<span style="font-size:0.88rem;color:var(--text-secondary);line-height:1.4;">${show.subtitle}</span>` : ''}
               </div>
               ${boothHTML ? `<div style="margin-left:auto;flex-shrink:0;">${boothHTML}</div>` : ''}
             </div>
