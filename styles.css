@@ -877,48 +877,87 @@ body {
 .stub-day { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
 .stub-date { font-family: 'Cinzel', serif; font-size: 2.5rem; font-weight: 800; line-height: 1; }
 .stub-month { font-size: 0.6rem; font-weight: 600; letter-spacing: 0.05em; }
-/* Single show — flyer | details | map */
+/* Single show — compact 2-row layout */
 .show-card-single {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
 }
 
-.show-card-single .show-flyer-link {
-  flex: 0 0 200px;
+.show-single-top {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
 }
 
-.show-card-single .show-details {
-  flex: 1;
+.show-single-flyer {
+  flex-shrink: 0;
+  display: block;
 }
 
-/* Sidebar for single show */
-.show-sidebar {
-  flex: 0 0 240px;
-  padding: 1.5rem;
+.show-single-flyer img {
+  height: 100px;
+  width: auto;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  display: block;
+  object-fit: contain;
+  image-rendering: auto;
+}
+
+.show-single-header {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  border-left: 1px solid var(--border);
+  gap: 0.2rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.show-single-bottom {
+  display: flex;
+  align-items: stretch;
+  border-top: 1px solid var(--border);
+}
+
+.show-single-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.show-single-right {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border-left: 1px solid var(--border);
   justify-content: center;
 }
 
-/* 2x2 countdown grid */
-.countdown-2x2 {
-  display: grid !important;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.6rem;
+.countdown-inline {
+  display: flex !important;
+  gap: 0.5rem;
+}
+
+.countdown-inline .countdown-unit {
+  min-width: 65px;
+  padding: 0.75rem 0.7rem;
+}
+
+.countdown-inline .countdown-num {
+  font-size: 2.2rem;
+}
+
+.show-single-btns {
+  display: flex;
+  gap: 0.5rem;
   width: 100%;
-  margin: 0.25rem 0;
-}
-
-.countdown-2x2 .countdown-unit {
-  min-width: 0;
-  padding: 0.75rem 0.5rem;
-}
-
-.countdown-2x2 .countdown-num {
-  font-size: 2rem;
 }
 
 .show-booth-pill {
@@ -951,23 +990,29 @@ body {
 }
 
 @media (max-width: 959px) {
-  .show-card-single {
+  .show-single-top {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+  .show-single-bottom {
     flex-direction: column;
   }
-  .show-card-single .show-flyer-link {
-    flex: none;
+  .show-single-info {
+    padding: 1rem;
   }
-  .show-sidebar {
+  .show-single-right {
     flex: none;
     border-left: none;
     border-top: 1px solid var(--border);
-    padding: 1.25rem;
+    padding: 1rem;
   }
-  .countdown-2x2 {
-    grid-template-columns: repeat(4, 1fr);
+  .countdown-inline .countdown-num {
+    font-size: 1.5rem;
   }
-  .countdown-2x2 .countdown-num {
-    font-size: 1.3rem;
+  .countdown-inline .countdown-unit {
+    min-width: 50px;
+    padding: 0.5rem 0.4rem;
   }
 }
 
