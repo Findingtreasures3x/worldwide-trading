@@ -926,7 +926,7 @@
         const flyerHTML = show.flyer_image
           ? `<a href="${show.event_url || '#'}" target="_blank" rel="noopener" class="show-flyer-link"><img src="${show.flyer_image}" alt="${show.name}" class="show-flyer" loading="lazy"></a>`
           : '';
-        const boothHTML = show.booth_number ? `<span class="show-booth-pill">FIND ME AT <strong>#${show.booth_number}</strong></span>` : '';
+        const boothHTML = show.booth_number ? `<span class="show-booth-pill">FIND ME AT BOOTH <strong>#${show.booth_number}</strong></span>` : '';
 
         // Google Calendar link
         const calStart = showDate.toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'');
@@ -943,7 +943,7 @@
                 <h3 class="show-name" style="font-size:1.8rem;">${show.name}</h3>
                 ${show.subtitle ? `<span style="font-size:0.88rem;color:var(--text-secondary);line-height:1.4;">${show.subtitle}</span>` : ''}
               </div>
-              ${boothHTML ? `<div style="margin-left:auto;flex-shrink:0;">${boothHTML}</div>` : ''}
+              ${boothHTML ? `<div class="show-booth-wrap">${boothHTML}</div>` : ''}
             </div>
             <div class="show-single-bottom">
               <div class="show-single-info">

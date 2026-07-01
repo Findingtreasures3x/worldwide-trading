@@ -960,6 +960,11 @@ body {
   width: 100%;
 }
 
+.show-booth-wrap {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
 .show-booth-pill {
   display: inline-flex;
   align-items: center;
@@ -1002,7 +1007,7 @@ body {
   .show-single-top .show-name {
     font-size: 1.3rem !important;
   }
-  .show-single-top > div:last-child {
+  .show-booth-wrap {
     margin-left: 0;
   }
   .show-single-bottom {
