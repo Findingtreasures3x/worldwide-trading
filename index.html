@@ -406,11 +406,15 @@
     function getSlabFrame(details) {
       const psaMatch = details.match(/PSA\s*(\d+)/i);
       const bgsMatch = details.match(/BGS\s*(\d+\.?\d*)/i);
+      const cgcMatch = details.match(/CGC\s*(\d+\.?\d*)/i);
       if (psaMatch) {
         return `<div class="slab-frame psa"><div class="slab-label">PSA<span class="slab-score">${psaMatch[1]}</span></div><div class="slab-body"></div><div class="slab-bottom"></div></div>`;
       }
       if (bgsMatch) {
         return `<div class="slab-frame bgs"><div class="slab-label">BGS<span class="slab-score">${bgsMatch[1]}</span></div><div class="slab-body"></div><div class="slab-bottom"></div></div>`;
+      }
+      if (cgcMatch) {
+        return `<div class="slab-frame cgc"><div class="slab-label">CGC<span class="slab-score">${cgcMatch[1]}</span></div><div class="slab-body"></div><div class="slab-bottom"></div></div>`;
       }
       return '';
     }
@@ -793,8 +797,10 @@
       function heroSlabFrame(details) {
         const psaMatch = details.match(/PSA\s*(\d+)/i);
         const bgsMatch = details.match(/BGS\s*(\d+\.?\d*)/i);
+        const cgcMatch = details.match(/CGC\s*(\d+\.?\d*)/i);
         if (psaMatch) return { type: 'psa', score: psaMatch[1] };
         if (bgsMatch) return { type: 'bgs', score: bgsMatch[1] };
+        if (cgcMatch) return { type: 'cgc', score: cgcMatch[1] };
         return null;
       }
 
@@ -915,14 +921,40 @@
         let dateStr = showDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
         if (show.end_date) {
           const endDate = new Date(show.end_date);
-          const endStr = endDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+          const sameYear = showDate.getFullYear() === endDate.getFullYear();
+          const endOpts = sameYear
+            ? { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }
+            : { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' };
+          const endStr = endDate.toLocaleDateString('en-US', endOpts);
           dateStr += ' – ' + endStr;
         }
         const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(show.location_name + ', ' + show.address)}`;
-        const earlyBird = show.early_bird_time ? `Early Bird ${show.early_bird_time}` : '';
-        const general = show.general_time ? `GA ${show.general_time}` : '';
-        const timeStr = [earlyBird, general].filter(Boolean).join(' · ');
-        const ticketLine = [show.early_bird_price ? `Early Bird ${show.early_bird_price}` : '', show.general_price ? `General ${show.general_price}` : ''].filter(Boolean).join(' · ');
+
+        // Per-day schedule support
+        let timeStr = '';
+        let ticketLine = '';
+        if (show.day_schedules && show.day_schedules.length) {
+          const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+          const timeLines = show.day_schedules.map(ds => {
+            const parts = [];
+            if (ds.early_bird_time) parts.push(`EB ${ds.early_bird_time}`);
+            if (ds.general_time) parts.push(`GA ${ds.general_time}`);
+            return parts.length ? `${ds.day.slice(0,3)}: ${parts.join(' · ')}` : '';
+          }).filter(Boolean);
+          timeStr = timeLines.join('<br>');
+          const priceLines = show.day_schedules.map(ds => {
+            const parts = [];
+            if (ds.early_bird_price) parts.push(`EB ${ds.early_bird_price}`);
+            if (ds.general_price) parts.push(`General ${ds.general_price}`);
+            return parts.length ? `${ds.day.slice(0,3)}: ${parts.join(' · ')}` : '';
+          }).filter(Boolean);
+          ticketLine = priceLines.join('<br>');
+        } else {
+          const earlyBird = show.early_bird_time ? `Early Bird ${show.early_bird_time}` : '';
+          const general = show.general_time ? `GA ${show.general_time}` : '';
+          timeStr = [earlyBird, general].filter(Boolean).join(' · ');
+          ticketLine = [show.early_bird_price ? `Early Bird ${show.early_bird_price}` : '', show.general_price ? `General ${show.general_price}` : ''].filter(Boolean).join(' · ');
+        }
         const flyerHTML = show.flyer_image
           ? `<a href="${show.event_url || '#'}" target="_blank" rel="noopener" class="show-flyer-link"><img src="${show.flyer_image}" alt="${show.name}" class="show-flyer" loading="lazy"></a>`
           : '';
@@ -1056,6 +1088,7 @@
           const nh = Math.floor((nDiff % 86400000) / 3600000);
           document.getElementById('countdownStat').style.display = 'block';
           document.getElementById('countdownValue').textContent = `${nd}d ${nh}h`;
+          document.querySelector('.stats-inner').classList.add('has-countdown');
         }
       }
       updateAllCountdowns();

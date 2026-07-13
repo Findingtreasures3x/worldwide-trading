@@ -224,6 +224,10 @@
     .btn:hover { border-color: var(--border-hover); color: var(--text); background: var(--bg-card-hover); }
     .btn-gold { background: var(--gold); border-color: var(--gold); color: #0a0a0c; }
     .btn-gold:hover { box-shadow: 0 0 0 3px var(--gold-glow); background: var(--gold); color: #0a0a0c; }
+    .fin-vis-btn { padding: 0.4rem 1rem; background: transparent; border: none; color: var(--text-secondary); cursor: pointer; font-weight: 600; transition: all 0.15s ease; }
+    .fin-vis-btn:not(:last-child) { border-right: 1px solid var(--border); }
+    .fin-vis-btn.active { background: var(--gold); color: #0a0a0c; }
+    .fin-vis-btn:hover:not(.active) { background: var(--bg-card-hover); color: var(--text); }
     .btn-danger { border-color: var(--danger); color: var(--danger); }
     .btn-danger:hover { background: var(--danger-dim); }
     .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.68rem; }
@@ -758,8 +762,13 @@
 
       <!-- FINANCIALS PAGE -->
       <div class="page" id="page-financials">
-        <div class="sec-header">
+        <div class="sec-header" style="display:flex;justify-content:space-between;align-items:center;">
           <h2 class="sec-title">Financials</h2>
+          <div id="finVisToggle" style="display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;font-size:0.75rem;">
+            <button class="fin-vis-btn active" data-filter="all" onclick="setFinFilter('all')">All</button>
+            <button class="fin-vis-btn" data-filter="active" onclick="setFinFilter('active')">Active</button>
+            <button class="fin-vis-btn" data-filter="hidden" onclick="setFinFilter('hidden')">Hidden</button>
+          </div>
         </div>
 
         <!-- KPI Row -->
@@ -1255,13 +1264,15 @@
           <div class="form-group"><label class="form-label">Booth / Table # <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label><input type="text" class="form-input" id="showBooth" placeholder="e.g. 412"></div>
           <div class="form-group"><label class="form-label">Event URL</label><input type="url" class="form-input" id="showUrl" placeholder="https://..."></div>
         </div>
-        <div class="form-row">
-          <div class="form-group"><label class="form-label">Early Bird (time)</label><input type="text" class="form-input" id="showEBTime" placeholder="9AM–4PM"></div>
-          <div class="form-group"><label class="form-label">Early Bird (price)</label><input type="text" class="form-input" id="showEBPrice" placeholder="$10"></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label class="form-label">General (time)</label><input type="text" class="form-input" id="showGATime" placeholder="11AM–4PM"></div>
-          <div class="form-group"><label class="form-label">General (price)</label><input type="text" class="form-input" id="showGAPrice" placeholder="$5"></div>
+        <div id="daySchedulesContainer">
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Early Bird (time)</label><input type="text" class="form-input" id="showEBTime" placeholder="9AM–4PM"></div>
+            <div class="form-group"><label class="form-label">Early Bird (price)</label><input type="text" class="form-input" id="showEBPrice" placeholder="$10"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">General (time)</label><input type="text" class="form-input" id="showGATime" placeholder="11AM–4PM"></div>
+            <div class="form-group"><label class="form-label">General (price)</label><input type="text" class="form-input" id="showGAPrice" placeholder="$5"></div>
+          </div>
         </div>
         <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="showNotes" rows="3" placeholder="e.g. Kids under 10 free with paid adult" style="resize:vertical;min-height:60px;"></textarea></div>
         <div class="form-group">
@@ -2309,7 +2320,14 @@
         let notesStr = '';
         if (item.notes) notesStr += `<div class="note-clickable" style="font-size:0.68rem;color:var(--text-muted);margin-top:0.15rem;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;" data-note="${item.notes.replace(/"/g,'&quot;').replace(/</g,'&lt;')}">📋 ${item.notes.replace(/</g,'&lt;')}</div>`;
         if (item.sold_notes) notesStr += `<div class="note-clickable" style="font-size:0.68rem;color:var(--gold-text);opacity:0.7;margin-top:0.1rem;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;" data-note="${item.sold_notes.replace(/"/g,'&quot;').replace(/</g,'&lt;')}">📝 ${item.sold_notes.replace(/</g,'&lt;')}</div>`;
-        return `<tr><td><input type="checkbox" class="sold-check" value="${item.id}" onchange="updateSoldSelection()" style="accent-color:var(--gold);"></td><td class="img-cell">${img}</td><td class="name-cell">${item.name}${qtyBadge}${notesStr}</td><td>${item.details}</td><td><span class="brand-badge">${bl}</span></td><td class="price-cell">${item.price}</td><td class="price-cell">${item.sold_price || '—'}</td><td class="price-cell">${item.cost || '—'}</td><td>${item.sold_buyer || '—'}</td><td>${item.sold_show || '—'}</td><td>${soldDate}</td><td><div class="action-btns"><button class="btn btn-sm" style="background:var(--blue-dim);color:var(--blue);" onclick="openAddToLotModal('${item.id}')">+ Lot</button><button class="btn btn-sm" onclick="openEditSoldModal('${item.id}')">Edit</button><button class="btn btn-sm btn-danger" onclick="unsoldItem('${item.id}')">Unsell</button></div></td></tr>`;
+        const q = item.qty || 1;
+        const totalSoldPrice = parseMoney(item.sold_price) * q;
+        const totalCostPrice = parseMoney(item.cost) * q;
+        const totalListedPrice = parseMoney(item.price) * q;
+        const soldDisplay = item.sold_price ? fmtPrice(totalSoldPrice) : '—';
+        const costDisplay = item.cost ? fmtPrice(totalCostPrice) : '—';
+        const listedDisplay = item.price ? fmtPrice(totalListedPrice) : '—';
+        return `<tr><td><input type="checkbox" class="sold-check" value="${item.id}" onchange="updateSoldSelection()" style="accent-color:var(--gold);"></td><td class="img-cell">${img}</td><td class="name-cell">${item.name}${qtyBadge}${notesStr}</td><td>${item.details}</td><td><span class="brand-badge">${bl}</span></td><td class="price-cell">${listedDisplay}</td><td class="price-cell">${soldDisplay}</td><td class="price-cell">${costDisplay}</td><td>${item.sold_buyer || '—'}</td><td>${item.sold_show || '—'}</td><td>${soldDate}</td><td><div class="action-btns"><button class="btn btn-sm" style="background:var(--blue-dim);color:var(--blue);" onclick="openAddToLotModal('${item.id}')">+ Lot</button><button class="btn btn-sm" onclick="openEditSoldModal('${item.id}')">Edit</button><button class="btn btn-sm btn-danger" onclick="unsoldItem('${item.id}')">Unsell</button></div></td></tr>`;
       }).join('');
       return `<table class="tbl"><thead><tr><th><input type="checkbox" class="sold-check-all" onchange="toggleSoldSelectAllInGroup(this)" style="accent-color:var(--gold);"></th><th>Image</th><th>Name</th><th>Details</th><th>Brand</th><th>Listed</th><th>Sold</th><th>Cost</th><th>Buyer</th><th>Show</th><th>Date</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
     }
@@ -2824,13 +2842,22 @@
       return parseFloat(String(s).replace(/[^0-9.\-]/g, '')) || 0;
     }
 
+    let _finFilter = 'all';
+    function setFinFilter(f) {
+      _finFilter = f;
+      document.querySelectorAll('.fin-vis-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === f));
+      loadFinancials();
+    }
+
     async function loadFinancials() {
       try {
-        const [soldItems, activeItems, expenses] = await Promise.all([
+        const [allSold, allActive, expenses] = await Promise.all([
           apiGet('inventory?select=*&sold=eq.true'),
           apiGet('inventory?select=*&sold=eq.false'),
           apiGet('expenses?select=*&order=expense_date.desc')
         ]);
+        const soldItems = _finFilter === 'all' ? allSold : _finFilter === 'active' ? allSold.filter(i => i.visible !== false) : allSold.filter(i => i.visible === false);
+        const activeItems = _finFilter === 'all' ? allActive : _finFilter === 'active' ? allActive.filter(i => i.visible !== false) : allActive.filter(i => i.visible === false);
 
         // Render expenses table and get total
         const totalExpenses = renderExpenses(expenses);
@@ -2871,7 +2898,7 @@
 
         const grossProfit = totalRevenue - totalCost;
         const netProfit = grossProfit - totalExpenses;
-        const margin = totalRevenue > 0 ? Math.round((netProfit / totalRevenue) * 100) : 0;
+        const margin = totalRevenue > 0 ? Math.round((netProfit / totalRevenue) * 100) : null;
 
         document.getElementById('finRevenue').textContent = `$${totalRevenue.toLocaleString()}`;
         document.getElementById('finCost').textContent = `$${totalCost.toLocaleString()}`;
@@ -2880,8 +2907,8 @@
         document.getElementById('finExpenses').textContent = `$${totalExpenses.toLocaleString()}`;
         document.getElementById('finProfit').textContent = `$${netProfit.toLocaleString()}`;
         document.getElementById('finProfit').style.color = netProfit >= 0 ? 'var(--success)' : 'var(--danger)';
-        document.getElementById('finMargin').textContent = `${margin}%`;
-        document.getElementById('finMargin').style.color = margin >= 0 ? 'var(--success)' : 'var(--danger)';
+        document.getElementById('finMargin').textContent = margin !== null ? `${margin}%` : 'N/A';
+        document.getElementById('finMargin').style.color = margin === null ? 'var(--text-muted)' : margin >= 0 ? 'var(--success)' : 'var(--danger)';
         document.getElementById('finItemsSoldSub').textContent = `${soldItems.length} items sold`;
 
         // ---- UNSOLD INVENTORY ----
@@ -3046,9 +3073,117 @@
 
     // Shows
     async function loadShows(){try{const d=await apiGet('shows?select=*&order=date.asc');const tb=document.getElementById('showsBody');tb.innerHTML='';if(!d.length){tb.innerHTML='<tr><td colspan="6" class="loading">No shows.</td></tr>';return;}window._shows=d;d.forEach(s=>{const dt=new Date(s.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'America/New_York'});const img=s.flyer_image?`<img src="${s.flyer_image}" style="height:36px;border-radius:3px;">`:'—';const typeBadge=s.show_type==='attending'?'<span class="lot-badge" style="background:var(--blue-dim);color:var(--blue);">Attending</span>':'<span class="lot-badge" style="background:var(--gold-dim);color:var(--gold-text);">Vending</span>';tb.innerHTML+=`<tr><td>${img}</td><td class="name-cell">${s.name}</td><td>${dt}</td><td>${s.location_name}</td><td>${typeBadge}</td><td><div class="action-btns"><button class="btn btn-sm" onclick="editShow('${s.id}')">Edit</button><button class="btn btn-sm btn-danger" onclick="deleteShow('${s.id}','${s.name.replace(/'/g,"\\'")}')">Del</button></div></td></tr>`;});renderCalendar();}catch(e){showToast('Failed','error');}}
-    function openShowModal(){document.getElementById('showModalTitle').textContent='Add Show';document.getElementById('showForm').reset();document.getElementById('showId').value='';uploadedFlyerUrl=null;resetFlyerDZ();flyerFI.value='';document.getElementById('showModal').classList.add('active');}
-    function editShow(id){const s=window._shows?.find(x=>x.id===id);if(!s)return;document.getElementById('showModalTitle').textContent='Edit Show';document.getElementById('showId').value=s.id;document.getElementById('showName').value=s.name;document.getElementById('showType').value=s.show_type||'vending';document.getElementById('showDate').value=new Date(s.date).toISOString().slice(0,16);document.getElementById('showUrl').value=s.event_url||'';document.getElementById('showLocName').value=s.location_name;document.getElementById('showAddress').value=s.address;document.getElementById('showEBTime').value=s.early_bird_time||'';document.getElementById('showEBPrice').value=s.early_bird_price||'';document.getElementById('showGATime').value=s.general_time||'';document.getElementById('showGAPrice').value=s.general_price||'';document.getElementById('showNotes').value=s.notes||'';document.getElementById('showSubtitle').value=s.subtitle||'';document.getElementById('showBooth').value=s.booth_number||'';document.getElementById('showEndDate').value=s.end_date?new Date(s.end_date).toISOString().slice(0,16):'';document.getElementById('showFlyer').value=s.flyer_image||'';uploadedFlyerUrl=null;flyerFI.value='';if(s.flyer_image){flyerImg.src=s.flyer_image;flyerPrompt.style.display='none';flyerPreview.style.display='inline-block';}else{resetFlyerDZ();}document.getElementById('showModal').classList.add('active');}
-    document.getElementById('showForm').addEventListener('submit',async e=>{e.preventDefault();const id=document.getElementById('showId').value;const p={name:document.getElementById('showName').value.trim(),show_type:document.getElementById('showType').value,date:new Date(document.getElementById('showDate').value).toISOString(),event_url:document.getElementById('showUrl').value.trim()||null,location_name:document.getElementById('showLocName').value.trim(),address:document.getElementById('showAddress').value.trim(),early_bird_time:document.getElementById('showEBTime').value.trim()||null,early_bird_price:document.getElementById('showEBPrice').value.trim()||null,general_time:document.getElementById('showGATime').value.trim()||null,general_price:document.getElementById('showGAPrice').value.trim()||null,notes:document.getElementById('showNotes').value.trim()||null,subtitle:document.getElementById('showSubtitle').value.trim()||null,booth_number:document.getElementById('showBooth').value.trim()||null,flyer_image:document.getElementById('showFlyer').value.trim()||uploadedFlyerUrl||null,end_date:document.getElementById('showEndDate').value?new Date(document.getElementById('showEndDate').value).toISOString():null};try{if(id){await apiPatch(`shows?id=eq.${id}`,p);}else{await apiPost('shows',p);}uploadedFlyerUrl=null;document.getElementById('showModal').classList.remove('active');showToast(id?'Updated':'Added','success');loadShows();}catch(e){showToast('Failed','error');}});
+    function buildDayScheduleFields() {
+      const startVal = document.getElementById('showDate').value;
+      const endVal = document.getElementById('showEndDate').value;
+      const container = document.getElementById('daySchedulesContainer');
+      if (!startVal || !endVal) {
+        // Single day — show standard fields
+        container.innerHTML = `
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Early Bird (time)</label><input type="text" class="form-input" id="showEBTime" placeholder="9AM–4PM"></div>
+            <div class="form-group"><label class="form-label">Early Bird (price)</label><input type="text" class="form-input" id="showEBPrice" placeholder="$10"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">General (time)</label><input type="text" class="form-input" id="showGATime" placeholder="11AM–4PM"></div>
+            <div class="form-group"><label class="form-label">General (price)</label><input type="text" class="form-input" id="showGAPrice" placeholder="$5"></div>
+          </div>`;
+        return;
+      }
+      const start = new Date(startVal);
+      const end = new Date(endVal);
+      const days = [];
+      const d = new Date(start);
+      d.setHours(0,0,0,0);
+      const endD = new Date(end);
+      endD.setHours(0,0,0,0);
+      while (d <= endD) {
+        days.push(new Date(d));
+        d.setDate(d.getDate() + 1);
+      }
+      if (days.length < 2) {
+        buildDayScheduleFields.__noEnd = true;
+        container.innerHTML = `
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Early Bird (time)</label><input type="text" class="form-input" id="showEBTime" placeholder="9AM–4PM"></div>
+            <div class="form-group"><label class="form-label">Early Bird (price)</label><input type="text" class="form-input" id="showEBPrice" placeholder="$10"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">General (time)</label><input type="text" class="form-input" id="showGATime" placeholder="11AM–4PM"></div>
+            <div class="form-group"><label class="form-label">General (price)</label><input type="text" class="form-input" id="showGAPrice" placeholder="$5"></div>
+          </div>`;
+        return;
+      }
+      const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      let html = '<div style="font-weight:700;font-size:0.85rem;color:var(--gold-text);margin-bottom:0.5rem;">Per-Day Schedule</div>';
+      days.forEach((day, i) => {
+        const label = dayNames[day.getDay()] + ', ' + day.toLocaleDateString('en-US', {month:'short', day:'numeric'});
+        html += `<div style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:0.75rem;margin-bottom:0.5rem;">
+          <div style="font-weight:600;font-size:0.82rem;margin-bottom:0.5rem;color:var(--text);">${label}</div>
+          <div class="form-row" style="margin-bottom:0;">
+            <div class="form-group" style="margin-bottom:0;"><label class="form-label" style="font-size:0.65rem;">Early Bird (time)</label><input type="text" class="form-input day-eb-time" data-day="${i}" placeholder="9AM–4PM"></div>
+            <div class="form-group" style="margin-bottom:0;"><label class="form-label" style="font-size:0.65rem;">Early Bird (price)</label><input type="text" class="form-input day-eb-price" data-day="${i}" placeholder="$10"></div>
+            <div class="form-group" style="margin-bottom:0;"><label class="form-label" style="font-size:0.65rem;">General (time)</label><input type="text" class="form-input day-ga-time" data-day="${i}" placeholder="10AM–6PM"></div>
+            <div class="form-group" style="margin-bottom:0;"><label class="form-label" style="font-size:0.65rem;">General (price)</label><input type="text" class="form-input day-ga-price" data-day="${i}" placeholder="$5"></div>
+          </div>
+        </div>`;
+      });
+      container.innerHTML = html;
+    }
+    document.getElementById('showDate').addEventListener('change', buildDayScheduleFields);
+    document.getElementById('showEndDate').addEventListener('change', buildDayScheduleFields);
+
+    function collectDaySchedules() {
+      const perDayInputs = document.querySelectorAll('.day-ga-time');
+      if (!perDayInputs.length) return null;
+      const startVal = document.getElementById('showDate').value;
+      const endVal = document.getElementById('showEndDate').value;
+      if (!startVal || !endVal) return null;
+      const start = new Date(startVal);
+      const end = new Date(endVal);
+      const days = [];
+      const d = new Date(start);
+      d.setHours(0,0,0,0);
+      const endD = new Date(end);
+      endD.setHours(0,0,0,0);
+      while (d <= endD) { days.push(new Date(d)); d.setDate(d.getDate()+1); }
+      const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      const schedules = [];
+      days.forEach((day, i) => {
+        const ebTime = document.querySelector(`.day-eb-time[data-day="${i}"]`);
+        const ebPrice = document.querySelector(`.day-eb-price[data-day="${i}"]`);
+        const gaTime = document.querySelector(`.day-ga-time[data-day="${i}"]`);
+        const gaPrice = document.querySelector(`.day-ga-price[data-day="${i}"]`);
+        schedules.push({
+          day: dayNames[day.getDay()],
+          date: day.toISOString().slice(0,10),
+          early_bird_time: ebTime?.value.trim() || null,
+          early_bird_price: ebPrice?.value.trim() || null,
+          general_time: gaTime?.value.trim() || null,
+          general_price: gaPrice?.value.trim() || null
+        });
+      });
+      return schedules;
+    }
+
+    function populateDaySchedules(schedules) {
+      if (!schedules || !schedules.length) return;
+      schedules.forEach((s, i) => {
+        const ebTime = document.querySelector(`.day-eb-time[data-day="${i}"]`);
+        const ebPrice = document.querySelector(`.day-eb-price[data-day="${i}"]`);
+        const gaTime = document.querySelector(`.day-ga-time[data-day="${i}"]`);
+        const gaPrice = document.querySelector(`.day-ga-price[data-day="${i}"]`);
+        if (ebTime) ebTime.value = s.early_bird_time || '';
+        if (ebPrice) ebPrice.value = s.early_bird_price || '';
+        if (gaTime) gaTime.value = s.general_time || '';
+        if (gaPrice) gaPrice.value = s.general_price || '';
+      });
+    }
+
+    function openShowModal(){document.getElementById('showModalTitle').textContent='Add Show';document.getElementById('showForm').reset();document.getElementById('showId').value='';uploadedFlyerUrl=null;resetFlyerDZ();flyerFI.value='';buildDayScheduleFields();document.getElementById('showModal').classList.add('active');}
+    function toLocalDatetimeStr(isoStr){const d=new Date(isoStr);const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const day=String(d.getDate()).padStart(2,'0');const h=String(d.getHours()).padStart(2,'0');const min=String(d.getMinutes()).padStart(2,'0');return `${y}-${m}-${day}T${h}:${min}`;}
+    function editShow(id){const s=window._shows?.find(x=>x.id===id);if(!s)return;document.getElementById('showModalTitle').textContent='Edit Show';document.getElementById('showId').value=s.id;document.getElementById('showName').value=s.name;document.getElementById('showType').value=s.show_type||'vending';document.getElementById('showDate').value=toLocalDatetimeStr(s.date);document.getElementById('showUrl').value=s.event_url||'';document.getElementById('showLocName').value=s.location_name;document.getElementById('showAddress').value=s.address;document.getElementById('showNotes').value=s.notes||'';document.getElementById('showSubtitle').value=s.subtitle||'';document.getElementById('showBooth').value=s.booth_number||'';document.getElementById('showEndDate').value=s.end_date?toLocalDatetimeStr(s.end_date):'';document.getElementById('showFlyer').value=s.flyer_image||'';uploadedFlyerUrl=null;flyerFI.value='';buildDayScheduleFields();if(s.day_schedules&&s.day_schedules.length){populateDaySchedules(s.day_schedules);}else{const ebT=document.getElementById('showEBTime');const ebP=document.getElementById('showEBPrice');const gaT=document.getElementById('showGATime');const gaP=document.getElementById('showGAPrice');if(ebT)ebT.value=s.early_bird_time||'';if(ebP)ebP.value=s.early_bird_price||'';if(gaT)gaT.value=s.general_time||'';if(gaP)gaP.value=s.general_price||'';}if(s.flyer_image){flyerImg.src=s.flyer_image;flyerPrompt.style.display='none';flyerPreview.style.display='inline-block';}else{resetFlyerDZ();}document.getElementById('showModal').classList.add('active');}
+    document.getElementById('showForm').addEventListener('submit',async e=>{e.preventDefault();const id=document.getElementById('showId').value;const daySchedules=collectDaySchedules();const ebTimeEl=document.getElementById('showEBTime');const ebPriceEl=document.getElementById('showEBPrice');const gaTimeEl=document.getElementById('showGATime');const gaPriceEl=document.getElementById('showGAPrice');const p={name:document.getElementById('showName').value.trim(),show_type:document.getElementById('showType').value,date:new Date(document.getElementById('showDate').value).toISOString(),event_url:document.getElementById('showUrl').value.trim()||null,location_name:document.getElementById('showLocName').value.trim(),address:document.getElementById('showAddress').value.trim(),early_bird_time:ebTimeEl?ebTimeEl.value.trim()||null:null,early_bird_price:ebPriceEl?ebPriceEl.value.trim()||null:null,general_time:gaTimeEl?gaTimeEl.value.trim()||null:null,general_price:gaPriceEl?gaPriceEl.value.trim()||null:null,notes:document.getElementById('showNotes').value.trim()||null,subtitle:document.getElementById('showSubtitle').value.trim()||null,booth_number:document.getElementById('showBooth').value.trim()||null,flyer_image:document.getElementById('showFlyer').value.trim()||uploadedFlyerUrl||null,end_date:document.getElementById('showEndDate').value?new Date(document.getElementById('showEndDate').value).toISOString():null,day_schedules:daySchedules||null};try{if(id){await apiPatch(`shows?id=eq.${id}`,p);}else{await apiPost('shows',p);}uploadedFlyerUrl=null;document.getElementById('showModal').classList.remove('active');showToast(id?'Updated':'Added','success');loadShows();}catch(e){showToast('Failed','error');}});
     async function deleteShow(id,name){if(!confirm(`Delete "${name}"?`))return;try{await apiDelete(`shows?id=eq.${id}`);showToast('Deleted','success');loadShows();}catch(e){showToast('Failed','error');}}
 
     // Show view toggle
