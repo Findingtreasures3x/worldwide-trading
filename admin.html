@@ -230,6 +230,15 @@
     .fin-vis-btn:hover:not(.active) { background: var(--bg-card-hover); color: var(--text); }
     .btn-danger { border-color: var(--danger); color: var(--danger); }
     .btn-danger:hover { background: var(--danger-dim); }
+    .reorder-list { display: flex; flex-direction: column; gap: 2px; }
+    .reorder-item { display: flex; align-items: center; gap: 0.65rem; padding: 0.5rem 0.75rem; background: var(--bg-raised); border: 1px solid var(--border); border-radius: 6px; cursor: grab; transition: background 0.15s ease; }
+    .reorder-item:hover { background: var(--bg-card-hover); }
+    .reorder-item.dragging { opacity: 0.4; border-color: var(--gold); }
+    .reorder-item.drag-over { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold-glow); }
+    .reorder-handle { font-size: 1rem; color: var(--text-muted); cursor: grab; flex-shrink: 0; }
+    .reorder-name { font-size: 0.78rem; font-weight: 600; color: var(--text); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .reorder-detail { font-size: 0.65rem; color: var(--text-muted); flex-shrink: 0; max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .reorder-order { font-size: 0.65rem; color: var(--text-muted); flex-shrink: 0; min-width: 30px; text-align: right; }
     .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.68rem; }
 
     /* ===== MODALS ===== */
@@ -478,6 +487,7 @@
               <button class="btn btn-sm" onclick="clearSelection()">Clear</button>
             </div>
             <button class="btn btn-gold" onclick="openAddModal()">+ Add Item</button>
+            <button class="btn btn-sm" id="reorderBtn" onclick="toggleReorderMode()" style="margin-left:0.5rem;">↕ Reorder</button>
           </div>
         </div>
         <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;flex-wrap:wrap;align-items:center;">
@@ -517,6 +527,7 @@
           </table>
         </div>
         <div id="invPagination" style="display:flex;align-items:center;justify-content:center;gap:0.5rem;margin-top:1rem;"></div>
+        <div id="reorderPanel" style="display:none;"></div>
       </div>
 
       <!-- SOLD PAGE -->
@@ -1870,6 +1881,135 @@
 
     async function toggleVisible(id,v){try{await apiPatch(`inventory?id=eq.${id}`,{visible:v});showToast(v?'Shown':'Hidden','success');loadInventory();}catch(e){showToast('Failed','error');}}
 
+    // ========== REORDER MODE ==========
+    let _reorderActive = false;
+    function toggleReorderMode() {
+      _reorderActive = !_reorderActive;
+      const panel = document.getElementById('reorderPanel');
+      const table = document.querySelector('#page-inventory .table-scroll');
+      const pagination = document.getElementById('invPagination');
+      const filters = document.querySelector('#page-inventory > div:nth-child(2)');
+      const btn = document.getElementById('reorderBtn');
+      if (_reorderActive) {
+        btn.textContent = '✕ Exit Reorder';
+        btn.style.background = 'var(--danger)';
+        btn.style.color = '#fff';
+        table.style.display = 'none';
+        pagination.style.display = 'none';
+        if (filters) filters.style.display = 'none';
+        panel.style.display = 'block';
+        renderReorderPanel();
+      } else {
+        btn.textContent = '↕ Reorder';
+        btn.style.background = '';
+        btn.style.color = '';
+        table.style.display = '';
+        pagination.style.display = '';
+        if (filters) filters.style.display = '';
+        panel.style.display = 'none';
+      }
+    }
+
+    function renderReorderPanel() {
+      const items = window._items || [];
+      const categories = {};
+      const catLabels = {slabs:'Slabs',sealed:'Sealed',raw:'Raw Cards',accessories:'Accessories',collectibles:'Collectibles'};
+      items.forEach(item => {
+        const cat = item.category || 'other';
+        if (!categories[cat]) categories[cat] = [];
+        categories[cat].push(item);
+      });
+      // Sort each category by sort_order
+      Object.values(categories).forEach(arr => arr.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)));
+
+      const catOrder = ['slabs','sealed','raw','accessories','collectibles'];
+      let html = '<div style="margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;"><span style="font-size:0.85rem;color:var(--text-secondary);">Drag items to reorder within each category. Changes save automatically.</span></div>';
+      catOrder.forEach(cat => {
+        if (!categories[cat] || !categories[cat].length) return;
+        const label = catLabels[cat] || cat;
+        html += `<div class="reorder-category" style="margin-bottom:1.5rem;">
+          <h3 style="font-size:1.1rem;font-family:'Cinzel',serif;margin-bottom:0.5rem;color:var(--gold-text);">${label} <span style="font-size:0.7rem;color:var(--text-muted);font-family:'Inter',sans-serif;">(${categories[cat].length} items)</span></h3>
+          <div class="reorder-list" data-category="${cat}">`;
+        categories[cat].forEach((item, idx) => {
+          const img = item.image ? `<img src="${item.image}" style="width:36px;height:36px;object-fit:cover;border-radius:4px;">` : '<div style="width:36px;height:36px;background:var(--bg-card);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:0.6rem;color:var(--text-muted);">—</div>';
+          const vis = item.visible === false ? ' style="opacity:0.4"' : '';
+          html += `<div class="reorder-item" data-id="${item.id}" draggable="true"${vis}>
+            <span class="reorder-handle">☰</span>
+            ${img}
+            <span class="reorder-name">${item.name}</span>
+            <span class="reorder-detail">${item.details}</span>
+            <span class="reorder-order">#${idx + 1}</span>
+          </div>`;
+        });
+        html += '</div></div>';
+      });
+      document.getElementById('reorderPanel').innerHTML = html;
+      initDragAndDrop();
+    }
+
+    function initDragAndDrop() {
+      let dragItem = null;
+      let dragList = null;
+      document.querySelectorAll('.reorder-item').forEach(el => {
+        el.addEventListener('dragstart', e => {
+          dragItem = el;
+          dragList = el.parentElement;
+          el.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+        });
+        el.addEventListener('dragend', () => {
+          el.classList.remove('dragging');
+          document.querySelectorAll('.reorder-item').forEach(i => i.classList.remove('drag-over'));
+          if (dragItem) saveReorder(dragList);
+          dragItem = null;
+          dragList = null;
+        });
+        el.addEventListener('dragover', e => {
+          e.preventDefault();
+          if (!dragItem || el === dragItem) return;
+          if (el.parentElement !== dragList) return;
+          e.dataTransfer.dropEffect = 'move';
+          const rect = el.getBoundingClientRect();
+          const midY = rect.top + rect.height / 2;
+          if (e.clientY < midY) {
+            el.parentElement.insertBefore(dragItem, el);
+          } else {
+            el.parentElement.insertBefore(dragItem, el.nextSibling);
+          }
+        });
+        el.addEventListener('dragenter', e => {
+          e.preventDefault();
+          if (el !== dragItem && el.parentElement === dragList) el.classList.add('drag-over');
+        });
+        el.addEventListener('dragleave', () => {
+          el.classList.remove('drag-over');
+        });
+      });
+    }
+
+    async function saveReorder(list) {
+      if (!list) return;
+      const items = list.querySelectorAll('.reorder-item');
+      const updates = [];
+      items.forEach((el, idx) => {
+        el.querySelector('.reorder-order').textContent = `#${idx + 1}`;
+        updates.push({ id: el.dataset.id, sort_order: idx + 1 });
+      });
+      try {
+        for (const u of updates) {
+          await apiPatch(`inventory?id=eq.${u.id}`, { sort_order: u.sort_order });
+        }
+        // Update local data
+        updates.forEach(u => {
+          const item = window._items.find(i => i.id === u.id);
+          if (item) item.sort_order = u.sort_order;
+        });
+        showToast('Order saved', 'success');
+      } catch(e) {
+        showToast('Failed to save order', 'error');
+      }
+    }
+
     // Item modal
     function openAddModal(){document.getElementById('modalTitle').textContent='Add Item';document.getElementById('itemForm').reset();document.getElementById('itemId').value='';document.getElementById('itemSort').value=(window._items?.length||0)+1;uploadedImageUrl=null;resetDropZone();fileInput.value='';document.getElementById('itemModal').classList.add('active');}
     function openEditModal(id){const i=window._items?.find(x=>x.id===id);if(!i)return;document.getElementById('modalTitle').textContent='Edit Item';document.getElementById('itemId').value=i.id;document.getElementById('itemName').value=i.name;document.getElementById('itemDetails').value=i.details;document.getElementById('itemPrice').value=i.price;document.getElementById('itemQty').value=i.qty;document.getElementById('itemSort').value=i.sort_order;document.getElementById('itemBrand').value=i.brand;document.getElementById('itemCategory').value=i.category;document.getElementById('itemImage').value=i.image||'';document.getElementById('itemFeatured').checked=i.featured;document.getElementById('itemExclusive').checked=i.exclusive;document.getElementById('itemTcgUrl').value=i.tcgplayer_url||'';document.getElementById('itemCost').value=i.cost||'';document.getElementById('itemNotes').value=i.notes||'';uploadedImageUrl=null;fileInput.value='';if(i.image){previewImg.src=i.image;dropPrompt.style.display='none';dropPreview.style.display='inline-block';}else{resetDropZone();}document.getElementById('itemModal').classList.add('active');}
@@ -2462,8 +2602,6 @@
       const lotListedTotal = lotItems.reduce((s, i) => s + parseMoney(i.price) * (i.qty || 1), 0);
       try {
         for (const item of lotItems) {
-          const itemListed = parseMoney(item.price) * (item.qty || 1);
-          const itemCost = lotListedTotal > 0 && lotCostTotal > 0 ? `$${Math.round((itemListed / lotListedTotal) * lotCostTotal)}` : null;
           const patch = {
             sold_lot: newName,
             lot_sold_price: soldPrice,
@@ -2471,7 +2609,6 @@
             sold_buyer: buyer,
             sold_show: show || item.sold_show
           };
-          if (itemCost && !item.cost) patch.cost = itemCost;
           await apiPatch(`inventory?id=eq.${item.id}`, patch);
         }
         closeEditLotModal();

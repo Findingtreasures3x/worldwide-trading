@@ -471,8 +471,14 @@
         groups[cat].items.push(item);
       });
 
-      // Render each group
-      for (const [catName, group] of Object.entries(groups)) {
+      // Render each group in fixed order
+      const catOrder = ['slabs', 'raw', 'sealed', 'accessories', 'collectibles'];
+      const sortedEntries = Object.entries(groups).sort((a, b) => {
+        const ai = catOrder.indexOf(a[1].key);
+        const bi = catOrder.indexOf(b[1].key);
+        return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+      });
+      for (const [catName, group] of sortedEntries) {
         const items = group.items;
         const section = document.createElement('div');
         section.className = 'category';
