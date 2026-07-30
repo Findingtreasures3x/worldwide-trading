@@ -605,6 +605,10 @@
               </div>
             </div>
             <div class="form-group">
+              <label class="form-label">Date Sold <span style="color:var(--text-muted);font-weight:400;">(defaults to today)</span></label>
+              <input type="date" class="form-input" id="soldDateInput">
+            </div>
+            <div class="form-group">
               <label class="form-label">Lot Name <span style="color:var(--text-muted);font-weight:400;">(optional — group items sold together)</span></label>
               <input class="form-input" id="soldLotInput" placeholder="e.g. One Piece Bundle, Table Clearance...">
             </div>
@@ -659,6 +663,10 @@
             <div class="form-group">
               <label class="form-label">Lot Name</label>
               <input class="form-input" id="editSoldLot" placeholder="e.g. One Piece Bundle...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Date Sold</label>
+              <input type="date" class="form-input" id="editSoldDate">
             </div>
             <div class="form-group">
               <label class="form-label">📋 Item Notes <span style="color:var(--text-muted);font-weight:400;">(original inventory notes)</span></label>
@@ -733,6 +741,10 @@
                 <label class="form-label">Show / Location</label>
                 <select class="form-select" id="editLotShow"></select>
               </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Date Sold</label>
+              <input type="date" class="form-input" id="editLotDate">
             </div>
             <div class="form-group">
               <label class="form-label">Notes</label>
@@ -2164,6 +2176,7 @@
       document.getElementById('soldBuyerInput').value = '';
       document.getElementById('soldLotInput').value = '';
       document.getElementById('soldNotesInput').value = '';
+      document.getElementById('soldDateInput').value = new Date().toISOString().slice(0, 10);
       // Handle quantity
       const isBulk = id.includes(',');
       const qtyGroup = document.getElementById('soldQtyGroup');
@@ -2203,6 +2216,8 @@
       const buyerVal = document.getElementById('soldBuyerInput').value.trim() || null;
       const lotVal = document.getElementById('soldLotInput').value.trim() || (ids.length > 1 ? `Lot ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'})}` : null);
       const notesVal = document.getElementById('soldNotesInput').value.trim() || null;
+      const soldDateVal = document.getElementById('soldDateInput').value;
+      const soldAt = soldDateVal ? new Date(soldDateVal + 'T12:00:00').toISOString() : new Date().toISOString();
       const soldQty = parseInt(document.getElementById('soldQtyInput')?.value) || 1;
       const maxQty = parseInt(document.getElementById('soldItemMaxQty').value) || 1;
       try {
@@ -2218,7 +2233,7 @@
               brand: item.brand, category: item.category, image: item.image,
               featured: item.featured, exclusive: item.exclusive, sort_order: item.sort_order,
               cost: item.cost, notes: item.notes, tcgplayer_url: item.tcgplayer_url,
-              visible: false, sold: true, sold_at: new Date().toISOString(),
+              visible: false, sold: true, sold_at: soldAt,
               sold_show: showVal, sold_price: priceVal, sold_lot: lotVal,
               sold_qty: soldQty, sold_notes: notesVal, sold_buyer: buyerVal
             });
@@ -2228,7 +2243,7 @@
           for (const id of ids) {
             const item = (window._items || []).find(i => i.id === id);
             await apiPatch(`inventory?id=eq.${id}`, {
-              sold: true, sold_at: new Date().toISOString(), sold_show: showVal,
+              sold: true, sold_at: soldAt, sold_show: showVal,
               sold_price: ids.length === 1 ? priceVal : null, sold_lot: lotVal,
               sold_qty: item ? item.qty : 1, sold_notes: notesVal, sold_buyer: buyerVal,
               visible: false
@@ -2244,14 +2259,38 @@
     });
 
     let _showDateMap = {};
+    let _showDateRanges = {};
     async function loadSold() {
       try {
         _soldData = await apiGet('inventory?select=*&sold=eq.true&order=sold_at.desc');
         // Build show name → date map
         try {
-          const showsData = await apiGet('shows?select=name,date');
+          const showsData = await apiGet('shows?select=name,date,end_date');
           _showDateMap = {};
-          showsData.forEach(s => { _showDateMap[s.name] = new Date(s.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/New_York' }); });
+          _showDateRanges = {};
+          showsData.forEach(s => {
+            const startDate = new Date(s.date);
+            const startStr = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/New_York' });
+            // Store date range for sub-grouping logic
+            const startDay = new Date(startDate.toLocaleDateString('en-US', { timeZone: 'America/New_York' }));
+            startDay.setHours(0,0,0,0);
+            if (s.end_date) {
+              const endDate = new Date(s.end_date);
+              const endDay = new Date(endDate.toLocaleDateString('en-US', { timeZone: 'America/New_York' }));
+              endDay.setHours(23,59,59,999);
+              _showDateRanges[s.name] = { start: startDay, end: endDay, multiDay: true };
+              const sameMonth = startDate.getMonth() === endDate.getMonth() && startDate.getFullYear() === endDate.getFullYear();
+              const endStr = sameMonth
+                ? endDate.toLocaleDateString('en-US', { day: 'numeric', timeZone: 'America/New_York' })
+                : endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/New_York' });
+              const yearStr = startDate.toLocaleDateString('en-US', { year: 'numeric', timeZone: 'America/New_York' });
+              const startNoYear = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/New_York' });
+              _showDateMap[s.name] = `${startNoYear}-${endStr}, ${yearStr}`;
+            } else {
+              _showDateRanges[s.name] = { start: startDay, end: new Date(startDay.getTime() + 86400000 - 1), multiDay: false };
+              _showDateMap[s.name] = startStr;
+            }
+          });
         } catch(e) {}
         document.getElementById('soldCount').textContent = totalQty(_soldData);
         // Populate filter dropdowns
@@ -2357,6 +2396,7 @@
         Object.entries(showGroups).forEach(([showName, group]) => {
           const allInGroup = [...Object.values(group.lots).flat(), ...group.individuals];
           const totalListed = allInGroup.reduce((s, i) => s + parsePrice(i.price) * (i.qty || 1), 0);
+          const totalCost = allInGroup.reduce((s, i) => s + parseMoney(i.cost) * (i.qty || 1), 0);
           // For sold total: count each lot's sold price once, not per item
           let totalSold = group.individuals.reduce((s, i) => s + parseMoney(i.sold_price), 0);
           Object.values(group.lots).forEach(lotItems => {
@@ -2379,17 +2419,69 @@
           html += `<div class="sold-group collapsed">
             <div class="sold-group-header" onclick="this.parentElement.classList.toggle('collapsed')">
               <span class="sold-group-title">${showName}</span>
-              <span class="sold-group-meta">${totalQty(allInGroup)} items · Listed: $${totalListed.toLocaleString()} · Sold: $${totalSold.toLocaleString()} · ${soldDate}</span>
+              <span class="sold-group-meta">${totalQty(allInGroup)} items · Listed: $${totalListed.toLocaleString()} · Sold: $${totalSold.toLocaleString()} · Cost: $${totalCost.toLocaleString()} · ${soldDate}</span>
             </div>
             <div class="sold-group-body" style="padding:0.75rem;">`;
-          // Render lot cards within show
-          Object.entries(group.lots).forEach(([lotName, lotItems]) => {
-            html += buildLotCard(lotName, lotItems);
-          });
-          // Render individuals
-          if (group.individuals.length) {
-            html += `<div style="margin-top:${Object.keys(group.lots).length ? '0.5rem' : '0'}">` + buildIndividualTable(group.individuals) + `</div>`;
+
+          // Sub-group by sold date — only for multi-day shows where dates fall within show range
+          const showRange = _showDateRanges[showName];
+          let useSubGroups = false;
+
+          if (showRange && showRange.multiDay) {
+            // Check if any sold_at dates actually fall within the show's date range
+            const allDates = allInGroup.map(i => i.sold_at ? new Date(i.sold_at) : null).filter(Boolean);
+            const datesInRange = allDates.filter(d => d >= showRange.start && d <= showRange.end);
+            // Only sub-group if at least one date is in range AND there are multiple distinct days in range
+            if (datesInRange.length > 0) {
+              const uniqueDays = new Set(datesInRange.map(d => d.toLocaleDateString('en-US', { timeZone: 'America/New_York' })));
+              useSubGroups = uniqueDays.size > 1;
+            }
           }
+
+          if (useSubGroups) {
+            const dateGroups = {};
+            Object.entries(group.lots).forEach(([lotName, lotItems]) => {
+              const soldDate2 = lotItems[0].sold_at ? new Date(lotItems[0].sold_at) : null;
+              const inRange = soldDate2 && soldDate2 >= showRange.start && soldDate2 <= showRange.end;
+              const dateKey = inRange ? soldDate2.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/New_York' }) : 'Other';
+              if (!dateGroups[dateKey]) dateGroups[dateKey] = { lots: {}, individuals: [] };
+              dateGroups[dateKey].lots[lotName] = lotItems;
+            });
+            group.individuals.forEach(item => {
+              const soldDate2 = item.sold_at ? new Date(item.sold_at) : null;
+              const inRange = soldDate2 && soldDate2 >= showRange.start && soldDate2 <= showRange.end;
+              const dateKey = inRange ? soldDate2.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/New_York' }) : 'Other';
+              if (!dateGroups[dateKey]) dateGroups[dateKey] = { lots: {}, individuals: [] };
+              dateGroups[dateKey].individuals.push(item);
+            });
+
+            const dateKeys = Object.keys(dateGroups).sort((a, b) => {
+              if (a === 'Other') return 1;
+              if (b === 'Other') return -1;
+              return new Date(a) - new Date(b);
+            });
+
+            dateKeys.forEach(dateKey => {
+              const dg = dateGroups[dateKey];
+              html += `<div style="margin-bottom:0.75rem;"><div style="font-size:0.75rem;font-weight:700;color:var(--gold-text);padding:0.4rem 0;border-bottom:1px solid var(--border);margin-bottom:0.5rem;">📅 ${dateKey}</div>`;
+              Object.entries(dg.lots).forEach(([lotName, lotItems]) => {
+                html += buildLotCard(lotName, lotItems);
+              });
+              if (dg.individuals.length) {
+                html += `<div style="margin-top:${Object.keys(dg.lots).length ? '0.5rem' : '0'}">` + buildIndividualTable(dg.individuals) + `</div>`;
+              }
+              html += `</div>`;
+            });
+          } else {
+            // No sub-grouping — flat list
+            Object.entries(group.lots).forEach(([lotName, lotItems]) => {
+              html += buildLotCard(lotName, lotItems);
+            });
+            if (group.individuals.length) {
+              html += `<div style="margin-top:${Object.keys(group.lots).length ? '0.5rem' : '0'}">` + buildIndividualTable(group.individuals) + `</div>`;
+            }
+          }
+
           html += `</div></div>`;
         });
       } else {
@@ -2497,6 +2589,16 @@
       document.getElementById('editSoldItemNotes').value = item.notes || '';
       document.getElementById('editSoldNotes').value = item.sold_notes || '';
       document.getElementById('editSoldShowCustom').value = '';
+      // Date sold field
+      if (item.sold_at) {
+        const d = new Date(item.sold_at);
+        const y = d.getFullYear();
+        const m = String(d.getMonth()+1).padStart(2,'0');
+        const day = String(d.getDate()).padStart(2,'0');
+        document.getElementById('editSoldDate').value = `${y}-${m}-${day}`;
+      } else {
+        document.getElementById('editSoldDate').value = '';
+      }
       // Qty field — use the record's qty (actual count on this record)
       const currentQty = item.qty || 1;
       document.getElementById('editSoldOrigQty').value = currentQty;
@@ -2532,13 +2634,17 @@
       const notesVal = document.getElementById('editSoldNotes').value.trim() || null;
       const origQty = parseInt(document.getElementById('editSoldOrigQty').value) || 1;
       const newQty = parseInt(document.getElementById('editSoldQty')?.value) || origQty;
+      const editSoldDateVal = document.getElementById('editSoldDate').value;
+      const editSoldAt = editSoldDateVal ? new Date(editSoldDateVal + 'T12:00:00').toISOString() : null;
       try {
         // Update this record
         const costVal = parseMoney(document.getElementById('editSoldCost').value) || null;
-        await apiPatch(`inventory?id=eq.${id}`, {
+        const patch = {
           sold_show: showVal, sold_price: priceVal, sold_buyer: buyerVal,
           sold_lot: lotVal, notes: itemNotesVal, sold_notes: notesVal, sold_qty: newQty, qty: newQty, cost: costVal
-        });
+        };
+        if (editSoldAt) patch.sold_at = editSoldAt;
+        await apiPatch(`inventory?id=eq.${id}`, patch);
         // If qty was reduced, create a new sold record with the remainder
         if (newQty < origQty) {
           const item = _soldData.find(i => i.id === id);
@@ -2590,6 +2696,16 @@
       document.getElementById('editLotCost').value = lotTotalCost ? fmtPrice(lotTotalCost) : '';
       document.getElementById('editLotBuyerInput').value = lotItems[0].sold_buyer || '';
       document.getElementById('editLotNotes').value = lotItems[0].lot_notes || '';
+      // Date sold
+      if (lotItems[0].sold_at) {
+        const d = new Date(lotItems[0].sold_at);
+        const y = d.getFullYear();
+        const m = String(d.getMonth()+1).padStart(2,'0');
+        const day = String(d.getDate()).padStart(2,'0');
+        document.getElementById('editLotDate').value = `${y}-${m}-${day}`;
+      } else {
+        document.getElementById('editLotDate').value = '';
+      }
       try {
         const shows = await apiGet('shows?select=name&order=date.desc');
         const customShows = [...new Set(_soldData.map(i => i.sold_show).filter(Boolean))];
@@ -2610,9 +2726,9 @@
       const show = document.getElementById('editLotShow').value || null;
       const notes = document.getElementById('editLotNotes').value.trim() || null;
       const lotCostTotal = parseMoney(document.getElementById('editLotCost').value);
+      const lotDateVal = document.getElementById('editLotDate').value;
+      const lotSoldAt = lotDateVal ? new Date(lotDateVal + 'T12:00:00').toISOString() : null;
       const lotItems = _soldData.filter(i => i.sold_lot === oldName);
-      // Distribute cost proportionally by listed price
-      const lotListedTotal = lotItems.reduce((s, i) => s + parseMoney(i.price) * (i.qty || 1), 0);
       try {
         for (const item of lotItems) {
           const patch = {
@@ -2622,6 +2738,7 @@
             sold_buyer: buyer,
             sold_show: show || item.sold_show
           };
+          if (lotSoldAt) patch.sold_at = lotSoldAt;
           await apiPatch(`inventory?id=eq.${item.id}`, patch);
         }
         closeEditLotModal();
