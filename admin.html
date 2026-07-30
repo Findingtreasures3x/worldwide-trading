@@ -178,6 +178,8 @@
     .sold-group.collapsed .sold-group-header { border-radius: 8px; }
     .lot-badge { font-size: 0.65rem; padding: 0.15rem 0.45rem; border-radius: 4px; background: var(--blue-dim); color: var(--blue); font-weight: 600; }
     .lot-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 0.75rem; overflow: hidden; }
+    .lot-card.trade-lot { border-color: rgba(78, 205, 196, 0.35); background: rgba(78, 205, 196, 0.03); }
+    .trade-badge { display: inline-block; font-size: 0.55rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; background: rgba(78, 205, 196, 0.15); color: #4ecdc4; padding: 2px 8px; border-radius: 4px; }
     .lot-card-header { display: flex; align-items: center; justify-content: space-between; padding: 0.85rem 1rem; gap: 1rem; flex-wrap: wrap; }
     .lot-card-title { font-size: 0.9rem; font-weight: 700; color: var(--gold-text); }
     .lot-card-stats { display: flex; gap: 1.5rem; font-size: 0.78rem; align-items: center; flex-wrap: wrap; }
@@ -561,6 +563,11 @@
             <option value="lot">Group by Lot</option>
             <option value="none">No Grouping</option>
           </select>
+          <select class="form-select" id="soldFilterType" onchange="renderSold()" style="width:auto;font-size:0.75rem;padding:0.4rem 1.5rem 0.4rem 0.6rem;">
+            <option value="">All Types</option>
+            <option value="trades">Trades Only</option>
+            <option value="sales">Sales Only</option>
+          </select>
         </div>
         <div id="soldContainer"><div class="loading">Loading...</div></div>
       </div>
@@ -893,7 +900,7 @@
             </div>
             <div class="form-group">
               <label class="form-label">Notes <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
-              <input class="form-input" id="expenseNotes" placeholder="Any additional notes...">
+              <textarea class="form-input" id="expenseNotes" rows="3" placeholder="Any additional notes..." style="resize:vertical;min-height:60px;"></textarea>
             </div>
             <div class="modal-actions">
               <button type="button" class="btn" onclick="closeExpenseModal()">Cancel</button>
@@ -2294,12 +2301,16 @@
       const groupBy = document.getElementById('soldGroupBy').value;
       const search = (document.getElementById('soldSearch').value || '').trim().toLowerCase();
 
+      const fType = document.getElementById('soldFilterType').value;
+
       let items = _soldData.filter(i => {
         if (fShow === '__shows__' && !_showDateMap[i.sold_show]) return false;
         if (fShow === '__other__' && _showDateMap[i.sold_show]) return false;
         if (fShow && fShow !== '__shows__' && fShow !== '__other__' && i.sold_show !== fShow) return false;
         if (fBrand && i.brand !== fBrand) return false;
         if (fCat && i.category !== fCat) return false;
+        if (fType === 'trades' && !/trade/i.test(i.sold_lot || '')) return false;
+        if (fType === 'sales' && /trade/i.test(i.sold_lot || '')) return false;
         if (search && !(
           i.name.toLowerCase().includes(search) ||
           i.details.toLowerCase().includes(search) ||
@@ -2426,9 +2437,11 @@
 
       const notesHtml = notes ? `<div class="note-clickable" style="font-size:0.72rem;color:var(--text-muted);padding:0.25rem 1rem 0.65rem;cursor:pointer;line-height:1.5;border-top:1px solid var(--border);" data-note="${notes.replace(/"/g,'&quot;').replace(/</g,'&lt;')}"><span style="opacity:0.7;">📝</span> ${notes.length > 150 ? notes.replace(/</g,'&lt;').slice(0, 150) + '... <span style="color:var(--gold-text);">(click to read more)</span>' : notes.replace(/</g,'&lt;')}</div>` : '';
 
-      return `<div class="lot-card">
+      const isTrade = /trade/i.test(lotName);
+      return `<div class="lot-card${isTrade ? ' trade-lot' : ''}">
         <div class="lot-card-header">
           <div style="display:flex;align-items:center;gap:0.75rem;">
+            ${isTrade ? '<span class="trade-badge">Trade</span>' : ''}
             <span class="lot-card-title">${lotName}</span>
             <span class="lot-badge">${totalQty(items)} items</span>
           </div>
@@ -2697,7 +2710,8 @@
         const cat = catLabels[exp.category] || exp.category;
         catTotals[cat] = (catTotals[cat] || 0) + amt;
         const dt = exp.expense_date ? new Date(exp.expense_date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
-        tbody.innerHTML += `<tr><td>${dt}</td><td><span class="brand-badge">${cat}</span></td><td>${exp.description || '—'}</td><td>${exp.show_name || 'General'}</td><td class="price-cell">${fmtPrice(exp.amount)}</td><td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${exp.notes || '—'}</td><td><div class="action-btns"><button class="btn btn-sm" onclick="openExpenseModal('${exp.id}')">Edit</button><button class="btn btn-sm btn-danger" onclick="deleteExpense('${exp.id}')">Del</button></div></td></tr>`;
+        const noteCell = exp.notes ? `<div class="note-clickable" style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;" data-note="${exp.notes.replace(/"/g,'&quot;').replace(/</g,'&lt;')}">📝 ${exp.notes.replace(/</g,'&lt;')}</div>` : '—';
+        tbody.innerHTML += `<tr><td>${dt}</td><td><span class="brand-badge">${cat}</span></td><td>${exp.description || '—'}</td><td>${exp.show_name || 'General'}</td><td class="price-cell">${fmtPrice(exp.amount)}</td><td>${noteCell}</td><td><div class="action-btns"><button class="btn btn-sm" onclick="openExpenseModal('${exp.id}')">Edit</button><button class="btn btn-sm btn-danger" onclick="deleteExpense('${exp.id}')">Del</button></div></td></tr>`;
       });
 
       // Expense KPI summary by category
