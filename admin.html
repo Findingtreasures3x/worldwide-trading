@@ -2308,9 +2308,34 @@
     }
 
     // Get display date: use show date if sold at a show, otherwise sold_at
+    function getExpandedGroups() {
+      const expanded = [];
+      document.querySelectorAll('.sold-group').forEach(g => {
+        if (!g.classList.contains('collapsed')) {
+          const title = g.querySelector('.sold-group-title');
+          if (title) expanded.push(title.textContent);
+        }
+      });
+      return expanded;
+    }
+    function restoreExpandedGroups(expanded) {
+      if (!expanded.length) return;
+      document.querySelectorAll('.sold-group').forEach(g => {
+        const title = g.querySelector('.sold-group-title');
+        if (title && expanded.includes(title.textContent)) {
+          g.classList.remove('collapsed');
+        }
+      });
+    }
+
     function getSoldDate(item) {
+      // Always prefer sold_at if it exists
+      if (item.sold_at) {
+        return new Date(item.sold_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/New_York' });
+      }
+      // Fall back to show date if no sold_at
       if (item.sold_show && _showDateMap[item.sold_show]) return _showDateMap[item.sold_show];
-      return item.sold_at ? new Date(item.sold_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/New_York' }) : '—';
+      return '—';
     }
 
     function totalQty(items) { return items.reduce((s, i) => s + (i.qty || 1), 0); }
@@ -2334,6 +2359,7 @@
     }
 
     function renderSold() {
+      const _expandedBefore = getExpandedGroups();
       const fShow = document.getElementById('soldFilterShow').value;
       const fBrand = document.getElementById('soldFilterBrand').value;
       const fCat = document.getElementById('soldFilterCategory').value;
@@ -2501,6 +2527,7 @@
       }
 
       container.innerHTML = html;
+      restoreExpandedGroups(_expandedBefore);
     }
 
     function buildLotCard(lotName, items) {
