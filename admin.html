@@ -2660,7 +2660,8 @@
       const itemNotesVal = document.getElementById('editSoldItemNotes').value.trim() || null;
       const notesVal = document.getElementById('editSoldNotes').value.trim() || null;
       const origQty = parseInt(document.getElementById('editSoldOrigQty').value) || 1;
-      const newQty = parseInt(document.getElementById('editSoldQty')?.value) || origQty;
+      const qtyGroupVisible = document.getElementById('editSoldQtyGroup').style.display !== 'none';
+      const newQty = qtyGroupVisible ? (parseInt(document.getElementById('editSoldQty')?.value) || origQty) : origQty;
       const editSoldDateVal = document.getElementById('editSoldDate').value;
       const editSoldAt = editSoldDateVal ? new Date(editSoldDateVal + 'T12:00:00').toISOString() : null;
       try {
@@ -2668,12 +2669,13 @@
         const costVal = parseMoney(document.getElementById('editSoldCost').value) || null;
         const patch = {
           sold_show: showVal, sold_price: priceVal, sold_buyer: buyerVal,
-          sold_lot: lotVal, notes: itemNotesVal, sold_notes: notesVal, sold_qty: newQty, qty: newQty, cost: costVal
+          sold_lot: lotVal, notes: itemNotesVal, sold_notes: notesVal, cost: costVal
         };
+        if (qtyGroupVisible) { patch.sold_qty = newQty; patch.qty = newQty; }
         if (editSoldAt) patch.sold_at = editSoldAt;
         await apiPatch(`inventory?id=eq.${id}`, patch);
-        // If qty was reduced, create a new sold record with the remainder
-        if (newQty < origQty) {
+        // If qty was explicitly reduced, create a new sold record with the remainder
+        if (qtyGroupVisible && newQty < origQty) {
           const item = _soldData.find(i => i.id === id);
           if (item) {
             const remainder = origQty - newQty;
