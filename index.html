@@ -927,12 +927,12 @@
         let dateStr = showDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
         if (show.end_date) {
           const endDate = new Date(show.end_date);
-          const sameYear = showDate.getFullYear() === endDate.getFullYear();
-          const endOpts = sameYear
-            ? { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }
-            : { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' };
-          const endStr = endDate.toLocaleDateString('en-US', endOpts);
-          dateStr += ' – ' + endStr;
+          const sameDay = showDate.toLocaleDateString('en-US') === endDate.toLocaleDateString('en-US');
+          if (!sameDay) {
+            const endOpts = { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' };
+            const endStr = endDate.toLocaleDateString('en-US', endOpts);
+            dateStr += ' – ' + endStr;
+          }
         }
         const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(show.location_name + ', ' + show.address)}`;
 
@@ -986,14 +986,14 @@
             <div class="show-single-bottom">
               <div class="show-single-info">
                 <div class="show-meta-item" style="font-size:1.05rem;">
-                  <span class="show-meta-icon" style="font-size:1.3rem;">📅</span>
+                  <span class="show-meta-icon" style="font-size:1.3rem;width:1.8rem;min-width:1.8rem;display:inline-block;text-align:center;">📅</span>
                   <div><strong>${dateStr}</strong>${timeStr ? `<span style="font-size:0.9rem;">${timeStr}</span>` : ''}</div>
                 </div>
                 <div class="show-meta-item" style="font-size:1.05rem;">
-                  <span class="show-meta-icon" style="font-size:1.3rem;">📍</span>
+                  <span class="show-meta-icon" style="font-size:1.3rem;width:1.8rem;min-width:1.8rem;display:inline-block;text-align:center;">📍</span>
                   <div><a href="${mapsUrl}" target="_blank" rel="noopener" class="show-address-link"><strong>${show.location_name}</strong><span style="font-size:0.9rem;">${show.address}</span></a></div>
                 </div>
-                ${ticketLine ? `<div class="show-meta-item" style="font-size:1.05rem;"><span class="show-meta-icon" style="font-size:1.3rem;">🎟️</span><div><strong>${ticketLine}</strong></div></div>` : ''}
+                ${ticketLine ? `<div class="show-meta-item" style="font-size:1.05rem;align-items:center;"><span class="show-meta-icon" style="font-size:1.3rem;width:1.8rem;min-width:1.8rem;display:inline-block;text-align:center;margin-top:0;">🎟</span><div><strong>${ticketLine}</strong></div></div>` : ''}
               </div>
               <div class="show-single-right">
                 <div class="show-doors-label">Doors open in</div>
@@ -1028,7 +1028,7 @@
                   <span class="show-meta-icon">📍</span>
                   <div><a href="${mapsUrl}" target="_blank" rel="noopener" class="show-address-link"><strong>${show.location_name}</strong><span>${show.address}</span></a></div>
                 </div>
-                ${ticketLine ? `<div class="show-meta-item"><span class="show-meta-icon">🎟️</span><div><strong>${ticketLine}</strong>${show.notes ? `<span class="show-notes-text">${show.notes.length > 80 ? show.notes.slice(0, 80) + '... ' + (show.event_url ? `<a href="${show.event_url}" target="_blank" rel="noopener" style="color:var(--gold-text);text-decoration:none;font-weight:600;">Read more</a>` : '') : show.notes}</span>` : ''}</div></div>` : ''}
+                ${ticketLine ? `<div class="show-meta-item"><span class="show-meta-icon">🎟</span><div><strong>${ticketLine}</strong>${show.notes ? `<span class="show-notes-text">${show.notes.length > 80 ? show.notes.slice(0, 80) + '... ' + (show.event_url ? `<a href="${show.event_url}" target="_blank" rel="noopener" style="color:var(--gold-text);text-decoration:none;font-weight:600;">Read more</a>` : '') : show.notes}</span>` : ''}</div></div>` : ''}
               </div>
               <div class="show-doors-label">Doors open in</div>
               <div class="countdown" data-show-date="${show.date}">

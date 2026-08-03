@@ -688,7 +688,7 @@
       <div class="modal-overlay" id="notePopup" onclick="if(event.target===this)this.classList.remove('active')">
         <div class="modal" style="max-width:500px;">
           <div class="modal-header"><h3>Note</h3><button class="modal-close" onclick="document.getElementById('notePopup').classList.remove('active')">✕</button></div>
-          <div id="notePopupContent" style="padding:1rem 1.5rem 1.5rem;font-size:0.85rem;color:var(--text);white-space:pre-wrap;line-height:1.6;"></div>
+          <div id="notePopupContent" style="padding:1rem 1.5rem 1.5rem;font-size:0.85rem;color:var(--text);white-space:pre-wrap;line-height:1.6;overflow-wrap:break-word;word-break:break-word;"></div>
         </div>
       </div>
 
