@@ -231,6 +231,8 @@
     .fin-vis-btn.active { background: var(--gold); color: #0a0a0c; }
     .fin-vis-btn:hover:not(.active) { background: var(--bg-card-hover); color: var(--text); }
     .btn-danger { border-color: var(--danger); color: var(--danger); }
+    .info-tip { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; font-size: 0.6rem; font-weight: 700; background: var(--bg-card); border: 1px solid var(--border); border-radius: 50%; color: var(--text-muted); cursor: help; vertical-align: middle; margin-left: 0.25rem; position: relative; }
+    .info-tip:hover { color: var(--gold-text); border-color: var(--gold-text); }
     .btn-danger:hover { background: var(--danger-dim); }
     .reorder-list { display: flex; flex-direction: column; gap: 2px; }
     .reorder-item { display: flex; align-items: center; gap: 0.65rem; padding: 0.5rem 0.75rem; background: var(--bg-raised); border: 1px solid var(--border); border-radius: 6px; cursor: grab; transition: background 0.15s ease; }
@@ -490,6 +492,7 @@
             </div>
             <button class="btn btn-gold" onclick="openAddModal()">+ Add Item</button>
             <button class="btn btn-sm" id="reorderBtn" onclick="toggleReorderMode()" style="margin-left:0.5rem;">↕ Reorder</button>
+            <button class="btn btn-sm" onclick="downloadInventoryCSV()" style="margin-left:0.25rem;">📥 CSV</button>
           </div>
         </div>
         <div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;flex-wrap:wrap;align-items:center;">
@@ -535,7 +538,8 @@
       <!-- SOLD PAGE -->
       <div class="page" id="page-sold">
         <div class="sec-header">
-          <h2 class="sec-title">Sold Items (<span id="soldCount">0</span>)</h2>
+          <h2 class="sec-title">Sold Items (<span id="soldCount">0</span>) <span class="info-tip note-clickable" data-note="Total units sold, including quantities. For example, an item with qty x6 counts as 6 toward this total.">?</span></h2>
+          <button class="btn btn-sm" onclick="downloadSoldCSV()" style="margin-left:0.5rem;">📥 CSV</button>
           <div id="soldBulkActions" style="display:none;align-items:center;gap:0.5rem;">
             <span style="font-size:0.8rem;color:var(--text-secondary);"><span id="soldSelectedCount">0</span> selected</span>
             <button class="btn btn-sm" style="background:var(--blue-dim);color:var(--blue);" onclick="openBulkLotModal()">New Lot</button>
@@ -794,10 +798,13 @@
       <div class="page" id="page-financials">
         <div class="sec-header" style="display:flex;justify-content:space-between;align-items:center;">
           <h2 class="sec-title">Financials</h2>
-          <div id="finVisToggle" style="display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;font-size:0.75rem;">
-            <button class="fin-vis-btn active" data-filter="all" onclick="setFinFilter('all')">All</button>
-            <button class="fin-vis-btn" data-filter="active" onclick="setFinFilter('active')">Active</button>
-            <button class="fin-vis-btn" data-filter="hidden" onclick="setFinFilter('hidden')">Hidden</button>
+          <div style="display:flex;align-items:center;gap:0.5rem;">
+            <button class="btn btn-sm" onclick="downloadFinancialsCSV()">📥 CSV</button>
+            <div id="finVisToggle" style="display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;font-size:0.75rem;">
+              <button class="fin-vis-btn active" data-filter="all" onclick="setFinFilter('all')">All</button>
+              <button class="fin-vis-btn" data-filter="active" onclick="setFinFilter('active')">Active</button>
+              <button class="fin-vis-btn" data-filter="hidden" onclick="setFinFilter('hidden')">Hidden</button>
+            </div>
           </div>
         </div>
 
@@ -808,7 +815,7 @@
           <div class="stat-card"><div class="stat-card-label">Gross Profit</div><div class="stat-card-value" id="finGrossProfit">—</div></div>
           <div class="stat-card"><div class="stat-card-label">Expenses</div><div class="stat-card-value" id="finExpenses" style="color:var(--danger);">—</div></div>
           <div class="stat-card"><div class="stat-card-label">Net Profit</div><div class="stat-card-value" id="finProfit">—</div></div>
-          <div class="stat-card"><div class="stat-card-label">Margin</div><div class="stat-card-value" id="finMargin">—</div><div class="stat-card-sub" id="finItemsSoldSub"></div></div>
+          <div class="stat-card"><div class="stat-card-label">Margin</div><div class="stat-card-value" id="finMargin">—</div><div class="stat-card-sub" id="finItemsSoldSub"></div><span class="info-tip note-clickable" data-note="Total unique sold records/transactions, not total units. Items with qty > 1 count as 1 record.">?</span></div>
         </div>
 
         <!-- Unsold Row -->
@@ -1902,6 +1909,189 @@
 
     // ========== REORDER MODE ==========
     let _reorderActive = false;
+    // ========== CSV DOWNLOADS ==========
+    function csvEscape(val) {
+      if (val == null) return '';
+      const str = String(val);
+      if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+        return '"' + str.replace(/"/g, '""') + '"';
+      }
+      return str;
+    }
+
+    function downloadCSV(filename, headers, rows) {
+      const csv = [headers.map(csvEscape).join(','), ...rows.map(r => r.map(csvEscape).join(','))].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadInventoryCSV() {
+      const items = window._items || [];
+      if (!items.length) { showToast('No inventory data', 'error'); return; }
+      const headers = ['Name', 'Details', 'Brand', 'Category', 'Price (Listed)', 'Cost', 'Quantity', 'Visible', 'Featured', 'Notes'];
+      const rows = items.map(i => [
+        i.name,
+        i.details,
+        i.brand?.replace(/-/g, ' '),
+        i.category,
+        parseMoney(i.price),
+        parseMoney(i.cost) || '',
+        i.qty || 1,
+        i.visible !== false ? 'Yes' : 'No',
+        i.featured ? 'Yes' : 'No',
+        i.notes || ''
+      ]);
+      const date = new Date().toISOString().slice(0, 10);
+      downloadCSV(`inventory_${date}.csv`, headers, rows);
+      showToast('Inventory CSV downloaded', 'success');
+    }
+
+    function downloadSoldCSV() {
+      const items = _soldData || [];
+      if (!items.length) { showToast('No sold data', 'error'); return; }
+      const headers = ['Name', 'Details', 'Brand', 'Category', 'Listed Price', 'Sold Price', 'Cost', 'Quantity', 'Buyer', 'Show/Location', 'Lot Name', 'Date Sold', 'Item Notes', 'Sale Notes'];
+      const rows = items.map(i => [
+        i.name,
+        i.details,
+        i.brand?.replace(/-/g, ' '),
+        i.category,
+        parseMoney(i.price),
+        parseMoney(i.sold_price) || '',
+        parseMoney(i.cost) || '',
+        i.qty || 1,
+        i.sold_buyer || '',
+        i.sold_show || '',
+        i.sold_lot || '',
+        i.sold_at ? new Date(i.sold_at).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric', timeZone: 'America/New_York' }) : '',
+        i.notes || '',
+        i.sold_notes || ''
+      ]);
+      const date = new Date().toISOString().slice(0, 10);
+      downloadCSV(`sold_${date}.csv`, headers, rows);
+      showToast('Sold CSV downloaded', 'success');
+    }
+
+    async function downloadFinancialsCSV() {
+      try {
+        const [soldItems, activeItems, expenses] = await Promise.all([
+          apiGet('inventory?select=*&sold=eq.true'),
+          apiGet('inventory?select=*&sold=eq.false'),
+          apiGet('expenses?select=*&order=expense_date.desc')
+        ]);
+
+        const rows = [];
+        // KPIs
+        let totalRevenue = 0, totalCost = 0;
+        const lots = {};
+        soldItems.forEach(item => {
+          totalCost += parseMoney(item.cost) * (item.qty || 1);
+          if (item.sold_lot) {
+            if (!lots[item.sold_lot]) lots[item.sold_lot] = { items: [] };
+            lots[item.sold_lot].items.push(item);
+          } else {
+            totalRevenue += parseMoney(item.sold_price) * (item.qty || 1);
+          }
+        });
+        Object.values(lots).forEach(l => {
+          const manual = parseMoney(l.items[0].lot_sold_price);
+          const sumIndiv = l.items.reduce((s, i) => s + parseMoney(i.sold_price) * (i.qty || 1), 0);
+          l.revenue = manual || sumIndiv;
+          totalRevenue += l.revenue;
+        });
+        const totalExpenses = expenses.reduce((s, e) => s + parseMoney(e.amount), 0);
+        const grossProfit = totalRevenue - totalCost;
+        const netProfit = grossProfit - totalExpenses;
+        const margin = totalRevenue > 0 ? Math.round((netProfit / totalRevenue) * 100) : 'N/A';
+
+        let unsoldListed = 0, unsoldCost = 0;
+        activeItems.forEach(item => {
+          unsoldListed += parseMoney(item.price) * (item.qty || 1);
+          unsoldCost += parseMoney(item.cost) * (item.qty || 1);
+        });
+
+        rows.push(['=== SUMMARY ===', '', '', '']);
+        rows.push(['Revenue', totalRevenue, '', '']);
+        rows.push(['Card Costs', totalCost, '', '']);
+        rows.push(['Gross Profit', grossProfit, '', '']);
+        rows.push(['Expenses', totalExpenses, '', '']);
+        rows.push(['Net Profit', netProfit, '', '']);
+        rows.push(['Margin', margin === 'N/A' ? 'N/A' : margin + '%', '', '']);
+        rows.push(['Items Sold (records)', soldItems.length, '', '']);
+        rows.push(['', '', '', '']);
+        rows.push(['Unsold Inventory (Listed)', unsoldListed, '', '']);
+        rows.push(['Unsold Inventory (Cost)', unsoldCost, '', '']);
+        rows.push(['Potential Profit', unsoldListed - unsoldCost, '', '']);
+        rows.push(['', '', '', '']);
+
+        // By Show
+        rows.push(['=== PROFIT BY SHOW ===', '', '', '']);
+        rows.push(['Show', 'Revenue', 'Cost', 'Profit']);
+        const showProfit = {};
+        soldItems.forEach(item => {
+          const show = item.sold_show || 'Other';
+          if (!showProfit[show]) showProfit[show] = { revenue: 0, cost: 0 };
+          showProfit[show].cost += parseMoney(item.cost) * (item.qty || 1);
+          if (item.sold_lot) {
+            // handled via lots
+          } else {
+            showProfit[show].revenue += parseMoney(item.sold_price) * (item.qty || 1);
+          }
+        });
+        // Add lot revenue to shows
+        Object.values(lots).forEach(l => {
+          const show = l.items[0].sold_show || 'Other';
+          if (!showProfit[show]) showProfit[show] = { revenue: 0, cost: 0 };
+          showProfit[show].revenue += l.revenue;
+        });
+        Object.entries(showProfit).sort((a, b) => (b[1].revenue - b[1].cost) - (a[1].revenue - a[1].cost)).forEach(([show, d]) => {
+          rows.push([show, d.revenue, d.cost, d.revenue - d.cost]);
+        });
+        rows.push(['', '', '', '']);
+
+        // By Brand
+        rows.push(['=== PROFIT BY BRAND ===', '', '', '']);
+        rows.push(['Brand', 'Revenue', 'Cost', 'Profit']);
+        const brandProfit = {};
+        soldItems.forEach(item => {
+          const brand = item.brand?.replace(/-/g, ' ') || 'Unknown';
+          if (!brandProfit[brand]) brandProfit[brand] = { revenue: 0, cost: 0 };
+          brandProfit[brand].cost += parseMoney(item.cost) * (item.qty || 1);
+          if (!item.sold_lot) {
+            brandProfit[brand].revenue += parseMoney(item.sold_price) * (item.qty || 1);
+          }
+        });
+        Object.entries(brandProfit).sort((a, b) => (b[1].revenue - b[1].cost) - (a[1].revenue - a[1].cost)).forEach(([brand, d]) => {
+          rows.push([brand, d.revenue, d.cost, d.revenue - d.cost]);
+        });
+        rows.push(['', '', '', '']);
+
+        // Expenses
+        rows.push(['=== EXPENSES ===', '', '', '', '', '']);
+        rows.push(['Date', 'Category', 'Description', 'Show/Sale', 'Amount', 'Notes']);
+        const catLabels = { table_fee: 'Table Fee', gas: 'Gas / Travel', supplies: 'Supplies', shipping: 'Shipping', entry_fee: 'Entry Fee', food: 'Food', platform_fees: 'Platform Fees', other: 'Other' };
+        expenses.forEach(e => {
+          rows.push([
+            e.expense_date || '',
+            catLabels[e.category] || e.category,
+            e.description || '',
+            e.show_name || 'General',
+            parseMoney(e.amount),
+            e.notes || ''
+          ]);
+        });
+
+        const headers = ['', '', '', '', '', ''];
+        const date = new Date().toISOString().slice(0, 10);
+        downloadCSV(`financials_${date}.csv`, headers, rows);
+        showToast('Financials CSV downloaded', 'success');
+      } catch(e) { showToast('Failed to download financials', 'error'); console.error(e); }
+    }
+
     function toggleReorderMode() {
       _reorderActive = !_reorderActive;
       const panel = document.getElementById('reorderPanel');
@@ -3808,6 +3998,7 @@
       try {
         await apiPatch(`inventory?id=eq.${id}`, { hero_showcase: false });
         showToast('Removed from showcase', 'success');
+        await loadInventory();
         loadHeroShowcase();
       } catch(e) { showToast('Failed', 'error'); }
     }
