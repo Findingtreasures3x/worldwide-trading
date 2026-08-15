@@ -909,7 +909,7 @@ body {
 }
 
 .show-single-flyer img {
-  height: 100px;
+  height: 180px;
   width: auto;
   border-radius: 6px;
   border: 1px solid var(--border);
