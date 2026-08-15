@@ -523,7 +523,7 @@
             : `<div class="item-image-wrap item-image-placeholder">${slabFrame}<span class="item-brand-dot ${item.brand} large"></span></div>`;
 
           grid.innerHTML += `
-            <div class="item-card${featuredClass}" data-brand="${item.brand}">
+            <div class="item-card${featuredClass}" data-brand="${item.brand}" data-category="${item.category}">
               ${imageHTML}
               <div class="item-body">
                 <div class="item-info">
@@ -602,32 +602,30 @@
     if (!_vid) { _vid = Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem('wt-vid', _vid); }
     const _pageStart = Date.now();
 
-    // Page view with enriched data — skip if admin
-    if (!_isAdmin) {
-      const _params = new URLSearchParams(window.location.search);
-      fetch(`${SUPABASE_URL}/rest/v1/page_views`, {
-        method: 'POST', headers: _aHeaders,
-        body: JSON.stringify({
-          path: window.location.pathname,
-          referrer: document.referrer || null,
-          visitor_id: _vid,
-          user_agent: navigator.userAgent,
-          screen_width: window.innerWidth,
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          utm_source: _params.get('utm_source') || null,
-          utm_campaign: _params.get('utm_campaign') || null,
-          language: navigator.language || null,
-          is_mobile: window.innerWidth < 768
-        })
-      }).catch(() => {});
-    }
+    // Page view with enriched data
+    const _params = new URLSearchParams(window.location.search);
+    fetch(`${SUPABASE_URL}/rest/v1/page_views`, {
+      method: 'POST', headers: _aHeaders,
+      body: JSON.stringify({
+        path: window.location.pathname,
+        referrer: document.referrer || null,
+        visitor_id: _vid,
+        user_agent: navigator.userAgent,
+        screen_width: window.innerWidth,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        utm_source: _params.get('utm_source') || null,
+        utm_campaign: _params.get('utm_campaign') || null,
+        language: navigator.language || null,
+        is_mobile: window.innerWidth < 768,
+        is_admin: _isAdmin
+      })
+    }).catch(() => {});
 
-    // Track events helper — skip if admin
+    // Track events helper
     function trackEvent(name, data) {
-      if (_isAdmin) return;
       fetch(`${SUPABASE_URL}/rest/v1/analytics_events`, {
         method: 'POST', headers: _aHeaders,
-        body: JSON.stringify({ visitor_id: _vid, event_name: name, event_data: data || {}, path: window.location.pathname })
+        body: JSON.stringify({ visitor_id: _vid, event_name: name, event_data: data || {}, path: window.location.pathname, is_admin: _isAdmin })
       }).catch(() => {});
     }
 
@@ -646,7 +644,7 @@
       // Show flyer click
       if (el.closest('.show-flyer-link')) { trackEvent('click_show_flyer', { url: el.href }); return; }
       // Inventory item image
-      if (el.classList.contains('item-image')) { trackEvent('click_inventory', { item: el.alt }); return; }
+      if (el.classList.contains('item-image')) { const card = el.closest('.item-card'); trackEvent('click_inventory', { item: el.alt, brand: card?.dataset.brand || '', category: card?.dataset.category || '' }); return; }
       // Hero CTA
       if (el.closest('.hero-cta')) { trackEvent('click_hero_cta', {}); return; }
     });
@@ -658,14 +656,14 @@
       [25, 50, 75, 100].forEach(m => { if (pct >= m && !_scrolled.has(m)) { _scrolled.add(m); trackEvent('scroll_depth', { depth: m }); } });
     }, { passive: true });
 
-    // Track session duration on leave — skip if admin
+    // Track session duration on leave
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden' && !_isAdmin) {
+      if (document.visibilityState === 'hidden') {
         const dur = Math.round((Date.now() - _pageStart) / 1000);
         if (dur > 2) { // ignore bounces under 2 seconds
           fetch(`${SUPABASE_URL}/rest/v1/analytics_events`, {
             method: 'POST', headers: _aHeaders, keepalive: true,
-            body: JSON.stringify({ visitor_id: _vid, event_name: 'session_end', event_data: { duration_seconds: dur }, path: '/' })
+            body: JSON.stringify({ visitor_id: _vid, event_name: 'session_end', event_data: { duration_seconds: dur }, path: '/', is_admin: _isAdmin })
           }).catch(() => {});
         }
       }

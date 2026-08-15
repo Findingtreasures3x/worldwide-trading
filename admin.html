@@ -431,6 +431,18 @@
           </div>
         </div>
 
+        <!-- Row 3b: Most Clicked Items + Clicks by Brand -->
+        <div class="analytics-row" style="grid-template-columns:1fr 1fr;">
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title">Most Clicked Items</span></div>
+            <div class="panel-body" id="clickedItemsPanel"><div class="loading">Loading...</div></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title">Clicks by Brand</span></div>
+            <div class="panel-body" id="clicksByBrandPanel"><div class="loading">Loading...</div></div>
+          </div>
+        </div>
+
         <!-- Row 4: Inventory Summary + By Brand + By Category -->
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem;">
           <div class="panel">
@@ -1429,34 +1441,25 @@
 
     // Exclude my views from analytics
     let _excludeMyViews = false;
-    let _myVisitorId = null;
 
     function toggleExcludeMe() {
       _excludeMyViews = !_excludeMyViews;
       if (_excludeMyViews) {
-        // Save visitor ID and set cookie
-        const vid = localStorage.getItem('wt-vid');
-        if (vid) localStorage.setItem('wt-admin-vid', vid);
-        _myVisitorId = vid;
         document.cookie = 'wt-admin-exclude=1; path=/; max-age=31536000; SameSite=Lax';
         document.getElementById('excludeLabel').textContent = 'Include My Views';
         showToast('Dashboard now excludes your visits', 'success');
       } else {
         document.cookie = 'wt-admin-exclude=; path=/; max-age=0';
-        _myVisitorId = null;
         document.getElementById('excludeLabel').textContent = 'Exclude My Views';
         showToast('Dashboard now includes your visits', 'success');
       }
-      // Reload analytics with new filter
       loadAnalytics();
     }
     (function initExclude() {
       const isExcluded = document.cookie.includes('wt-admin-exclude=1');
       _excludeMyViews = isExcluded;
-      _myVisitorId = isExcluded ? localStorage.getItem('wt-admin-vid') : null;
       const label = document.getElementById('excludeLabel');
       if (label && isExcluded) label.textContent = 'Include My Views';
-      // Restore analytics range
       const savedRange = sessionStorage.getItem('wt-analytics-range');
       if (savedRange) document.getElementById('analyticsRange').value = savedRange;
     })();
@@ -1691,7 +1694,7 @@
         ]);
 
         // Filter out admin views if exclude is active
-        const filterAdmin = d => !(_excludeMyViews && _myVisitorId && d.visitor_id === _myVisitorId);
+        const filterAdmin = d => !(_excludeMyViews && d.is_admin);
         const current = data.filter(d => d.created_at >= since).filter(filterAdmin);
         const previous = data.filter(d => d.created_at < since).filter(filterAdmin);
         const filteredEvents = events.filter(filterAdmin);
@@ -1779,6 +1782,31 @@
         document.getElementById('eventsPanel').innerHTML = evSorted.length ? evSorted.map(([k, v]) =>
           `<div class="breakdown-item"><span class="breakdown-label">${k}</span><span class="breakdown-value">${v}</span></div>`
         ).join('') : '<div class="loading">No events yet — data populates as visitors interact</div>';
+
+        // Most Clicked Items
+        const invClicks = filteredEvents.filter(e => e.event_name === 'click_inventory' && e.event_data?.item);
+        const itemClickMap = {};
+        invClicks.forEach(e => {
+          const name = e.event_data.item;
+          itemClickMap[name] = (itemClickMap[name] || 0) + 1;
+        });
+        const itemClickSorted = Object.entries(itemClickMap).sort((a, b) => b[1] - a[1]).slice(0, 10);
+        document.getElementById('clickedItemsPanel').innerHTML = itemClickSorted.length ? itemClickSorted.map(([k, v]) => {
+          const shortName = k.length > 45 ? k.slice(0, 42) + '...' : k;
+          return `<div class="breakdown-item"><span class="breakdown-label" title="${k}" style="font-size:0.8rem">${shortName}</span><span class="breakdown-value">${v}</span></div>`;
+        }).join('') : '<div class="loading">No item clicks yet — data populates as visitors click on cards</div>';
+
+        // Clicks by Brand
+        const brandClickMap = {};
+        invClicks.forEach(e => {
+          const brand = e.event_data.brand ? e.event_data.brand.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Unknown';
+          brandClickMap[brand] = (brandClickMap[brand] || 0) + 1;
+        });
+        const brandClickSorted = Object.entries(brandClickMap).sort((a, b) => b[1] - a[1]).slice(0, 8);
+        const brandClickMax = brandClickSorted[0]?.[1] || 1;
+        document.getElementById('clicksByBrandPanel').innerHTML = brandClickSorted.length ? brandClickSorted.map(([k, v], i) =>
+          `<div class="h-bar-item"><span class="h-bar-label">${k}</span><div class="h-bar-track"><div class="h-bar-fill ${colors[i % 3]}" style="width:${(v / brandClickMax) * 100}%"></div></div><span class="h-bar-value">${v}</span></div>`
+        ).join('') : '<div class="loading">No item clicks yet — data populates as visitors click on cards</div>';
 
         // Scroll depth funnel
         const scrollEvents = filteredEvents.filter(e => e.event_name === 'scroll_depth');
@@ -1994,12 +2022,12 @@
             if (!lots[item.sold_lot]) lots[item.sold_lot] = { items: [] };
             lots[item.sold_lot].items.push(item);
           } else {
-            totalRevenue += parseMoney(item.sold_price) * (item.qty || 1);
+            totalRevenue += parseMoney(item.sold_price);
           }
         });
         Object.values(lots).forEach(l => {
           const manual = parseMoney(l.items[0].lot_sold_price);
-          const sumIndiv = l.items.reduce((s, i) => s + parseMoney(i.sold_price) * (i.qty || 1), 0);
+          const sumIndiv = l.items.reduce((s, i) => s + parseMoney(i.sold_price), 0);
           l.revenue = manual || sumIndiv;
           totalRevenue += l.revenue;
         });
@@ -2039,7 +2067,7 @@
           if (item.sold_lot) {
             // handled via lots
           } else {
-            showProfit[show].revenue += parseMoney(item.sold_price) * (item.qty || 1);
+            showProfit[show].revenue += parseMoney(item.sold_price);
           }
         });
         // Add lot revenue to shows
@@ -2062,7 +2090,7 @@
           if (!brandProfit[brand]) brandProfit[brand] = { revenue: 0, cost: 0 };
           brandProfit[brand].cost += parseMoney(item.cost) * (item.qty || 1);
           if (!item.sold_lot) {
-            brandProfit[brand].revenue += parseMoney(item.sold_price) * (item.qty || 1);
+            brandProfit[brand].revenue += parseMoney(item.sold_price);
           }
         });
         Object.entries(brandProfit).sort((a, b) => (b[1].revenue - b[1].cost) - (a[1].revenue - a[1].cost)).forEach(([brand, d]) => {
