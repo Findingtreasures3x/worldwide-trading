@@ -1296,6 +1296,13 @@
       <div class="modal-header"><span class="modal-title" id="showModalTitle">Add Show</span><button class="modal-close" onclick="document.getElementById('showModal').classList.remove('active')">&times;</button></div>
       <form id="showForm">
         <input type="hidden" id="showId">
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label class="form-label">Import from URL <span style="font-weight:400;color:var(--text-secondary);font-size:0.75rem;">(optional — auto-fills fields from event page)</span></label>
+          <div style="display:flex;gap:0.5rem;">
+            <input type="text" class="form-input" id="showImportUrl" placeholder="Paste event page URL...">
+            <button type="button" class="btn btn-gold" id="showImportBtn" onclick="importShowFromUrl()" style="white-space:nowrap;padding:0.5rem 1rem;">Import</button>
+          </div>
+        </div>
         <div class="form-row">
           <div class="form-group"><label class="form-label">Show Name</label><input type="text" class="form-input" id="showName" required placeholder="e.g. The Big Show"></div>
           <div class="form-group"><label class="form-label">Type</label><select class="form-select" id="showType"><option value="vending">Vending (shown on site)</option><option value="attending">Attending (personal only)</option></select></div>
@@ -3695,6 +3702,48 @@
       });
     }
 
+    async function importShowFromUrl() {
+      const urlInput = document.getElementById('showImportUrl');
+      const btn = document.getElementById('showImportBtn');
+      const url = urlInput.value.trim();
+      if (!url || !url.startsWith('http')) { showToast('Paste a valid URL first', 'error'); return; }
+      btn.textContent = 'Importing...'; btn.disabled = true;
+      try {
+        const resp = await fetch('/api/scrape-show', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        });
+        if (!resp.ok) throw new Error('Failed to fetch event page');
+        const data = await resp.json();
+        if (data.name) document.getElementById('showName').value = data.name;
+        if (data.date) {
+          // If date has no Z/timezone suffix, it's already local — use directly
+          const d = data.date;
+          document.getElementById('showDate').value = d.endsWith('Z') || d.includes('+') ? toLocalDatetimeStr(d) : d.slice(0, 16);
+        }
+        if (data.endDate) {
+          const d = data.endDate;
+          document.getElementById('showEndDate').value = d.endsWith('Z') || d.includes('+') ? toLocalDatetimeStr(d) : d.slice(0, 16);
+        }
+        if (data.locationName) document.getElementById('showLocName').value = data.locationName;
+        if (data.address) document.getElementById('showAddress').value = data.address;
+        if (data.eventUrl) document.getElementById('showUrl').value = data.eventUrl;
+        if (data.description) document.getElementById('showSubtitle').value = data.description;
+        if (data.image) {
+          document.getElementById('showFlyer').value = data.image;
+          flyerImg.src = data.image;
+          flyerPrompt.style.display = 'none';
+          flyerPreview.style.display = 'inline-block';
+        }
+        buildDayScheduleFields();
+        showToast('Imported — review and adjust fields before saving', 'success');
+      } catch (e) {
+        showToast('Could not import from that URL — fill in manually', 'error');
+        console.error(e);
+      }
+      btn.textContent = 'Import'; btn.disabled = false;
+    }
     function openShowModal(){document.getElementById('showModalTitle').textContent='Add Show';document.getElementById('showForm').reset();document.getElementById('showId').value='';uploadedFlyerUrl=null;resetFlyerDZ();flyerFI.value='';buildDayScheduleFields();document.getElementById('showModal').classList.add('active');}
     function toLocalDatetimeStr(isoStr){const d=new Date(isoStr);const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const day=String(d.getDate()).padStart(2,'0');const h=String(d.getHours()).padStart(2,'0');const min=String(d.getMinutes()).padStart(2,'0');return `${y}-${m}-${day}T${h}:${min}`;}
     function editShow(id){const s=window._shows?.find(x=>x.id===id);if(!s)return;document.getElementById('showModalTitle').textContent='Edit Show';document.getElementById('showId').value=s.id;document.getElementById('showName').value=s.name;document.getElementById('showType').value=s.show_type||'vending';document.getElementById('showDate').value=toLocalDatetimeStr(s.date);document.getElementById('showUrl').value=s.event_url||'';document.getElementById('showLocName').value=s.location_name;document.getElementById('showAddress').value=s.address;document.getElementById('showNotes').value=s.notes||'';document.getElementById('showSubtitle').value=s.subtitle||'';document.getElementById('showBooth').value=s.booth_number||'';document.getElementById('showEndDate').value=s.end_date?toLocalDatetimeStr(s.end_date):'';document.getElementById('showFlyer').value=s.flyer_image||'';uploadedFlyerUrl=null;flyerFI.value='';buildDayScheduleFields();if(s.day_schedules&&s.day_schedules.length){populateDaySchedules(s.day_schedules);}else{const ebT=document.getElementById('showEBTime');const ebP=document.getElementById('showEBPrice');const gaT=document.getElementById('showGATime');const gaP=document.getElementById('showGAPrice');if(ebT)ebT.value=s.early_bird_time||'';if(ebP)ebP.value=s.early_bird_price||'';if(gaT)gaT.value=s.general_time||'';if(gaP)gaP.value=s.general_price||'';}if(s.flyer_image){flyerImg.src=s.flyer_image;flyerPrompt.style.display='none';flyerPreview.style.display='inline-block';}else{resetFlyerDZ();}document.getElementById('showModal').classList.add('active');}

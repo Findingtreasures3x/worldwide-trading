@@ -706,7 +706,7 @@
             h1.innerHTML = heroTitle.split(/\s+/).map(w => w.endsWith('.') ? `<span class="gold-grad">${w}</span>` : w).join(' ');
           }
           if (heroSubtitle) {
-            document.querySelector('.hero-sub').innerHTML = heroSubtitle.replace(/(\d+[–-]\d+%\s*market\s*value)/i, '<strong style="color:var(--gold-text)">$1</strong>');
+            document.querySelector('.hero-sub').innerHTML = heroSubtitle.replace(/((?:up\s+to\s+)?\d+(?:[–-]\d+)?%\s*market\s*value)/i, '<strong style="color:var(--gold-text)">$1</strong>');
           }
 
           // SEO
@@ -747,7 +747,7 @@
           }
           if (sellDesc) {
             const el = document.querySelector('.sell-cta-text');
-            if (el) el.innerHTML = sellDesc.replace(/(\d+[–-]\d+%\s*market\s*value)/i, '<strong style="color:var(--gold-text)">$1</strong>');
+            if (el) el.innerHTML = sellDesc.replace(/((?:up\s+to\s+)?\d+(?:[–-]\d+)?%\s*market\s*value)/i, '<strong style="color:var(--gold-text)">$1</strong>');
           }
 
           // DM links for modal
@@ -991,7 +991,7 @@
                   <span class="show-meta-icon" style="font-size:1.3rem;width:1.8rem;min-width:1.8rem;display:inline-block;text-align:center;">📍</span>
                   <div><a href="${mapsUrl}" target="_blank" rel="noopener" class="show-address-link"><strong>${show.location_name}</strong><span style="font-size:0.9rem;">${show.address}</span></a></div>
                 </div>
-                ${ticketLine ? `<div class="show-meta-item" style="font-size:1.05rem;align-items:center;"><span class="show-meta-icon" style="font-size:1.3rem;width:1.8rem;min-width:1.8rem;display:inline-block;text-align:center;margin-top:0;">🎟</span><div><strong>${ticketLine}</strong></div></div>` : ''}
+                ${ticketLine ? `<div class="show-meta-item" style="font-size:1.05rem;align-items:center;"><span class="show-meta-icon" style="font-size:1.3rem;width:1.8rem;min-width:1.8rem;display:inline-block;text-align:center;margin-top:0;">🎟</span><div><strong>${ticketLine}</strong>${show.notes ? `<span style="display:block;font-size:0.85rem;color:var(--text-secondary);margin-top:0.25rem;font-weight:400;">${show.notes}</span>` : ''}</div></div>` : ''}
               </div>
               <div class="show-single-right">
                 <div class="show-doors-label">Doors open in</div>
