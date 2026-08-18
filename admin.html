@@ -395,10 +395,9 @@
       <!-- DASHBOARD PAGE -->
       <div class="page" id="page-dashboard">
         <!-- KPI Cards Row -->
-        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0.65rem;margin-bottom:1.25rem;" id="kpiGrid">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.65rem;margin-bottom:1.25rem;" id="kpiGrid">
           <div class="stat-card"><div class="stat-card-label">Page Views</div><div class="stat-card-value gold" id="aViews">—</div><div class="stat-card-delta" id="aViewsDelta"></div><div class="sparkline" id="aViewsSpark"></div></div>
           <div class="stat-card"><div class="stat-card-label">Unique Visitors</div><div class="stat-card-value blue" id="aUnique">—</div><div class="stat-card-delta" id="aUniqueDelta"></div><div class="sparkline" id="aUniqueSpark"></div></div>
-          <div class="stat-card"><div class="stat-card-label">Avg Session</div><div class="stat-card-value" id="aAvgSession" style="color:var(--text);">—</div><div class="stat-card-sub">duration</div></div>
           <div class="stat-card"><div class="stat-card-label">Mobile</div><div class="stat-card-value green" id="aMobile">—</div><div class="stat-card-sub" id="aMobileSub">of visitors</div></div>
           <div class="stat-card"><div class="stat-card-label">Today</div><div class="stat-card-value gold" id="aToday">—</div><div class="stat-card-sub" id="aTodaySub">views</div></div>
         </div>
@@ -466,12 +465,20 @@
           </div>
         </div>
 
-        <!-- Row 5: Scroll Depth + Timezones -->
-        <div class="two-col">
+        <!-- Row 5: Inventory Age + Hot vs Cold -->
+        <div class="analytics-row" style="grid-template-columns:1fr 1fr;">
           <div class="panel">
-            <div class="panel-header"><span class="panel-title">Scroll Depth</span></div>
-            <div class="panel-body" id="scrollPanel"><div class="loading">Loading...</div></div>
+            <div class="panel-header"><span class="panel-title">Longest Unsold Items</span></div>
+            <div class="panel-body" id="inventoryAgePanel"><div class="loading">Loading...</div></div>
           </div>
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title">Hot but Unsold</span> <span style="font-size:0.7rem;color:var(--text-muted);font-weight:400;">(high clicks, no sale)</span></div>
+            <div class="panel-body" id="hotColdPanel"><div class="loading">Loading...</div></div>
+          </div>
+        </div>
+
+        <!-- Row 6: Visitor Regions -->
+        <div class="analytics-row" style="grid-template-columns:1fr;">
           <div class="panel">
             <div class="panel-header"><span class="panel-title">Visitor Regions</span></div>
             <div class="panel-body" id="regionPanel"><div class="loading">Loading...</div></div>
@@ -835,6 +842,12 @@
           <div class="stat-card"><div class="stat-card-label">Unsold Inventory (Listed)</div><div class="stat-card-value gold" id="finUnsoldListed">—</div></div>
           <div class="stat-card"><div class="stat-card-label">Unsold Inventory (Cost)</div><div class="stat-card-value" id="finUnsoldCost" style="color:var(--text);">—</div></div>
           <div class="stat-card"><div class="stat-card-label">Potential Profit</div><div class="stat-card-value green" id="finUnsoldProfit">—</div></div>
+        </div>
+
+        <!-- Sell-Through & Cash Flow Row -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.65rem;margin-bottom:1.25rem;">
+          <div class="stat-card"><div class="stat-card-label">Sell-Through Rate</div><div class="stat-card-value" id="finSellThrough" style="color:var(--gold-text);">—</div><div class="stat-card-sub" id="finSellThroughSub"></div></div>
+          <div class="stat-card"><div class="stat-card-label">Cash Flow (Revenue - Card Costs - Expenses)</div><div class="stat-card-value" id="finCashFlow">—</div><div class="stat-card-sub" id="finCashFlowSub"></div></div>
         </div>
 
         <!-- Charts Row -->
@@ -1721,16 +1734,6 @@
         const todayCount = current.filter(d => toETDateKey(d.created_at) === todayKey).length;
         document.getElementById('aToday').textContent = todayCount.toLocaleString();
 
-        // KPI: Avg Session Duration
-        const sessions = filteredEvents.filter(e => e.event_name === 'session_end');
-        if (sessions.length) {
-          const avgSec = Math.round(sessions.reduce((s, e) => s + (e.event_data?.duration_seconds || 0), 0) / sessions.length);
-          const mm = Math.floor(avgSec / 60), ss = avgSec % 60;
-          document.getElementById('aAvgSession').textContent = mm > 0 ? `${mm}m ${ss}s` : `${ss}s`;
-        } else {
-          document.getElementById('aAvgSession').textContent = '—';
-        }
-
         // KPI: Mobile %
         const mobileCount = current.filter(d => d.is_mobile).length;
         const mobilePct = current.length ? Math.round((mobileCount / current.length) * 100) : 0;
@@ -1815,14 +1818,35 @@
           `<div class="h-bar-item"><span class="h-bar-label">${k}</span><div class="h-bar-track"><div class="h-bar-fill ${colors[i % 3]}" style="width:${(v / brandClickMax) * 100}%"></div></div><span class="h-bar-value">${v}</span></div>`
         ).join('') : '<div class="loading">No item clicks yet — data populates as visitors click on cards</div>';
 
-        // Scroll depth funnel
-        const scrollEvents = filteredEvents.filter(e => e.event_name === 'scroll_depth');
-        const scrollMap = { 25: 0, 50: 0, 75: 0, 100: 0 };
-        scrollEvents.forEach(e => { const d = e.event_data?.depth; if (d && scrollMap.hasOwnProperty(d)) scrollMap[d]++; });
-        const scrollMax = Math.max(...Object.values(scrollMap), 1);
-        document.getElementById('scrollPanel').innerHTML = Object.entries(scrollMap).map(([k, v]) =>
-          `<div class="funnel-step"><span class="funnel-label">${k}%</span><div class="h-bar-track"><div class="funnel-bar" style="width:${(v / scrollMax) * 100}%"></div></div><span class="funnel-value">${v}</span></div>`
-        ).join('') || '<div class="loading">No data yet</div>';
+        // Inventory Age — longest unsold items
+        try {
+          const unsoldItems = await apiGet('inventory?select=name,details,price,created_at,cost&sold=eq.false&visible=eq.true&order=created_at.asc&limit=8');
+          const now = Date.now();
+          document.getElementById('inventoryAgePanel').innerHTML = unsoldItems.length ? unsoldItems.map(item => {
+            const days = Math.floor((now - new Date(item.created_at).getTime()) / 86400000);
+            const daysLabel = days === 0 ? 'Today' : days === 1 ? '1 day' : `${days} days`;
+            const shortName = item.name.length > 40 ? item.name.slice(0, 37) + '...' : item.name;
+            return `<div class="breakdown-item"><span class="breakdown-label" title="${item.name}" style="font-size:0.8rem">${shortName}</span><span class="breakdown-value" style="color:${days > 60 ? 'var(--danger)' : days > 30 ? 'var(--gold-text)' : 'var(--text-secondary)'}">${daysLabel}</span></div>`;
+          }).join('') : '<div class="loading">No unsold items</div>';
+        } catch(e) { document.getElementById('inventoryAgePanel').innerHTML = '<div class="loading">Could not load</div>'; }
+
+        // Hot vs Cold — items with clicks but unsold
+        try {
+          const clickedItems = {};
+          filteredEvents.filter(e => e.event_name === 'click_inventory' && e.event_data?.item).forEach(e => {
+            clickedItems[e.event_data.item] = (clickedItems[e.event_data.item] || 0) + 1;
+          });
+          const unsoldForHot = await apiGet('inventory?select=name,price,created_at&sold=eq.false&visible=eq.true');
+          const unsoldNames = new Set(unsoldForHot.map(i => i.name));
+          const hotUnsold = Object.entries(clickedItems)
+            .filter(([name]) => unsoldNames.has(name))
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 8);
+          document.getElementById('hotColdPanel').innerHTML = hotUnsold.length ? hotUnsold.map(([name, clicks]) => {
+            const shortName = name.length > 40 ? name.slice(0, 37) + '...' : name;
+            return `<div class="breakdown-item"><span class="breakdown-label" title="${name}" style="font-size:0.8rem">${shortName}</span><span class="breakdown-value">${clicks} click${clicks !== 1 ? 's' : ''}</span></div>`;
+          }).join('') : '<div class="loading">No click data yet — builds as visitors interact with your inventory</div>';
+        } catch(e) { document.getElementById('hotColdPanel').innerHTML = '<div class="loading">Could not load</div>'; }
 
         // Regions (timezone)
         const tzMap = {};
@@ -2644,7 +2668,20 @@
           showGroups[show].individuals.push(item);
         });
 
-        Object.entries(showGroups).forEach(([showName, group]) => {
+        // Sort show groups by most recent date first
+        const sortedShowGroups = Object.entries(showGroups).sort((a, b) => {
+          const getDate = ([name, grp]) => {
+            if (_showDateRanges && _showDateRanges[name]) return _showDateRanges[name].start;
+            if (_showDateMap[name]) { const d = new Date(_showDateMap[name]); if (!isNaN(d)) return d; }
+            const all = [...Object.values(grp.lots).flat(), ...grp.individuals];
+            return all.reduce((latest, i) => {
+              const d = i.sold_at ? new Date(i.sold_at) : new Date(0);
+              return d > latest ? d : latest;
+            }, new Date(0));
+          };
+          return getDate(b) - getDate(a);
+        });
+        sortedShowGroups.forEach(([showName, group]) => {
           const allInGroup = [...Object.values(group.lots).flat(), ...group.individuals];
           const totalListed = allInGroup.reduce((s, i) => s + parsePrice(i.price) * (i.qty || 1), 0);
           const totalCost = allInGroup.reduce((s, i) => s + parseMoney(i.cost) * (i.qty || 1), 0);
@@ -3442,6 +3479,20 @@
         document.getElementById('finUnsoldListed').textContent = `$${unsoldListed.toLocaleString()}`;
         document.getElementById('finUnsoldCost').textContent = `$${unsoldCost.toLocaleString()}`;
         document.getElementById('finUnsoldProfit').textContent = `$${(unsoldListed - unsoldCost).toLocaleString()}`;
+
+        // ---- SELL-THROUGH RATE ----
+        const totalSoldQty = soldItems.reduce((s, i) => s + (i.qty || 1), 0);
+        const totalActiveQty = activeItems.reduce((s, i) => s + (i.qty || 1), 0);
+        const totalEverListed = totalSoldQty + totalActiveQty;
+        const sellThrough = totalEverListed > 0 ? Math.round((totalSoldQty / totalEverListed) * 100) : 0;
+        document.getElementById('finSellThrough').textContent = `${sellThrough}%`;
+        document.getElementById('finSellThroughSub').textContent = `${totalSoldQty} sold of ${totalEverListed} total`;
+
+        // ---- CASH FLOW ----
+        const cashFlow = totalRevenue - totalCost - totalExpenses;
+        document.getElementById('finCashFlow').textContent = `$${cashFlow.toLocaleString()}`;
+        document.getElementById('finCashFlow').style.color = cashFlow >= 0 ? 'var(--success)' : 'var(--danger)';
+        document.getElementById('finCashFlowSub').textContent = `$${totalRevenue.toLocaleString()} in — $${(totalCost + totalExpenses).toLocaleString()} out`;
 
         // ---- PROFIT BY SHOW ----
         const showProfit = {};
