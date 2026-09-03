@@ -2422,14 +2422,19 @@
     let _soldData = [];
 
     async function openSoldModal(id, name) {
+      // Reset all fields to clean slate
+      document.getElementById('soldForm').reset();
       document.getElementById('soldItemId').value = id;
       document.getElementById('soldItemName').textContent = name;
+      document.getElementById('soldShow').selectedIndex = 0;
       document.getElementById('soldShowCustom').value = '';
       document.getElementById('soldPriceInput').value = '';
       document.getElementById('soldBuyerInput').value = '';
       document.getElementById('soldLotInput').value = '';
       document.getElementById('soldNotesInput').value = '';
       document.getElementById('soldDateInput').value = new Date().toISOString().slice(0, 10);
+      document.getElementById('soldBulkQtyGroup').style.display = 'none';
+      document.getElementById('soldBulkQtyList').innerHTML = '';
       // Handle quantity
       const isBulk = id.includes(',');
       const qtyGroup = document.getElementById('soldQtyGroup');
@@ -2887,8 +2892,8 @@
             ${buyer ? `<div class="lot-card-stat"><span class="lot-card-stat-label">Buyer</span><span class="lot-card-stat-value">${buyer}</span></div>` : ''}
             ${show ? `<div class="lot-card-stat"><span class="lot-card-stat-label">Show</span><span class="lot-card-stat-value">${show}</span></div>` : ''}
             <div class="lot-card-stat"><span class="lot-card-stat-label">Date</span><span class="lot-card-stat-value">${soldDate}</span></div>
-            <button class="btn btn-sm" onclick="openEditLotModal('${lotName.replace(/'/g,"\\'")}')">Edit Lot</button>
-            <button class="btn btn-sm btn-danger" onclick="deleteLot('${lotName.replace(/'/g,"\\'")}')">Delete Lot</button>
+            <button class="btn btn-sm" onclick="openEditLotModal(decodeURIComponent('${encodeURIComponent(lotName)}'))">Edit Lot</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteLot(decodeURIComponent('${encodeURIComponent(lotName)}'))">Delete Lot</button>
             <button class="lot-card-toggle" onclick="document.getElementById('lotItems_${uid}').classList.toggle('collapsed');this.textContent=this.textContent==='Show Items'?'Hide Items':'Show Items';">Show Items</button>
           </div>
         </div>
