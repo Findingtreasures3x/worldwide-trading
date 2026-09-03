@@ -2522,11 +2522,14 @@
           const bulkQtyMap = {};
           bulkQtyInputs.forEach(inp => { bulkQtyMap[inp.dataset.id] = { qty: parseInt(inp.value) || 1, max: parseInt(inp.dataset.max) || 1 }; });
 
+          let isFirstInLot = true;
           for (const id of ids) {
             const item = (window._items || []).find(i => i.id === id);
             const bulkInfo = bulkQtyMap[id];
             const sellQty = bulkInfo ? bulkInfo.qty : (item ? item.qty : 1);
             const itemMax = bulkInfo ? bulkInfo.max : (item ? item.qty : 1);
+            // For lots: save lot_sold_price and lot_notes on the first item
+            const lotFields = (ids.length > 1 && isFirstInLot) ? { lot_sold_price: priceVal, lot_notes: notesVal } : {};
 
             if (bulkInfo && sellQty < itemMax) {
               // Partial sell in bulk: reduce original, create sold copy
@@ -2538,7 +2541,8 @@
                 cost: item.cost, notes: item.notes, tcgplayer_url: item.tcgplayer_url,
                 visible: false, sold: true, sold_at: soldAt,
                 sold_show: showVal, sold_price: ids.length === 1 ? priceVal : null, sold_lot: lotVal,
-                sold_qty: sellQty, sold_notes: notesVal, sold_buyer: buyerVal
+                sold_qty: sellQty, sold_notes: notesVal, sold_buyer: buyerVal,
+                ...lotFields
               });
             } else {
               // Full sell
@@ -2546,9 +2550,11 @@
                 sold: true, sold_at: soldAt, sold_show: showVal,
                 sold_price: ids.length === 1 ? priceVal : null, sold_lot: lotVal,
                 sold_qty: sellQty, sold_notes: notesVal, sold_buyer: buyerVal,
-                visible: false
+                visible: false,
+                ...lotFields
               });
             }
+            isFirstInLot = false;
           }
         }
         closeSoldModal();
