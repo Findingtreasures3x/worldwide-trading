@@ -185,7 +185,7 @@ body {
 }
 
 .nav-logo {
-  height: 56px;
+  height: 42px;
   width: auto;
 }
 
@@ -399,7 +399,7 @@ body {
 }
 
 .hero-logo {
-  width: 280px;
+  width: 300px;
   height: auto;
   margin-bottom: 1.5rem;
 }
@@ -2096,7 +2096,7 @@ body {
   }
 
   .hero-logo {
-    width: 320px;
+    width: 300px;
   }
 
   .hero {

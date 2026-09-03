@@ -607,6 +607,10 @@
               <label class="form-label">Quantity to Sell <span style="color:var(--text-muted);font-weight:400;">(out of <span id="soldQtyMax"></span>)</span></label>
               <input class="form-input" id="soldQtyInput" type="number" min="1" value="1">
             </div>
+            <div id="soldBulkQtyGroup" style="display:none;margin-bottom:1rem;">
+              <label class="form-label" style="margin-bottom:0.5rem;">Quantity per item</label>
+              <div id="soldBulkQtyList" style="display:flex;flex-direction:column;gap:0.4rem;"></div>
+            </div>
             <div class="form-group">
               <label class="form-label">Sold At (Show / Location)</label>
               <select class="form-select" id="soldShow">
@@ -2444,6 +2448,26 @@
       } else {
         qtyGroup.style.display = 'none';
         document.getElementById('soldItemMaxQty').value = '1';
+        // Bulk mode: show per-item qty pickers if any item has qty > 1
+        const bulkIds = id.split(',');
+        const bulkItems = bulkIds.map(bid => (window._items || []).find(i => i.id === bid)).filter(Boolean);
+        const hasMultiQty = bulkItems.some(i => i.qty > 1);
+        const bulkQtyGroup = document.getElementById('soldBulkQtyGroup');
+        const bulkQtyList = document.getElementById('soldBulkQtyList');
+        if (hasMultiQty) {
+          bulkQtyGroup.style.display = '';
+          bulkQtyList.innerHTML = bulkItems.map(item => {
+            const shortName = item.name.length > 35 ? item.name.slice(0, 32) + '...' : item.name;
+            return `<div style="display:flex;align-items:center;gap:0.5rem;">
+              <span style="flex:1;font-size:0.82rem;color:var(--text-secondary);" title="${item.name}">${shortName}</span>
+              <input type="number" class="form-input bulk-qty-input" data-id="${item.id}" data-max="${item.qty}" min="1" max="${item.qty}" value="1" style="width:70px;padding:0.35rem 0.5rem;font-size:0.85rem;">
+              <span style="font-size:0.75rem;color:var(--text-muted);">of ${item.qty}</span>
+            </div>`;
+          }).join('');
+        } else {
+          bulkQtyGroup.style.display = 'none';
+          bulkQtyList.innerHTML = '';
+        }
       }
       try {
         const shows = await apiGet('shows?select=name&order=date.desc');
@@ -2488,15 +2512,38 @@
             });
           }
         } else {
-          // Full sell (single or bulk)
+          // Full or partial sell (single or bulk)
+          const bulkQtyInputs = document.querySelectorAll('.bulk-qty-input');
+          const bulkQtyMap = {};
+          bulkQtyInputs.forEach(inp => { bulkQtyMap[inp.dataset.id] = { qty: parseInt(inp.value) || 1, max: parseInt(inp.dataset.max) || 1 }; });
+
           for (const id of ids) {
             const item = (window._items || []).find(i => i.id === id);
-            await apiPatch(`inventory?id=eq.${id}`, {
-              sold: true, sold_at: soldAt, sold_show: showVal,
-              sold_price: ids.length === 1 ? priceVal : null, sold_lot: lotVal,
-              sold_qty: item ? item.qty : 1, sold_notes: notesVal, sold_buyer: buyerVal,
-              visible: false
-            });
+            const bulkInfo = bulkQtyMap[id];
+            const sellQty = bulkInfo ? bulkInfo.qty : (item ? item.qty : 1);
+            const itemMax = bulkInfo ? bulkInfo.max : (item ? item.qty : 1);
+
+            if (bulkInfo && sellQty < itemMax) {
+              // Partial sell in bulk: reduce original, create sold copy
+              await apiPatch(`inventory?id=eq.${id}`, { qty: itemMax - sellQty });
+              await apiPost('inventory', {
+                name: item.name, details: item.details, price: item.price, qty: sellQty,
+                brand: item.brand, category: item.category, image: item.image,
+                featured: item.featured, exclusive: item.exclusive, sort_order: item.sort_order,
+                cost: item.cost, notes: item.notes, tcgplayer_url: item.tcgplayer_url,
+                visible: false, sold: true, sold_at: soldAt,
+                sold_show: showVal, sold_price: ids.length === 1 ? priceVal : null, sold_lot: lotVal,
+                sold_qty: sellQty, sold_notes: notesVal, sold_buyer: buyerVal
+              });
+            } else {
+              // Full sell
+              await apiPatch(`inventory?id=eq.${id}`, {
+                sold: true, sold_at: soldAt, sold_show: showVal,
+                sold_price: ids.length === 1 ? priceVal : null, sold_lot: lotVal,
+                sold_qty: sellQty, sold_notes: notesVal, sold_buyer: buyerVal,
+                visible: false
+              });
+            }
           }
         }
         closeSoldModal();
@@ -2527,14 +2574,21 @@
               const endDate = new Date(s.end_date);
               const endDay = new Date(endDate.toLocaleDateString('en-US', { timeZone: 'America/New_York' }));
               endDay.setHours(23,59,59,999);
-              _showDateRanges[s.name] = { start: startDay, end: endDay, multiDay: true };
-              const sameMonth = startDate.getMonth() === endDate.getMonth() && startDate.getFullYear() === endDate.getFullYear();
-              const endStr = sameMonth
-                ? endDate.toLocaleDateString('en-US', { day: 'numeric', timeZone: 'America/New_York' })
-                : endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/New_York' });
-              const yearStr = startDate.toLocaleDateString('en-US', { year: 'numeric', timeZone: 'America/New_York' });
-              const startNoYear = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/New_York' });
-              _showDateMap[s.name] = `${startNoYear}-${endStr}, ${yearStr}`;
+              // Check if start and end are the same calendar day
+              const sameDay = startDay.getTime() === new Date(endDay.toLocaleDateString('en-US', { timeZone: 'America/New_York' })).setHours(0,0,0,0);
+              if (sameDay) {
+                _showDateRanges[s.name] = { start: startDay, end: endDay, multiDay: false };
+                _showDateMap[s.name] = startStr;
+              } else {
+                _showDateRanges[s.name] = { start: startDay, end: endDay, multiDay: true };
+                const sameMonth = startDate.getMonth() === endDate.getMonth() && startDate.getFullYear() === endDate.getFullYear();
+                const endStr = sameMonth
+                  ? endDate.toLocaleDateString('en-US', { day: 'numeric', timeZone: 'America/New_York' })
+                  : endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/New_York' });
+                const yearStr = startDate.toLocaleDateString('en-US', { year: 'numeric', timeZone: 'America/New_York' });
+                const startNoYear = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'America/New_York' });
+                _showDateMap[s.name] = `${startNoYear}-${endStr}, ${yearStr}`;
+              }
             } else {
               _showDateRanges[s.name] = { start: startDay, end: new Date(startDay.getTime() + 86400000 - 1), multiDay: false };
               _showDateMap[s.name] = startStr;
@@ -3294,17 +3348,8 @@
       const ids = getSelectedIds();
       const names = getSelectedNames();
       if (!ids.length) return;
-      document.getElementById('soldItemId').value = ids.join(',');
-      document.getElementById('soldItemName').textContent = ids.length === 1 ? names[0] : `${ids.length} items`;
-      document.getElementById('soldShowCustom').value = '';
-      document.getElementById('soldPriceInput').value = '';
-      document.getElementById('soldLotInput').value = '';
-      try {
-        const shows = await apiGet('shows?select=name&order=date.desc');
-        const sel = document.getElementById('soldShow');
-        sel.innerHTML = '<option value="">— Select or type below —</option>' + shows.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
-      } catch(e) {}
-      document.getElementById('soldModal').classList.add('active');
+      const label = ids.length === 1 ? names[0] : `${ids.length} items`;
+      await openSoldModal(ids.join(','), label);
     }
 
     async function bulkVisibility(visible) {
