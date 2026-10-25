@@ -15,26 +15,229 @@
   <meta property="og:type" content="website">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cinzel:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cinzel:wght@400;500;600;700;800&family=Cinzel+Decorative:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
   <!-- Password Gate -->
-  <div id="passwordGate" style="display:none;position:fixed;inset:0;z-index:9999;background:var(--bg);display:none;align-items:center;justify-content:center;flex-direction:column;padding:2rem;">
-    <div style="text-align:center;max-width:380px;width:100%;">
-      <img src="logo-new.webp" alt="Worldwide Trading" style="height:80px;width:auto;margin-bottom:1.5rem;">
-      <h1 style="font-family:'Cinzel',serif;font-size:1.5rem;color:var(--gold-text);margin-bottom:0.5rem;">Worldwide Trading</h1>
-      <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:1.5rem;">This site is currently password protected.</p>
-      <form id="passwordForm" style="display:flex;flex-direction:column;gap:0.75rem;">
-        <input type="password" id="sitePasswordInput" placeholder="Enter password" style="padding:0.75rem 1rem;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);font-size:0.9rem;font-family:inherit;outline:none;">
-        <button type="submit" style="padding:0.75rem;border-radius:8px;border:none;background:var(--gold);color:#000;font-weight:700;font-size:0.9rem;cursor:pointer;font-family:inherit;">Enter</button>
-        <p id="passwordError" style="color:#ef4444;font-size:0.8rem;display:none;">Incorrect password</p>
-      </form>
+  <div id="passwordGate" style="display:none;">
+    <div class="gate-bg" id="gateBg">
+      <canvas id="gateCanvas"></canvas>
+      <div class="gate-content">
+        <div class="gate-logo-wrap">
+          <div class="gate-logo-glow"></div>
+          <img src="logo-new.webp" alt="Worldwide Trading" class="gate-logo">
+        </div>
+        <h1 class="gate-title">Worldwide Trading</h1>
+        <p class="gate-subtitle">This site is currently password protected.</p>
+        <form id="passwordForm" class="gate-form">
+          <input type="password" id="sitePasswordInput" placeholder="Enter password" class="gate-input">
+          <button type="submit" class="gate-btn">Set Sail</button>
+          <p id="passwordError" class="gate-error">Incorrect password</p>
+        </form>
+      </div>
     </div>
   </div>
 
-  <style id="gateStyle">.top-nav,.hero,.section,.footer,.section-divider,.stats-bar{visibility:hidden;}</style>
+  <style>
+    .gate-bg {
+      position:fixed;inset:0;z-index:9999;
+      background:#030a14;
+      display:flex;align-items:center;justify-content:center;flex-direction:column;
+      overflow-x:hidden;overflow-y:auto;
+    }
+    #gateCanvas { position:absolute;inset:0;width:100%;height:100%;z-index:0; }
+    .gate-logo-wrap {
+      position:relative;display:inline-block;
+    }
+    .gate-logo-glow {
+      position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+      width:300px;height:300px;
+      background:radial-gradient(circle, rgba(180,200,240,0.1) 0%, rgba(160,190,240,0.04) 35%, transparent 60%);
+      border-radius:50%;pointer-events:none;
+    }
+    .gate-content {
+      position:relative;z-index:10;
+      text-align:center;max-width:400px;width:100%;
+      padding:1rem 1.5rem;min-height:100vh;min-height:100dvh;box-sizing:border-box;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+    }
+    .gate-logo {
+      height:clamp(120px, 22vh, 200px);width:auto;
+      filter:none;
+      margin-bottom:0.4rem;
+    }
+    .gate-title {
+      font-family:'Cinzel Decorative',serif;
+      font-size:clamp(1.3rem, 3.5vw, 2rem);font-weight:700;
+      color:#e8c766;
+      text-shadow:0 2px 12px rgba(218,165,32,0.2);
+      margin-bottom:0.3rem;letter-spacing:0.04em;
+    }
+    .gate-subtitle {
+      color:rgba(160,185,220,0.45);font-size:clamp(0.7rem, 1.5vw, 0.85rem);
+      margin-bottom:1.2rem;font-family:'Inter',sans-serif;
+    }
+    .gate-form { display:flex;flex-direction:column;gap:0.65rem; }
+    .gate-input {
+      padding:0.75rem 1rem;border-radius:10px;
+      border:1px solid rgba(130,165,210,0.12);
+      background:rgba(80,120,180,0.07);backdrop-filter:blur(12px);
+      color:#dce5f0;font-size:0.9rem;font-family:'Inter',sans-serif;
+      outline:none;transition:border-color 0.3s, box-shadow 0.3s;
+    }
+    .gate-input:focus {
+      border-color:rgba(232,199,102,0.35);
+      box-shadow:0 0 18px rgba(232,199,102,0.08);
+    }
+    .gate-input::placeholder { color:rgba(140,165,200,0.35); }
+    .gate-btn {
+      padding:0.75rem;border-radius:10px;border:none;
+      background:linear-gradient(135deg, #e8c766, #d4a940);
+      color:#1a1a2e;font-weight:700;font-size:0.9rem;
+      cursor:pointer;font-family:'Cinzel',serif;letter-spacing:0.05em;
+      transition:transform 0.2s, box-shadow 0.2s;text-transform:uppercase;
+    }
+    .gate-btn:hover { transform:translateY(-2px);box-shadow:0 6px 20px rgba(232,199,102,0.25); }
+    .gate-error { color:#ef4444;font-size:0.8rem;display:none;font-family:'Inter',sans-serif; }
+  </style>
+
+  <script>
+    (function initGateScene() {
+      const c = document.getElementById('gateCanvas');
+      if (!c) return;
+      const ctx = c.getContext('2d');
+      let W, H;
+
+      const stars = [];
+      for (let i = 0; i < 700; i++) stars.push({ x:Math.random(), y:Math.random()*0.68, r:Math.random()*0.5+0.15, a:Math.random()*0.45+0.1, ph:Math.random()*6.28, sp:Math.random()*6+8 });
+      for (let i = 0; i < 120; i++) stars.push({ x:Math.random(), y:Math.random()*0.62, r:Math.random()*0.4+0.7, a:Math.random()*0.3+0.35, ph:Math.random()*6.28, sp:Math.random()*8+10 });
+      for (let i = 0; i < 20; i++) stars.push({ x:Math.random(), y:Math.random()*0.5, r:Math.random()*0.5+1.2, a:Math.random()*0.15+0.7, ph:Math.random()*6.28, sp:Math.random()*10+12, bright:true });
+
+      const moon = { xFrac:0.8, yFrac:0.12, r:16 };
+
+      const shimmers = [];
+      for (let i = 0; i < 120; i++) shimmers.push({ x:Math.random(), y:Math.random(), a:Math.random()*0.12+0.02, ph:Math.random()*6.28, sp:Math.random()*5+3, w:Math.random()*4+1 });
+
+      function resize() { W = c.width = window.innerWidth; H = c.height = window.innerHeight; }
+      window.addEventListener('resize', resize);
+      resize();
+
+      let t = 0;
+      function draw() {
+        t += 0.005;
+        const oceanY = H * 0.72;
+
+        // Sky gradient
+        const sky = ctx.createLinearGradient(0, 0, 0, H);
+        sky.addColorStop(0, '#030a14');
+        sky.addColorStop(0.15, '#061424');
+        sky.addColorStop(0.3, '#0a1e38');
+        sky.addColorStop(0.45, '#0e2a4c');
+        sky.addColorStop(0.58, '#133862');
+        sky.addColorStop(0.68, '#1a4a78');
+        sky.addColorStop(0.72, '#1a7aaa');
+        sky.addColorStop(0.82, '#0a3d65');
+        sky.addColorStop(0.92, '#051e3a');
+        sky.addColorStop(1, '#031428');
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, W, H);
+
+        // Stars
+        for (const s of stars) {
+          const sy = s.y * H;
+          if (sy > oceanY) continue;
+          const tw = Math.sin(t * (6.28 / s.sp) + s.ph) * 0.05;
+          ctx.globalAlpha = Math.max(0.02, Math.min(0.85, s.a + tw));
+          ctx.beginPath();
+          ctx.arc(s.x * W, sy, s.r, 0, 6.28);
+          ctx.fillStyle = s.bright ? '#d0dcf8' : '#fff';
+          ctx.fill();
+          if (s.bright) {
+            ctx.globalAlpha *= 0.25;
+            ctx.beginPath();
+            ctx.arc(s.x * W, sy, s.r * 5, 0, 6.28);
+            ctx.fillStyle = 'rgba(160,195,240,0.15)';
+            ctx.fill();
+          }
+        }
+
+        // Moon
+        const mx = moon.xFrac * W, my = moon.yFrac * H, mr = moon.r;
+        // Wide atmospheric glow
+        ctx.globalAlpha = 0.03;
+        const h0 = ctx.createRadialGradient(mx, my, mr, mx, my, mr * 15);
+        h0.addColorStop(0, 'rgba(180,200,240,1)'); h0.addColorStop(1, 'rgba(180,200,240,0)');
+        ctx.fillStyle = h0;
+        ctx.beginPath(); ctx.arc(mx, my, mr * 15, 0, 6.28); ctx.fill();
+        // Mid glow
+        ctx.globalAlpha = 0.08;
+        const h1 = ctx.createRadialGradient(mx, my, mr, mx, my, mr * 6);
+        h1.addColorStop(0, 'rgba(220,230,250,1)'); h1.addColorStop(1, 'rgba(200,215,245,0)');
+        ctx.fillStyle = h1;
+        ctx.beginPath(); ctx.arc(mx, my, mr * 6, 0, 6.28); ctx.fill();
+        // Inner bright glow
+        ctx.globalAlpha = 0.15;
+        const h2 = ctx.createRadialGradient(mx, my, mr, mx, my, mr * 3);
+        h2.addColorStop(0, 'rgba(240,235,220,1)'); h2.addColorStop(1, 'rgba(220,225,240,0)');
+        ctx.fillStyle = h2;
+        ctx.beginPath(); ctx.arc(mx, my, mr * 3, 0, 6.28); ctx.fill();
+        // Moon body
+        ctx.globalAlpha = 1;
+        const mg = ctx.createRadialGradient(mx - mr*0.2, my - mr*0.2, 0, mx, my, mr);
+        mg.addColorStop(0, '#f8f2e0'); mg.addColorStop(0.5, '#ece4d0'); mg.addColorStop(1, '#d5cdb8');
+        ctx.fillStyle = mg;
+        ctx.beginPath(); ctx.arc(mx, my, mr, 0, 6.28); ctx.fill();
+
+        // --- OCEAN ---
+        ctx.globalAlpha = 1;
+        // Base gradient — bright teal at horizon fading to deep navy
+        const og = ctx.createLinearGradient(0, oceanY, 0, H);
+        og.addColorStop(0, '#1a7aaa');
+        og.addColorStop(0.03, '#1670a0');
+        og.addColorStop(0.08, '#126090');
+        og.addColorStop(0.15, '#0e5080');
+        og.addColorStop(0.3, '#0a3d65');
+        og.addColorStop(0.55, '#072d50');
+        og.addColorStop(0.8, '#051e3a');
+        og.addColorStop(1, '#031428');
+        ctx.fillStyle = og;
+        ctx.fillRect(0, oceanY, W, H - oceanY);
+
+
+        // Moon reflection — broad luminous column
+        ctx.globalAlpha = 0.12;
+        const rg = ctx.createRadialGradient(mx, oceanY, 0, mx, oceanY + (H-oceanY)*0.4, W * 0.15);
+        rg.addColorStop(0, 'rgba(100,200,240,1)');
+        rg.addColorStop(0.3, 'rgba(60,150,210,0.5)');
+        rg.addColorStop(0.7, 'rgba(30,100,170,0.15)');
+        rg.addColorStop(1, 'rgba(15,60,120,0)');
+        ctx.fillStyle = rg;
+        ctx.beginPath();
+        ctx.ellipse(mx, oceanY + (H-oceanY)*0.2, W*0.12, (H-oceanY)*0.4, 0, 0, 6.28);
+        ctx.fill();
+
+        // Scattered light sparkles on water
+        ctx.fillStyle = 'rgba(140,220,255,1)';
+        for (const sh of shimmers) {
+          const sy = oceanY + 5 + sh.y * (H - oceanY - 10);
+          const sx = sh.x * W;
+          const tw2 = Math.sin(t * (6.28 / sh.sp) + sh.ph);
+          const dist = (sy - oceanY) / (H - oceanY);
+          ctx.globalAlpha = Math.max(0, (sh.a * 1.5 + tw2 * 0.06) * (1 - dist * 0.8));
+          const len = sh.w * (1 + dist);
+          ctx.fillRect(sx, sy, len, 0.8);
+        }
+
+        ctx.globalAlpha = 1;
+        requestAnimationFrame(draw);
+      }
+      draw();
+    })();
+  </script>
+
+  <style id="gateStyle">.top-nav,.hero,.section,.footer,.section-divider,.stats-bar{display:none;}</style>
 
   <!-- Announcement Banner -->
   <div id="announcementBar" class="announcement-bar" style="display:none;">

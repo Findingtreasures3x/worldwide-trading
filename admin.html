@@ -2490,7 +2490,8 @@
       const idStr = document.getElementById('soldItemId').value;
       const ids = idStr.split(',');
       const showVal = document.getElementById('soldShowCustom').value.trim() || document.getElementById('soldShow').value || null;
-      const priceVal = parseMoney(document.getElementById('soldPriceInput').value) || null;
+      const priceRaw = document.getElementById('soldPriceInput').value.trim();
+      const priceVal = priceRaw === '' ? null : parseMoney(priceRaw);
       const buyerVal = document.getElementById('soldBuyerInput').value.trim() || null;
       const lotVal = document.getElementById('soldLotInput').value.trim() || (ids.length > 1 ? `Lot ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'})}` : null);
       const notesVal = document.getElementById('soldNotesInput').value.trim() || null;
@@ -2981,7 +2982,8 @@
       btn.textContent = 'Saving...'; btn.disabled = true;
       const id = document.getElementById('editSoldId').value;
       const showVal = document.getElementById('editSoldShowCustom').value.trim() || document.getElementById('editSoldShow').value || null;
-      const priceVal = parseMoney(document.getElementById('editSoldPrice').value) || null;
+      const editPriceRaw = document.getElementById('editSoldPrice').value.trim();
+      const priceVal = editPriceRaw === '' ? null : parseMoney(editPriceRaw);
       const buyerVal = document.getElementById('editSoldBuyer').value.trim() || null;
       const lotVal = document.getElementById('editSoldLot').value.trim() || null;
       const itemNotesVal = document.getElementById('editSoldItemNotes').value.trim() || null;
