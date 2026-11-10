@@ -2061,7 +2061,8 @@
           }
         });
         Object.values(lots).forEach(l => {
-          const manual = parseMoney(l.items[0].lot_sold_price);
+          const manualItem = l.items.find(i => i.lot_sold_price != null);
+          const manual = manualItem ? parseMoney(manualItem.lot_sold_price) : 0;
           const sumIndiv = l.items.reduce((s, i) => s + parseMoney(i.sold_price), 0);
           l.revenue = manual || sumIndiv;
           totalRevenue += l.revenue;
@@ -2754,7 +2755,8 @@
           // For sold total: count each lot's sold price once, not per item
           let totalSold = group.individuals.reduce((s, i) => s + parseMoney(i.sold_price), 0);
           Object.values(group.lots).forEach(lotItems => {
-            const manual = parseMoney(lotItems[0].lot_sold_price);
+            const manualItem = lotItems.find(i => i.lot_sold_price != null);
+            const manual = manualItem ? parseMoney(manualItem.lot_sold_price) : 0;
             const sumIndiv = lotItems.reduce((s, i) => s + parseMoney(i.sold_price), 0);
             totalSold += manual || sumIndiv;
           });
@@ -2862,7 +2864,8 @@
       const totalListed = items.reduce((s, i) => s + parsePrice(i.price) * (i.qty || 1), 0);
       const totalCost = items.reduce((s, i) => s + parseMoney(i.cost) * (i.qty || 1), 0);
       // Lot sold price: manual lot_sold_price takes priority, otherwise sum individual sold_prices
-      const manualLotPrice = items[0].lot_sold_price;
+      const manualItem = items.find(i => i.lot_sold_price != null);
+      const manualLotPrice = manualItem ? manualItem.lot_sold_price : null;
       const sumIndividual = items.reduce((s, i) => s + parseMoney(i.sold_price), 0);
       const lotSoldPrice = manualLotPrice || (sumIndividual ? `$${sumIndividual.toLocaleString()}` : '');
       const buyer = items[0].sold_buyer || '';
@@ -3046,7 +3049,8 @@
       document.getElementById('editLotTitle').textContent = lotName;
       document.getElementById('editLotNewName').value = lotName;
       // Lot-level price: use lot_sold_price, or sum individual sold_prices, or manual
-      const lotManualPrice = lotItems[0].lot_sold_price;
+      const lotManualItem = lotItems.find(i => i.lot_sold_price != null);
+      const lotManualPrice = lotManualItem ? lotManualItem.lot_sold_price : null;
       const lotSumPrice = lotItems.reduce((s, i) => s + parseMoney(i.sold_price), 0);
       document.getElementById('editLotSoldPrice').value = lotManualPrice || (lotSumPrice ? `$${lotSumPrice}` : '');
       // Sum cost across all items in lot
@@ -3507,7 +3511,8 @@
         });
         // Calculate lot revenue: manual lot_sold_price takes priority, else sum individual sold_prices
         Object.values(lots).forEach(l => {
-          const manual = parseMoney(l.items[0].lot_sold_price);
+          const manualItem = l.items.find(i => i.lot_sold_price != null);
+          const manual = manualItem ? parseMoney(manualItem.lot_sold_price) : 0;
           const sumIndiv = l.items.reduce((s, i) => s + parseMoney(i.sold_price), 0);
           l.revenue = manual || sumIndiv;
           totalRevenue += l.revenue;
@@ -3563,7 +3568,8 @@
               showProfit[show].counted.add(item.sold_lot);
               // Use lot_sold_price, or sum individual sold_prices for this lot
               const lotItems = soldItems.filter(i => i.sold_lot === item.sold_lot);
-              const manual = parseMoney(item.lot_sold_price);
+              const manualItem = lotItems.find(i => i.lot_sold_price != null);
+              const manual = manualItem ? parseMoney(manualItem.lot_sold_price) : 0;
               const sumIndiv = lotItems.reduce((s, i) => s + parseMoney(i.sold_price), 0);
               showProfit[show].revenue += manual || sumIndiv;
             }
