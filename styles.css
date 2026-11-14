@@ -891,8 +891,10 @@ body {
 .stub-month { font-size: 0.6rem; font-weight: 600; letter-spacing: 0.05em; }
 /* Single show — compact 2-row layout */
 .show-card-single {
-  display: flex;
   flex-direction: column;
+}
+.show-card-single.carousel-visible {
+  display: flex;
 }
 
 .show-single-top {
@@ -1000,8 +1002,8 @@ body {
   margin-top: 0.25rem;
 }
 
-/* Single show grid: full width */
-.show-carousel:has(.show-card-single) {
+/* Single show grid: full width only when spotlight is visible */
+.show-carousel:has(.show-card-single.carousel-visible) {
   grid-template-columns: 1fr;
 }
 

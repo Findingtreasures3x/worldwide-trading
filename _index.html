@@ -1279,7 +1279,7 @@
         if (isSingle) {
           // Single show — mockup 4 layout: compact 2-row
           return `
-          <div class="show-card show-card-single carousel-visible">
+          <div class="show-card show-card-single">
             <div class="show-single-top">
               ${show.flyer_image ? `<a href="${show.event_url || '#'}" target="_blank" rel="noopener" class="show-single-flyer"><img src="${show.flyer_image}" alt="${show.name}" loading="lazy"></a>` : ''}
               <div class="show-single-header">
@@ -1319,11 +1319,12 @@
 
         // Multi-show card (standard)
         return `
-          <div class="show-card${idx < perPage ? ' carousel-visible' : ''}">
+          <div class="show-card">
             ${flyerHTML}
             <div class="show-details">
               ${boothHTML}
               <h3 class="show-name">${show.name}</h3>
+              ${show.subtitle ? `<span style="font-size:0.82rem;color:var(--text-secondary);line-height:1.4;display:block;margin-bottom:0.5rem;">${show.subtitle}</span>` : ''}
               <div class="show-meta">
                 <div class="show-meta-item">
                   <span class="show-meta-icon">📅</span>
@@ -1350,10 +1351,12 @@
           </div>`;
       }
 
-      const isSingle = shows.length === 1;
-      const cardsHTML = shows.map((show, idx) => buildShowCard(show, idx, isSingle)).join('');
+      // First show always gets spotlight layout, rest use multi-card layout
+      const firstCard = buildShowCard(shows[0], 0, true);
+      const restCards = shows.slice(1).map((show, idx) => buildShowCard(show, idx, false)).join('');
+      const cardsHTML = firstCard + restCards;
 
-      const totalPages = Math.ceil(shows.length / perPage);
+      const totalPages = shows.length === 1 ? 1 : 1 + Math.ceil((shows.length - 1) / perPage);
       const navHTML = totalPages > 1 ? `
         <div class="carousel-nav has-pages">
           <button class="carousel-btn" id="carouselPrev" onclick="carouselMove(-1)">‹</button>
@@ -1405,8 +1408,8 @@
       updateAllCountdowns();
       countdownInterval = setInterval(updateAllCountdowns, 1000);
 
-      // Start auto-carousel on mobile and narrow desktop (under 960px)
-      if (shows.length > 1 && window.innerWidth < 960) startCarouselAuto();
+      // Initialize carousel to page 0
+      if (shows.length > 1) carouselGo(0);
     }
 
     // ========== CAROUSEL ==========
@@ -1420,13 +1423,19 @@
       if (!carousel) return;
       const cards = [...carousel.querySelectorAll('.show-card')];
       const perPage = getPerPage();
-      const totalPages = Math.ceil(cards.length / perPage);
+      // Page 0 = spotlight (first card only), page 1+ = remaining cards in groups of perPage
+      const restCards = cards.length - 1;
+      const totalPages = cards.length <= 1 ? 1 : 1 + Math.ceil(restCards / perPage);
       if (pageIdx < 0) pageIdx = totalPages - 1;
       if (pageIdx >= totalPages) pageIdx = 0;
       carouselIdx = pageIdx;
-      const startIdx = pageIdx * perPage;
       cards.forEach((c, i) => {
-        c.classList.toggle('carousel-visible', i >= startIdx && i < startIdx + perPage);
+        if (pageIdx === 0) {
+          c.classList.toggle('carousel-visible', i === 0);
+        } else {
+          const startIdx = 1 + (pageIdx - 1) * perPage;
+          c.classList.toggle('carousel-visible', i >= startIdx && i < startIdx + perPage);
+        }
       });
       document.querySelectorAll('.carousel-dot').forEach((d, i) => d.classList.toggle('active', i === pageIdx));
     }
@@ -1446,19 +1455,30 @@
       if (carouselAutoTimer) { clearInterval(carouselAutoTimer); carouselAutoTimer = null; }
     }
 
-    // Pause on hover, resume on leave
+    // Pause on hover, resume on leave (desktop)
     document.addEventListener('mouseenter', (e) => {
       if (e.target.closest?.('.show-carousel')) stopCarouselAuto();
     }, true);
     document.addEventListener('mouseleave', (e) => {
-      if (e.target.closest?.('.show-carousel')) startCarouselAuto();
+      // No auto-restart
     }, true);
+    // Stop auto-rotate on any manual interaction (touch or click on nav)
+    document.addEventListener('click', (e) => {
+      if (e.target.closest?.('.carousel-btn, .carousel-dot')) {
+        stopCarouselAuto();
+      }
+    });
 
-    // Start auto-rotate after shows load (called from renderShows)
-    setTimeout(() => { if (document.getElementById('showCarousel')) startCarouselAuto(); }, 3000);
+    // No auto-rotate — let user control the carousel manually
 
     // Recalculate carousel on resize
-    window.addEventListener('resize', () => { carouselGo(0); });
+    let lastWidth = window.innerWidth;
+    window.addEventListener('resize', () => {
+      if (window.innerWidth !== lastWidth) {
+        lastWidth = window.innerWidth;
+        carouselGo(carouselIdx);
+      }
+    });
 
     // ========== CONNECT LINKS ==========
     const ICON_MAP = {

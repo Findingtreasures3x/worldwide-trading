@@ -612,7 +612,7 @@
               <div id="soldBulkQtyList" style="display:flex;flex-direction:column;gap:0.4rem;"></div>
             </div>
             <div class="form-group">
-              <label class="form-label">Sold At (Show / Location)</label>
+              <label class="form-label">Sold At</label>
               <select class="form-select" id="soldShow">
                 <option value="">— Select or type below —</option>
               </select>
@@ -664,7 +664,7 @@
               <input class="form-input" id="editSoldQty" type="number" min="1" value="1">
             </div>
             <div class="form-group">
-              <label class="form-label">Sold At (Show / Location)</label>
+              <label class="form-label">Sold At</label>
               <select class="form-select" id="editSoldShow">
                 <option value="">— Select or type below —</option>
               </select>
@@ -765,7 +765,7 @@
                 <input class="form-input" id="editLotBuyerInput" placeholder="e.g. John...">
               </div>
               <div class="form-group">
-                <label class="form-label">Show / Location</label>
+                <label class="form-label">Sold At</label>
                 <select class="form-select" id="editLotShow"></select>
               </div>
             </div>
@@ -2017,7 +2017,7 @@
     function downloadSoldCSV() {
       const items = _soldData || [];
       if (!items.length) { showToast('No sold data', 'error'); return; }
-      const headers = ['Name', 'Details', 'Brand', 'Category', 'Listed Price', 'Sold Price', 'Cost', 'Quantity', 'Buyer', 'Show/Location', 'Lot Name', 'Date Sold', 'Item Notes', 'Sale Notes'];
+      const headers = ['Name', 'Details', 'Brand', 'Category', 'Listed Price', 'Sold Price', 'Cost', 'Quantity', 'Buyer', 'Sold At', 'Lot Name', 'Date Sold', 'Item Notes', 'Sale Notes'];
       const rows = items.map(i => [
         i.name,
         i.details,
@@ -2477,8 +2477,10 @@
       }
       try {
         const shows = await apiGet('shows?select=name&order=date.desc');
+        const customLocations = [...new Set(_soldData.map(i => i.sold_show).filter(Boolean))];
+        const allLocations = [...new Set([...shows.map(s => s.name), ...customLocations])].sort();
         const sel = document.getElementById('soldShow');
-        sel.innerHTML = '<option value="">— Select or type below —</option>' + shows.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+        sel.innerHTML = '<option value="">— Select or type below —</option>' + allLocations.map(s => `<option value="${s}">${s}</option>`).join('');
       } catch(e) {}
       document.getElementById('soldModal').classList.add('active');
     }
