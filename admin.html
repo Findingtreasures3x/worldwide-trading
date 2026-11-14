@@ -299,6 +299,9 @@
       .form-row, .form-row-3 { grid-template-columns: 1fr; }
       .tbl { min-width: 600px; }
     }
+    /* Toggle switches */
+    .toggle-on { background: var(--gold) !important; }
+    .toggle-on + span { transform: translateX(16px) !important; }
   </style>
 </head>
 <body>
@@ -1062,15 +1065,31 @@
               <button class="btn btn-sm" onclick="saveStatsBar()">Save</button>
             </div>
             <div style="display:flex;gap:0.75rem;align-items:flex-end;flex-wrap:wrap;">
-              <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
-                <label class="form-label" style="margin:0;white-space:nowrap;">Show Carousel</label>
-                <label style="display:flex;align-items:center;gap:0.35rem;font-size:0.78rem;color:var(--text-secondary);cursor:pointer;">
-                  <input type="checkbox" id="showCarouselEnabled" style="accent-color:var(--gold);">
-                  Auto-rotate
-                </label>
-                <input class="form-input" id="showCarouselInterval" type="number" min="3" max="60" value="6" style="width:70px;font-size:0.78rem;padding:0.35rem 0.5rem;">
-                <span style="font-size:0.72rem;color:var(--text-muted);">seconds</span>
-                <button class="btn btn-sm" onclick="saveShowCarouselInterval()">Save</button>
+              <div style="display:flex;flex-direction:column;gap:0.6rem;">
+                <label class="form-label" style="margin:0;white-space:nowrap;">Show Carousel — Auto-rotate</label>
+                <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+                  <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.82rem;cursor:pointer;">
+                    <span style="position:relative;display:inline-block;width:36px;height:20px;">
+                      <input type="checkbox" id="showCarouselDesktop" style="opacity:0;width:0;height:0;" onchange="document.getElementById('showCarouselDesktopTrack').classList.toggle('toggle-on',this.checked)">
+                      <span id="showCarouselDesktopTrack" style="position:absolute;inset:0;border-radius:10px;background:var(--border);transition:background 0.2s;cursor:pointer;"></span>
+                      <span style="position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform 0.2s;pointer-events:none;" id="showCarouselDesktopKnob"></span>
+                    </span>
+                    <span style="color:var(--text-secondary);">Desktop</span>
+                  </label>
+                  <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.82rem;cursor:pointer;">
+                    <span style="position:relative;display:inline-block;width:36px;height:20px;">
+                      <input type="checkbox" id="showCarouselMobile" style="opacity:0;width:0;height:0;" onchange="document.getElementById('showCarouselMobileTrack').classList.toggle('toggle-on',this.checked)">
+                      <span id="showCarouselMobileTrack" style="position:absolute;inset:0;border-radius:10px;background:var(--border);transition:background 0.2s;cursor:pointer;"></span>
+                      <span style="position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform 0.2s;pointer-events:none;" id="showCarouselMobileKnob"></span>
+                    </span>
+                    <span style="color:var(--text-secondary);">Mobile</span>
+                  </label>
+                  <div style="display:flex;align-items:center;gap:0.4rem;">
+                    <input class="form-input" id="showCarouselInterval" type="number" min="3" max="60" value="15" style="width:60px;font-size:0.78rem;padding:0.35rem 0.5rem;">
+                    <span style="font-size:0.72rem;color:var(--text-muted);">seconds</span>
+                  </div>
+                  <button class="btn btn-sm" onclick="saveShowCarouselInterval()">Save</button>
+                </div>
               </div>
             </div>
           </div>
@@ -4068,21 +4087,32 @@
     // ========== SHOW CAROUSEL TIMER ==========
     async function loadShowCarouselInterval() {
       try {
-        const data = await apiGet('site_settings?key=in.(show_carousel_interval,show_carousel_speed)&select=key,value');
-        const interval = data.find(s => s.key === 'show_carousel_interval');
+        const data = await apiGet('site_settings?key=in.(show_carousel_interval,show_carousel_speed,show_carousel_desktop,show_carousel_mobile)&select=key,value');
         const speed = data.find(s => s.key === 'show_carousel_speed');
-        document.getElementById('showCarouselEnabled').checked = interval ? parseInt(interval.value) !== 0 : true;
-        document.getElementById('showCarouselInterval').value = speed ? parseInt(speed.value) || 6 : 6;
+        const desktop = data.find(s => s.key === 'show_carousel_desktop');
+        const mobile = data.find(s => s.key === 'show_carousel_mobile');
+        const desktopOn = desktop ? desktop.value === 'true' : true;
+        const mobileOn = mobile ? mobile.value === 'true' : false;
+        document.getElementById('showCarouselDesktop').checked = desktopOn;
+        document.getElementById('showCarouselDesktopTrack').classList.toggle('toggle-on', desktopOn);
+        document.getElementById('showCarouselMobile').checked = mobileOn;
+        document.getElementById('showCarouselMobileTrack').classList.toggle('toggle-on', mobileOn);
+        document.getElementById('showCarouselInterval').value = speed ? parseInt(speed.value) || 15 : 15;
       } catch(e) {}
     }
 
     async function saveShowCarouselInterval() {
-      const enabled = document.getElementById('showCarouselEnabled').checked;
-      const seconds = parseInt(document.getElementById('showCarouselInterval').value) || 6;
+      const desktopOn = document.getElementById('showCarouselDesktop').checked;
+      const mobileOn = document.getElementById('showCarouselMobile').checked;
+      const seconds = parseInt(document.getElementById('showCarouselInterval').value) || 15;
+      const interval = (desktopOn || mobileOn) ? String(seconds) : '0';
       try {
-        await apiFetch('site_settings?key=eq.show_carousel_interval', { method: 'PATCH', body: JSON.stringify({ value: enabled ? String(seconds) : '0', updated_at: new Date().toISOString() }) });
+        await apiFetch('site_settings?key=eq.show_carousel_interval', { method: 'PATCH', body: JSON.stringify({ value: interval, updated_at: new Date().toISOString() }) });
         await apiFetch('site_settings?key=eq.show_carousel_speed', { method: 'PATCH', body: JSON.stringify({ value: String(seconds), updated_at: new Date().toISOString() }) });
-        showToast(enabled ? `Show carousel set to ${seconds}s` : 'Show carousel off', 'success');
+        await apiFetch('site_settings?key=eq.show_carousel_desktop', { method: 'PATCH', body: JSON.stringify({ value: String(desktopOn), updated_at: new Date().toISOString() }) });
+        await apiFetch('site_settings?key=eq.show_carousel_mobile', { method: 'PATCH', body: JSON.stringify({ value: String(mobileOn), updated_at: new Date().toISOString() }) });
+        const status = desktopOn && mobileOn ? 'Both on' : desktopOn ? 'Desktop only' : mobileOn ? 'Mobile only' : 'Off';
+        showToast(`Show carousel: ${status} (${seconds}s)`, 'success');
       } catch(e) { showToast('Failed to save', 'error'); }
     }
 

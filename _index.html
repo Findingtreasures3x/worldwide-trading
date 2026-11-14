@@ -985,7 +985,7 @@
           fetch(`${SUPABASE_URL}/rest/v1/category_descriptions?select=*`, {
             headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
           }),
-          fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=in.(hero_carousel_interval,show_carousel_interval,announcement_enabled,announcement_text,hero_title,hero_subtitle,stats_grading,hero_bg_image,seo_title,seo_description,seo_og_image,sell_badge_1_label,sell_badge_2_label,sell_badge_3_label,sell_title,sell_description,sell_dm_1_label,sell_dm_1_url,sell_dm_2_label,sell_dm_2_url)&select=key,value`, {
+          fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=in.(hero_carousel_interval,show_carousel_interval,show_carousel_desktop,show_carousel_mobile,announcement_enabled,announcement_text,hero_title,hero_subtitle,stats_grading,hero_bg_image,seo_title,seo_description,seo_og_image,sell_badge_1_label,sell_badge_2_label,sell_badge_3_label,sell_title,sell_description,sell_dm_1_label,sell_dm_1_url,sell_dm_2_label,sell_dm_2_url)&select=key,value`, {
             headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
           })
         ]);
@@ -996,7 +996,9 @@
           const get = (k) => settings.find(s => s.key === k)?.value || '';
           window._heroCarouselInterval = parseInt(get('hero_carousel_interval')) || 60;
           const sci = get('show_carousel_interval');
-          window._showCarouselInterval = sci !== '' ? parseInt(sci) : 6;
+          window._showCarouselInterval = sci !== '' ? parseInt(sci) : 15;
+          window._showCarouselDesktop = get('show_carousel_desktop') !== 'false';
+          window._showCarouselMobile = get('show_carousel_mobile') === 'true';
 
           // Announcement banner
           if (get('announcement_enabled') === 'true' && get('announcement_text') && !sessionStorage.getItem('wt-announcement-dismissed')) {
@@ -1408,8 +1410,8 @@
       updateAllCountdowns();
       countdownInterval = setInterval(updateAllCountdowns, 1000);
 
-      // Initialize carousel to page 0
-      if (shows.length > 1) carouselGo(0);
+      // Initialize carousel to page 0 and start auto-rotate if enabled
+      if (shows.length > 1) { carouselGo(0); startCarouselAuto(); }
     }
 
     // ========== CAROUSEL ==========
@@ -1445,11 +1447,11 @@
     function startCarouselAuto() {
       stopCarouselAuto();
       const interval = window._showCarouselInterval;
-      // Only auto-rotate if explicitly set to > 0 (0 = off, null/undefined = wait for setting)
-      if (interval === 0) return;
-      if (interval && interval > 0) {
-        carouselAutoTimer = setInterval(() => carouselMove(1), interval * 1000);
-      }
+      if (!interval || interval <= 0) return;
+      const isMobile = window.innerWidth < 960;
+      const allowed = isMobile ? window._showCarouselMobile : window._showCarouselDesktop;
+      if (!allowed) return;
+      carouselAutoTimer = setInterval(() => carouselMove(1), interval * 1000);
     }
     function stopCarouselAuto() {
       if (carouselAutoTimer) { clearInterval(carouselAutoTimer); carouselAutoTimer = null; }
@@ -1469,7 +1471,8 @@
       }
     });
 
-    // No auto-rotate — let user control the carousel manually
+    // Backup auto-start in case shows load after initial render
+    setTimeout(() => { if (document.getElementById('showCarousel')) startCarouselAuto(); }, 3000);
 
     // Recalculate carousel on resize
     let lastWidth = window.innerWidth;
