@@ -1356,7 +1356,9 @@
       // First show always gets spotlight layout, rest use multi-card layout
       const firstCard = buildShowCard(shows[0], 0, true);
       const restCards = shows.slice(1).map((show, idx) => buildShowCard(show, idx, false)).join('');
-      const cardsHTML = firstCard + restCards;
+      const cardsHTML = shows.length === 1
+        ? firstCard.replace('class="show-card show-card-single"', 'class="show-card show-card-single carousel-visible"')
+        : firstCard + restCards;
 
       const totalPages = shows.length === 1 ? 1 : 1 + Math.ceil((shows.length - 1) / perPage);
       const navHTML = totalPages > 1 ? `
@@ -1410,7 +1412,7 @@
       updateAllCountdowns();
       countdownInterval = setInterval(updateAllCountdowns, 1000);
 
-      // Initialize carousel to page 0 and start auto-rotate if enabled
+      // Only use carousel when multiple shows — single show is already visible
       if (shows.length > 1) { carouselGo(0); startCarouselAuto(); }
     }
 

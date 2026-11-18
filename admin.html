@@ -84,6 +84,7 @@
     .stat-card-value { font-size: 1.8rem; font-weight: 800; color: var(--text); line-height: 1.1; }
     .stat-card-value.gold { color: var(--gold-text); }
     .stat-card-value.green { color: var(--success); }
+    .stat-card-value.red { color: #ef4444; }
     .stat-card-value.blue { color: var(--blue); }
     .stat-card-sub { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.25rem; }
 
@@ -3562,7 +3563,11 @@
         });
         document.getElementById('finUnsoldListed').textContent = `$${unsoldListed.toLocaleString()}`;
         document.getElementById('finUnsoldCost').textContent = `$${unsoldCost.toLocaleString()}`;
-        document.getElementById('finUnsoldProfit').textContent = `$${(unsoldListed - unsoldCost).toLocaleString()}`;
+        const potentialProfit = unsoldListed - unsoldCost;
+        document.getElementById('finUnsoldProfit').textContent = `$${potentialProfit.toLocaleString()}`;
+        const ppEl = document.getElementById('finUnsoldProfit');
+        ppEl.classList.remove('green', 'red');
+        ppEl.classList.add(potentialProfit >= 0 ? 'green' : 'red');
 
         // ---- SELL-THROUGH RATE ----
         const totalSoldQty = soldItems.reduce((s, i) => s + (i.qty || 1), 0);
